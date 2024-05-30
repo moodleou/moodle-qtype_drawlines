@@ -85,7 +85,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
                         'labelend' => '',
                         'zonestart' => '100,100;10',
                         'zoneend' => '322,213;10',
-                ]
+                ],
         ];
         $qdata->hints = [
                 1 => (object) [

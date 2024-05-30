@@ -133,7 +133,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
                 self::file_picker_options());
         $question->bgimage = $draftitemid;
 
-      //$this->js_call();
+        // TODO: Require js amd module for fom.
 
         return $question;
     }
@@ -210,7 +210,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
         if (!$bgimagesize === null) {
             $errors["bgimage"] = get_string('formerror_nobgimage', 'qtype_' . $this->qtype());
         }
-       // Validate whether the line type error needed to be displayed.
+        // Validate whether the line type error needed to be displayed.
         for ($i = 0; $i < $this->numberoflines; $i++) {
             // Validate line type.
             if (!in_array($data["type"][$i], array_keys(line::get_line_types())) &&
@@ -315,10 +315,5 @@ class qtype_drawlines_edit_form extends question_edit_form {
         $mform->setType('zoneend', PARAM_RAW_TRIMMED);
         return $repeated;
     }
-
-    //public function js_call() {
-    //    global $PAGE;
-    //    $PAGE->requires->js_call_amd('qtype_drawlines/form', 'init');
-    //}
-
+    
 }

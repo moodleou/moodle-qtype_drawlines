@@ -38,8 +38,7 @@ class provider implements
         // This component has data.
         // We need to return default options that have been set a user preferences.
         \core_privacy\local\metadata\provider,
-        \core_privacy\local\request\user_preference_provider
-{
+        \core_privacy\local\request\user_preference_provider {
 
     /**
      * Returns meta data about this system.
@@ -47,7 +46,7 @@ class provider implements
      * @param   collection     $collection The initialised collection to add items to.
      * @return  collection     A listing of user data stored through this system.
      */
-    public static function get_metadata(collection $collection) : collection {
+    public static function get_metadata(collection $collection): collection {
         $collection->add_user_preference('qtype_drawlines_defaultmark', 'privacy:preference:defaultmark');
         $collection->add_user_preference('qtype_drawlines_penalty', 'privacy:preference:penalty');
         $collection->add_user_preference('qtype_drawlines_grademethod', 'privacy:preference:grademethod');

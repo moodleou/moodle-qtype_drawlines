@@ -31,16 +31,16 @@ class line {
     const LINE_NUMBER_ADD = 2;
 
     /** @var string linesegment (Line segment ---). */
-    const TYPE_LINE_SEGMENT ='linesegment';
+    const TYPE_LINE_SEGMENT = 'linesegment';
 
     /** @var string linesinglearrow (Single arrow -→). */
-    const TYPE_LINE_SINGLE_ARROW ='linesinglearrow';
+    const TYPE_LINE_SINGLE_ARROW = 'linesinglearrow';
 
     /** @var string linedoublearrows (Double arrows ←--→). */
-    const TYPE_LINE_DOUBLE_ARROW ='linedoublearrows';
+    const TYPE_LINE_DOUBLE_ARROW = 'linedoublearrows';
 
     /** @var string lineinfinite (Infinite line --o--o--). */
-    const TYPE_LINE_INFINITE ='lineinfinite';
+    const TYPE_LINE_INFINITE = 'lineinfinite';
 
 
     /** @var string lineinfinite (Infinite line --o--o--). */
@@ -125,11 +125,11 @@ class line {
      */
     public static function is_zone_coordinates_valid(string $zone): bool {
         preg_match_all(self::VALIDATE_ZONE_COORDINATES, $zone, $matches);
-        // If the zone is empty return fale
+        // If the zone is empty return false.
         if (trim($zone) === '') {
             return false;
         }
-        // if there is no match return false.
+        // If there is no match return false.
         foreach ($matches as $i => $match) {
             if (empty($matches[$i])) {
                 return false;

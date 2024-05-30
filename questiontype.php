@@ -103,8 +103,7 @@ class qtype_drawlines extends question_type {
         global $DB;
         $context = $fromform->context;
 
-        $oldhints = $DB->get_records('question_hints',
-                array('questionid' => $fromform->id), 'id ASC');
+        $oldhints = $DB->get_records('question_hints', ['questionid' => $fromform->id], 'id ASC');
 
         if (!empty($fromform->hint)) {
             $numhints = max(array_keys($fromform->hint)) + 1;
@@ -166,7 +165,7 @@ class qtype_drawlines extends question_type {
         $fs = get_file_storage();
         foreach ($oldhints as $oldhint) {
             $fs->delete_area_files($context->id, 'question', 'hint', $oldhint->id);
-            $DB->delete_records('question_hints', array('id' => $oldhint->id));
+            $DB->delete_records('question_hints', ['id' => $oldhint->id]);
         }
     }
 
@@ -178,12 +177,11 @@ class qtype_drawlines extends question_type {
     protected function initialise_question_instance(question_definition $question, $questiondata): void {
         parent::initialise_question_instance($question, $questiondata);
         $this->initialise_question_lines($question, $questiondata);
-        //$this->initialise_combined_feedback($question, $questiondata, true);
     }
 
     protected function initialise_question_lines(question_definition $question, stdClass $questiondata): void {
         foreach ($questiondata->lines as $line) {
-            $question->lines[$line->number -1] = $this->make_line($line);
+            $question->lines[$line->number - 1] = $this->make_line($line);
         }
     }
     protected function initialise_combined_feedback(question_definition $question, $questiondata, $withparts = false) {
@@ -208,7 +206,6 @@ class qtype_drawlines extends question_type {
         $DB->delete_records('qtype_drawlines_options', ['questionid' => $questionid]);
         $DB->delete_records('qtype_drawlines_lines', ['questionid' => $questionid]);
         // TODO: user the answer table for storing drag items.
-        //$DB->delete_records('qtype_drawlines_drags', ['questionid' => $questionid]);
         parent::delete_question($questionid, $contextid);
     }
 

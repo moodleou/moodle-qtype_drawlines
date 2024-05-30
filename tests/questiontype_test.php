@@ -45,15 +45,15 @@ class questiontype_test extends \advanced_testcase {
         $this->qtype = null;
     }
 
-    public function test_name() {
+    public function test_name(): void {
         $this->assertEquals($this->qtype->name(), 'drawlines');
     }
 
-    public function test_can_analyse_responses() {
+    public function test_can_analyse_responses(): void {
         $this->assertTrue($this->qtype->can_analyse_responses());
     }
 
-    public function test_make_line() {
+    public function test_make_line(): void {
         $this->resetAfterTest();
 
         $line = new stdClass();
@@ -75,10 +75,7 @@ class questiontype_test extends \advanced_testcase {
         }
     }
 
-    /**
-     * Test to make sure that loading of question options works, including in an error case.
-     */
-    public function test_get_question_options() {
+    public function test_get_question_options(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -102,16 +99,16 @@ class questiontype_test extends \advanced_testcase {
         $this->assertEquals($formdata->shownumcorrect, $options->shownumcorrect);
 
         foreach ($question->lines as $line) {
-            $this->assertEquals($line->type, $formdata->type[$line->number -1]);
-            $this->assertEquals($line->labelstart, $formdata->labelstart[$line->number -1]);
-            $this->assertEquals($line->labelmiddle, $formdata->labelmiddle[$line->number -1]);
-            $this->assertEquals($line->labelend, $formdata->labelend[$line->number -1]);
-            $this->assertEquals($line->zonestart, $formdata->zonestart[$line->number -1]);
-            $this->assertEquals($line->zoneend, $formdata->zoneend[$line->number -1]);
+            $this->assertEquals($line->type, $formdata->type[$line->number - 1]);
+            $this->assertEquals($line->labelstart, $formdata->labelstart[$line->number - 1]);
+            $this->assertEquals($line->labelmiddle, $formdata->labelmiddle[$line->number - 1]);
+            $this->assertEquals($line->labelend, $formdata->labelend[$line->number - 1]);
+            $this->assertEquals($line->zonestart, $formdata->zonestart[$line->number - 1]);
+            $this->assertEquals($line->zoneend, $formdata->zoneend[$line->number - 1]);
         };
     }
 
-    public function test_save_lines() {
+    public function test_save_lines(): void {
         global $DB;
 
         $this->resetAfterTest(true);

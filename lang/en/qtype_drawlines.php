@@ -26,10 +26,10 @@ $string['alttext'] = 'Alt text';
 $string['answer'] = 'Answer';
 
 $string['bgimage'] = 'Background image';
-$string['dropbackground'] = 'Background image for dragging markers onto';
 
-//$string['coords'] = 'Coordinates';
 $string['correctansweris'] = 'The correct answer is: {$a}';
+
+$string['dropbackground'] = 'Background image for dragging markers onto';
 
 $string['formerror_nobgimage'] = 'You need to select an image to use as the background for the drag and drop area.';
 $string['formerror_notype'] = 'You have to select a type for Line {$a}';

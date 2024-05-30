@@ -130,7 +130,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
     public function get_num_parts_right(array $response) {
         $chosenhits = $this->choose_hits($response);
         $divisor = max(count($this->rightchoices), $this->total_number_of_items_dragged($response));
-        return array(count($chosenhits), $divisor);
+        return [count($chosenhits), $divisor];
     }
 
     /**
@@ -218,7 +218,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
     public function grade_response(array $response) {
         list($right, $total) = $this->get_num_parts_right($response);
         $fraction = $right / $total;
-        return array($fraction, question_state::graded_state_for_fraction($fraction));
+        return [$fraction, question_state::graded_state_for_fraction($fraction)];
     }
 
     public function compute_final_grade($responses, $totaltries) {
