@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="question/type/drawlines/db" VERSION="2024041600" COMMENT="XMLDB file for Moodle question/type/drawlines."
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../../lib/xmldb/xmldb.xsd">
+  <TABLES>
+    <TABLE NAME="qtype_drawlines_options" COMMENT="Defines options for drawlines questions">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="questionid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="grademethod" TYPE="char" LENGTH="10" NOTNULL="true" DEFAULT="partial" SEQUENCE="false" COMMENT="Whether grading is partial or all-or-nothing"/>
+        <FIELD NAME="correctfeedback" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Feedback shown for any correct response."/>
+        <FIELD NAME="correctfeedbackformat" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="partiallycorrectfeedback" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Feedback shown for any partially correct response."/>
+        <FIELD NAME="partiallycorrectfeedbackformat" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="incorrectfeedback" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Feedback shown for any incorrect response."/>
+        <FIELD NAME="incorrectfeedbackformat" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="shownumcorrect" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="showmisplaced" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="questionid" TYPE="foreign" FIELDS="questionid" REFTABLE="question" REFFIELDS="id"/>
+      </KEYS>
+    </TABLE>
+    <TABLE NAME="qtype_drawlines_lines" COMMENT="Settings for the line object in qtype_drawlines_lines table.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="questionid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
+        <FIELD NAME="number" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="line number, lines are numbered sequentially 1, 2, 3, ... in a given question"/>
+        <FIELD NAME="type" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Whether the line is a 'line segment', 'single arrow', double arrow' or 'infinite line'"/>
+        <FIELD NAME="labelstart" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="The line label is displayed at the start of the line."/>
+        <FIELD NAME="labelmiddle" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="The line label is displayed on the middle of the line."/>
+        <FIELD NAME="labelend" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="The line label is displayed at the end of the line."/>
+        <FIELD NAME="zonestart" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Coordinates within a circle in 'xcenter,ycenter;radius' format."/>
+        <FIELD NAME="zoneend" TYPE="text" NOTNULL="true" SEQUENCE="false" COMMENT="Coordinates within a circle in 'xcenter,ycenter;radius' format."/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="questionid" TYPE="foreign" FIELDS="questionid" REFTABLE="question" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="questionid-number" UNIQUE="true" FIELDS="questionid, number" COMMENT="Unique index for a line within a question."/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

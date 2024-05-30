@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<quiz>
+  <!-- question: 512  -->
+  <question type="drawlines">
+    <name>
+      <text>OUMatrix single choice</text>
+    </name>
+    <!DOCTYPE HTML>
+    <questiontext format="html">
+      <text><![CDATA[<p>Draw a line fron A to B.</p>]]></text>
+    </questiontext>
+    <generalfeedback format="html">
+      <text><![CDATA[<p>This is general feedback</p>]]></text>
+    </generalfeedback>
+    <defaultgrade>6</defaultgrade>
+    <penalty>0.3333333</penalty>
+    <hidden>0</hidden>
+    <idnumber>001</idnumber>
+    <grademethod>partial</grademethod>
+    <lines>
+      <line number="1">
+        <type>linesegment</type>
+        <labelstart>Srtat</labelstart>
+        <labelmiddle>Mid</labelmiddle>
+        <labelend>End</labelend>
+        <zonestart>10,10;12</zonestart>
+        <zoneend>200,10,12</zoneend>
+      </line>
+    </lines>
+    <correctfeedback format="html">
+      <text><![CDATA[<p>Your answer is correct.</p>]]></text>
+    </correctfeedback>
+    <partiallycorrectfeedback format="html">
+      <text><![CDATA[<p>Your answer is partially correct.</p>]]></text>
+    </partiallycorrectfeedback>
+    <incorrectfeedback format="html">
+      <text><![CDATA[<p>Your answer is incorrect.</p>]]></text>
+    </incorrectfeedback>
+    <shownumcorrect/>
+    <showmisplaced/>
+    <hint format="html">
+      <text><![CDATA[<p>Hint 1</p>]]></text>
+    </hint>
+    <hint format="html">
+      <text><![CDATA[<p>Hint 2</p>]]></text>
+      <shownumcorrect/>
+      <showmisplaced/>
+    </hint>
+  </question>
+
+</quiz>
