@@ -232,16 +232,9 @@ class qtype_drawlines extends question_type {
         parent::delete_files($questionid, $contextid);
         $this->delete_files_in_combined_feedback($questionid, $contextid);
         $this->delete_files_in_hints($questionid, $contextid);
-
-
-            $fs = get_file_storage();
-
-            parent::delete_files($questionid, $contextid);
-            $this->delete_files_in_row_feedback($questionid, $contextid);
-            $this->delete_files_in_hints($questionid, $contextid);
-            $fs->delete_area_files($contextid, 'question', 'correctfeedback', $questionid);
-            $fs->delete_area_files($contextid, 'question', 'partiallycorrectfeedback', $questionid);
-            $fs->delete_area_files($contextid, 'question', 'incorrectfeedback', $questionid);
+        $fs->delete_area_files($contextid, 'question', 'correctfeedback', $questionid);
+        $fs->delete_area_files($contextid, 'question', 'partiallycorrectfeedback', $questionid);
+        $fs->delete_area_files($contextid, 'question', 'incorrectfeedback', $questionid);
     }
 
     public function export_to_xml($question, qformat_xml $format, $extra = null) {
@@ -296,12 +289,12 @@ class qtype_drawlines extends question_type {
             $dragindex = $dragno - 1;
             $question->drags[$dragindex] = [];
             $question->drags[$dragindex]['label'] =
-                        $format->getpath($dragxml, array('#', 'text', 0, '#'), '', true);
+                        $format->getpath($dragxml, ['#', 'text', 0, '#'], '', true);
             if (array_key_exists('infinite', $dragxml['#'])) {
                 $question->drags[$dragindex]['noofdrags'] = 0; // Means infinite in the form.
             } else {
                 // Defaults to 1 if 'noofdrags' not set.
-                $question->drags[$dragindex]['noofdrags'] = $format->getpath($dragxml, array('#', 'noofdrags', 0, '#'), 1);
+                $question->drags[$dragindex]['noofdrags'] = $format->getpath($dragxml, ['#', 'noofdrags', 0, '#'], 1);
             }
         }
 

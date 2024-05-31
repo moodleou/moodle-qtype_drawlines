@@ -315,5 +315,4 @@ class qtype_drawlines_edit_form extends question_edit_form {
         $mform->setType('zoneend', PARAM_RAW_TRIMMED);
         return $repeated;
     }
-    
 }

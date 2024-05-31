@@ -75,5 +75,5 @@ $string['type'] = 'Type';
 $string['type_help'] = 'You can choose whether the line doesn’t have a beginning or end (line), has one or more ends (right, left, and double arrows), or it only matters that the line intersects specific points on the graph (intersect points).';
 
 $string['zonecoordinates'] = 'x,y;r (where x,y are the coordinates of the centre of the circle and r is the radius)';
-$string['zonestart'] = 'Start zone coordinates'; // Coordinatare are in 'xcenter,ycenter;radius'.
-$string['zoneend'] = 'End zone coordinates'; // Coordinatare are in 'xcenter,ycenter;radius'.
+$string['zonestart'] = 'Start zone coordinates';
+$string['zoneend'] = 'End zone coordinates';
