@@ -32,12 +32,17 @@ class qtype_drawlines_edit_form extends question_edit_form {
     /** @var string gardemethod of rows. */
     protected $grademethod;
 
+    /**
+     * Returns the question type name.
+     *
+     * @return string The question type name.
+     */
     public function qtype(): string {
         return 'drawlines';
     }
 
     /**
-     * Set basic the number of lines.
+     * Set the number of lines.
      *
      * @return void
      */
@@ -60,7 +65,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
      *
      * @return array Array of filepicker options.
      */
-    public static function file_picker_options() {
+    public static function file_picker_options(): array {
         $filepickeroptions = [];
         $filepickeroptions['accepted_types'] = ['web_image'];
         $filepickeroptions['maxbytes'] = 0;
@@ -69,6 +74,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
         return $filepickeroptions;
     }
 
+    #[\Override]
     protected function definition_inner($mform) {
 
         $this->set_current_settings();
@@ -101,6 +107,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
         $this->add_interactive_settings(true, true);
     }
 
+    #[\Override]
     protected function get_hint_fields($withclearwrong = false, $withshownumpartscorrect = false) {
         $mform = $this->_form;
 
@@ -118,6 +125,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
         return [$repeated, $repeatedoptions];
     }
 
+    #[\Override]
     public function data_preprocessing($question) {
         $question = parent::data_preprocessing($question);
         $question = $this->data_preprocessing_options($question);
@@ -204,6 +212,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
         return $question;
     }
 
+    #[\Override]
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
         $bgimagesize = $this->get_image_size_in_draft_area($data['bgimage']);
@@ -250,7 +259,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
                 $imageinfo = $file->get_imageinfo();
                 $width = $imageinfo['width'];
                 $height = $imageinfo['height'];
-                return array($width, $height);
+                return [$width, $height];
             }
         }
         return null;

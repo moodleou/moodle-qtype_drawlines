@@ -71,7 +71,7 @@ class provider implements
             writer::export_user_preference('qtype_drawlines', 'penalty', transform::percentage($preference), $desc);
         }
 
-        $preference = get_user_preferences('qtype_oumatrix_grademethod', null, $userid);
+        $preference = get_user_preferences('qtype_drawlines_grademethod', null, $userid);
         if (null !== $preference) {
             $desc = get_string('privacy:preference:grademethod', 'qtype_drawlines');
             writer::export_user_preference('qtype_drawlines', 'grademethod', transform::yesno($preference), $desc);
