@@ -32,7 +32,7 @@ require_once($CFG->dirroot . '/question/type/drawlines/tests/helper.php');
  * @package    qtype_drawlines
  * @copyright  2024 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers\qtype_drawlines
+ * @covers     \qtype_drawlines
  */
 class questiontype_test extends \advanced_testcase {
     /** @var qtype_drawlines instance of the question type class to test. */
@@ -46,14 +46,23 @@ class questiontype_test extends \advanced_testcase {
         $this->qtype = null;
     }
 
+    /**
+     * @covers \question_type::name
+     */
     public function test_name(): void {
         $this->assertEquals($this->qtype->name(), 'drawlines');
     }
 
+    /**
+     * @covers \question_type::can_analyse_responses
+     */
     public function test_can_analyse_responses(): void {
         $this->assertTrue($this->qtype->can_analyse_responses());
     }
 
+    /**
+     * @covers \qtype_drawlines::make_line
+     */
     public function test_make_line(): void {
         $this->resetAfterTest();
 
@@ -76,6 +85,9 @@ class questiontype_test extends \advanced_testcase {
         }
     }
 
+    /**
+     * @covers \qtype_drawlines::get_question_options
+     */
     public function test_get_question_options(): void {
         global $DB;
 
@@ -109,6 +121,9 @@ class questiontype_test extends \advanced_testcase {
         };
     }
 
+    /**
+     * @covers \qtype_drawlines::save_lines
+     */
     public function test_save_lines(): void {
         global $DB;
 

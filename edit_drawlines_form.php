@@ -74,7 +74,6 @@ class qtype_drawlines_edit_form extends question_edit_form {
         return $filepickeroptions;
     }
 
-    #[\Override]
     protected function definition_inner($mform) {
 
         $this->set_current_settings();
@@ -107,7 +106,13 @@ class qtype_drawlines_edit_form extends question_edit_form {
         $this->add_interactive_settings(true, true);
     }
 
-    #[\Override]
+    /**
+     * Create the form elements required by one hint.
+     *
+     * @param string $withclearwrong whether this quesiton type uses the 'Clear wrong' option on hints.
+     * @param string $withshownumpartscorrect whether this quesiton type uses the 'Show num parts correct' option on hints.
+     * @return array form field elements for one hint.
+     */
     protected function get_hint_fields($withclearwrong = false, $withshownumpartscorrect = false) {
         $mform = $this->_form;
 
@@ -125,7 +130,6 @@ class qtype_drawlines_edit_form extends question_edit_form {
         return [$repeated, $repeatedoptions];
     }
 
-    #[\Override]
     public function data_preprocessing($question) {
         $question = parent::data_preprocessing($question);
         $question = $this->data_preprocessing_options($question);
@@ -212,7 +216,6 @@ class qtype_drawlines_edit_form extends question_edit_form {
         return $question;
     }
 
-    #[\Override]
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
         $bgimagesize = $this->get_image_size_in_draft_area($data['bgimage']);
