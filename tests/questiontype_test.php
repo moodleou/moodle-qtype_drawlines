@@ -39,14 +39,18 @@ class questiontype_test extends \advanced_testcase {
     protected $qtype;
 
     protected function setUp(): void {
+        parent::setUp();
         $this->qtype = question_bank::get_qtype('drawlines');;
     }
 
     protected function tearDown(): void {
         $this->qtype = null;
+        parent::tearDown();
     }
 
     /**
+     * Check the name of this question type.
+     *
      * @covers \question_type::name
      */
     public function test_name(): void {
@@ -54,6 +58,8 @@ class questiontype_test extends \advanced_testcase {
     }
 
     /**
+     * Check that this question type can analise responses.
+     *
      * @covers \question_type::can_analyse_responses
      */
     public function test_can_analyse_responses(): void {
@@ -61,6 +67,8 @@ class questiontype_test extends \advanced_testcase {
     }
 
     /**
+     * Make line object and check if it was constructed correctly.
+     *
      * @covers \qtype_drawlines::make_line
      */
     public function test_make_line(): void {
@@ -86,6 +94,8 @@ class questiontype_test extends \advanced_testcase {
     }
 
     /**
+     * Get the question options from the form and check the entries in the database table.
+     *
      * @covers \qtype_drawlines::get_question_options
      */
     public function test_get_question_options(): void {
@@ -122,6 +132,8 @@ class questiontype_test extends \advanced_testcase {
     }
 
     /**
+     * Save the line objects from the form and check the entries in the database table.
+     *
      * @covers \qtype_drawlines::save_lines
      */
     public function test_save_lines(): void {
