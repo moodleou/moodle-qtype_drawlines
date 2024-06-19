@@ -1,0 +1,30 @@
+/* Styles for DrawLines. */
+.que.drawlines .qtext {
+    display: block;
+    margin-bottom: 0.5em;
+}
+
+.que.drawlines .dropbackground,
+form.mform fieldset#id_previewareaheader .dropbackground {
+    margin: 0 auto;
+    border: 1px solid black;
+}
+
+.que.drawlines line.color1 {
+    fill: #1d1e1d;
+}
+.que.drawlines line.color2 {
+    fill: #1c5fa1;
+}
+.que.drawlines line.color3 {
+    fill: #39da20;
+}
+.que.drawlines line.color4 {
+    fill: rgba(255, 165, 0, 0.98);
+}
+.que.drawlines line.color5 {
+    fill: #a11c1c;
+}
+.que.drawlines line.color6 {
+    fill: #e50de5;
+}

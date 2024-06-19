@@ -23,6 +23,7 @@ use qtype_drawlines\line;
  * @copyright  2024 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+#[AllowDynamicProperties]
 class qtype_drawlines_question extends question_graded_automatically_with_countback {
 
     /** @var lines[], an array of line objects. */
@@ -31,7 +32,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
     /** @var int The number of lines. */
     public $numberoflines;
 
-
+    #[\Override]
     public function check_file_access($qa, $options, $component, $filearea, $args, $forcedownload) {
         if ($filearea === 'bgimage') {
             $validfilearea = true;
@@ -154,6 +155,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         }
         return $chosenhits;
     }
+
     public function total_number_of_items_dragged(array $response) {
         $total = 0;
         foreach ($this->choiceorder[1] as $choice) {
@@ -206,6 +208,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         return $hits;
     }
 
+    #[\Override]
     public function get_right_choice_for($place) {
         $group = $this->places[$place]->group;
         foreach ($this->choiceorder[$group] as $choicekey => $choiceid) {
@@ -215,12 +218,14 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         }
         return null;
     }
+    #[\Override]
     public function grade_response(array $response) {
         list($right, $total) = $this->get_num_parts_right($response);
         $fraction = $right / $total;
         return [$fraction, question_state::graded_state_for_fraction($fraction)];
     }
 
+    #[\Override]
     public function compute_final_grade($responses, $totaltries) {
         $maxitemsdragged = 0;
         $wrongtries = [];
@@ -246,6 +251,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         return $grade;
     }
 
+    #[\Override]
     public function classify_response(array $response) {
         $parts = [];
         $hits = $this->choose_hits($response);
@@ -264,6 +270,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         return $parts;
     }
 
+    #[\Override]
     public function get_correct_response() {
         $responsecoords = [];
         foreach ($this->places as $placeno => $place) {
@@ -286,7 +293,8 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         return $response;
     }
 
-    public function summarise_response(array $response) {
+    #[\Override]
+    public function summarise_response(array $response): null|string {
         $hits = $this->choose_hits($response);
         $goodhits = [];
         foreach ($this->places as $placeno => $place) {
@@ -302,6 +310,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         return implode(', ', $goodhits);
     }
 
+    #[\Override]
     public function get_random_guess_score() {
         return null;
     }

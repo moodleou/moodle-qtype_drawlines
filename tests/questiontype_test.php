@@ -103,32 +103,49 @@ class questiontype_test extends \advanced_testcase {
 
         $this->resetAfterTest(true);
         $this->setAdminUser();
-        $this->setAdminUser();
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $cat = $questiongenerator->create_question_category([]);
         $q = $questiongenerator->create_question('drawlines', 'mkmap_twolines', ['category' => $cat->id]);
         $questiondata = question_bank::load_question_data($q->id);
-        $formdata = \test_question_maker::get_question_form_data('drawlines', 'mkmap_twolines');
 
-        $question = $this->qtype->get_question_options($questiondata);
-        $options = $question->options;
-        $this->assertEquals($formdata->grademethod, $options->grademethod);
-        $this->assertEquals($formdata->correctfeedback['text'], $options->correctfeedback);
-        $this->assertEquals($formdata->correctfeedback['format'], $options->correctfeedbackformat);
-        $this->assertEquals($formdata->partiallycorrectfeedback['text'], $options->partiallycorrectfeedback);
-        $this->assertEquals($formdata->partiallycorrectfeedback['format'], $options->partiallycorrectfeedbackformat);
-        $this->assertEquals($formdata->incorrectfeedback['text'], $options->incorrectfeedback);
-        $this->assertEquals($formdata->incorrectfeedback['format'], $options->incorrectfeedbackformat);
-        $this->assertEquals($formdata->shownumcorrect, $options->shownumcorrect);
+        // Question data contains options and lines and return true.
+        $trueorfalse = $this->qtype->get_question_options($questiondata);
+        $this->assertTrue($trueorfalse);
+        $options = $DB->get_record('qtype_drawlines_options', ['questionid' => $questiondata->id]);
+        $this->assertEquals('partial', $options->grademethod);
+        $this->assertEquals('Well done!', $options->correctfeedback);
+        $this->assertEquals(FORMAT_HTML, $options->correctfeedbackformat);
+        $this->assertEquals('Parts, but only parts, of your response are correct.', $options->partiallycorrectfeedback);
+        $this->assertEquals(FORMAT_HTML, $options->partiallycorrectfeedbackformat);
+        $this->assertEquals('That is not right at all.', $options->incorrectfeedback);
+        $this->assertEquals(FORMAT_HTML, $options->incorrectfeedbackformat);
+        $this->assertEquals(1, $options->shownumcorrect);
+        $this->assertEquals(0, $options->showmisplaced);
 
-        foreach ($question->lines as $line) {
-            $this->assertEquals($line->type, $formdata->type[$line->number - 1]);
-            $this->assertEquals($line->labelstart, $formdata->labelstart[$line->number - 1]);
-            $this->assertEquals($line->labelmiddle, $formdata->labelmiddle[$line->number - 1]);
-            $this->assertEquals($line->labelend, $formdata->labelend[$line->number - 1]);
-            $this->assertEquals($line->zonestart, $formdata->zonestart[$line->number - 1]);
-            $this->assertEquals($line->zoneend, $formdata->zoneend[$line->number - 1]);
-        };
+        $this->assertEquals($options->id, $questiondata->options->id);
+        $this->assertEquals($options->questionid, $questiondata->options->questionid);
+        $this->assertEquals($options->grademethod, $questiondata->options->grademethod);
+        $this->assertEquals($options->correctfeedback, $questiondata->options->correctfeedback);
+        $this->assertEquals($options->correctfeedbackformat, $questiondata->options->correctfeedbackformat);
+        $this->assertEquals($options->partiallycorrectfeedback, $questiondata->options->partiallycorrectfeedback);
+        $this->assertEquals($options->partiallycorrectfeedbackformat, $questiondata->options->partiallycorrectfeedbackformat);
+        $this->assertEquals($options->incorrectfeedback, $questiondata->options->incorrectfeedback);
+        $this->assertEquals($options->incorrectfeedbackformat, $questiondata->options->incorrectfeedbackformat);
+        $this->assertEquals($options->shownumcorrect, $questiondata->options->shownumcorrect);
+        $this->assertEquals($options->showmisplaced, $questiondata->options->showmisplaced);
+
+        $lines = $DB->get_records('qtype_drawlines_lines', ['questionid' => $questiondata->id]);
+        foreach ($questiondata->lines as $key => $line) {
+            $this->assertEquals($line->id, $lines[$key]->id);
+            $this->assertEquals($line->questionid, $lines[$key]->questionid);
+            $this->assertEquals($line->number, $lines[$key]->number);
+            $this->assertEquals($line->type, $lines[$key]->type);
+            $this->assertEquals($line->labelstart, $lines[$key]->labelstart);
+            $this->assertEquals($line->labelmiddle, $lines[$key]->labelmiddle);
+            $this->assertEquals($line->labelend, $lines[$key]->labelend);
+            $this->assertEquals($line->zonestart, $lines[$key]->zonestart);
+            $this->assertEquals($line->zoneend, $lines[$key]->zoneend);
+        }
     }
 
     /**
@@ -140,7 +157,6 @@ class questiontype_test extends \advanced_testcase {
         global $DB;
 
         $this->resetAfterTest(true);
-        $this->setAdminUser();
         $this->setAdminUser();
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $cat = $questiongenerator->create_question_category([]);
@@ -154,8 +170,8 @@ class questiontype_test extends \advanced_testcase {
         foreach ($lines as $id => $line) {
             $this->assertEquals($line->id, $questiondata->lines[$id]->id);
             $this->assertEquals($line->questionid, $questiondata->lines[$id]->questionid);
-            $this->assertEquals($line->type, $questiondata->lines[$id]->type);
             $this->assertEquals($line->number, $questiondata->lines[$id]->number);
+            $this->assertEquals($line->type, $questiondata->lines[$id]->type);
             $this->assertEquals($line->labelstart, $questiondata->lines[$id]->labelstart);
             $this->assertEquals($line->labelmiddle, $questiondata->lines[$id]->labelmiddle);
             $this->assertEquals($line->labelend, $questiondata->lines[$id]->labelend);

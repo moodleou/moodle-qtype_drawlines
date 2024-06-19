@@ -36,18 +36,32 @@ class qtype_drawlines_test_helper extends question_test_helper {
      * @return stdClass
      */
     public function get_drawlines_question_data_mkmap_twolines(): stdClass {
-        global $USER;
+        global $CFG, $USER;
 
         $qdata = new stdClass();
+        question_bank::load_question_definition_classes('drawlines');
+        $qdata = new qtype_drawlines_question();
+        $bgdraftitemid = 0;
+        file_prepare_draft_area($bgdraftitemid, null, null, null, null);
+        $fs = get_file_storage();
+        $filerecord = new stdClass();
+        $filerecord->contextid = context_user::instance($USER->id)->id;
+        $filerecord->component = 'user';
+        $filerecord->filearea = 'draft';
+        $filerecord->itemid = $bgdraftitemid;
+        $filerecord->filepath = '/';
+        $filerecord->filename = 'mkmap.png';
+        $fs->create_file_from_pathname($filerecord, $CFG->dirroot .
+                '/question/type/drawlines/tests/fixtures/mkmap.png');
 
         $qdata->createdby = $USER->id;
         $qdata->modifiedby = $USER->id;
         $qdata->qtype = 'drawlines';
         $qdata->name = 'drawlines_mkmap01';
         $qdata->questiontext = 'Draw 2 lines on the map. A line segent from A (line starting point) to B (line Ending point),' .
-                    ' and another one from c to D. A is ..., B is ..., C is ... and D is ...';
+                    ' and another one from C to D. A is ..., B is ..., C is ... and D is ...';
         $qdata->questiontextformat = FORMAT_HTML;
-        $qdata->generalfeedback = 'we draw lines from a starting to an end point.';
+        $qdata->generalfeedback = 'We draw lines from a starting to an end point.';
         $qdata->generalfeedbackformat = FORMAT_HTML;
         $qdata->defaultmark = 1;
         $qdata->length = 1;
@@ -65,12 +79,13 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $qdata->options->incorrectfeedback = test_question_maker::STANDARD_OVERALL_INCORRECT_FEEDBACK;
         $qdata->options->incorrectfeedbackformat = FORMAT_HTML;
         $qdata->options->shownumcorrect = 1;
+        $qdata->options->showmisplaced = 0;
 
         $qdata->lines = [
                 1 => (object)[
                         'id' => 11,
                         'number' => 1,
-                        'type' => line::TYPE_LINE_INFINITE,
+                        'type' => line::TYPE_LINE_SEGMENT,
                         'labelstart' => 'Start 1',
                         'labelmiddle' => 'Mid 1',
                         'labelend' => '',
@@ -79,7 +94,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
                 ],
                 2 => (object)[
                         'number' => 2,
-                        'type' => line::TYPE_LINE_INFINITE,
+                        'type' => line::TYPE_LINE_SEGMENT,
                         'labelstart' => 'Start 2',
                         'labelmiddle' => '',
                         'labelend' => '',
@@ -134,13 +149,13 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $fromform->name = 'MK landmarks';
         $fromform->questiontext = [
             'text' => 'Draw 2 lines on the map. A line segent from A (line starting point) to B (line Ending point),' .
-                    ' and another one from c to D. A is ..., B is ..., C is ... and D is ...',
+                    ' and another one from C to D. A is ..., B is ..., C is ... and D is ...',
             'format' => FORMAT_HTML,
         ];
         $fromform->defaultmark = 1;
         $fromform->grademethod = get_config('qtype_drawlines', 'grademethod');
         $fromform->generalfeedback = [
-            'text' => '.',
+            'text' => 'We draw lines from a starting to an end point.',
             'format' => FORMAT_HTML,
         ];
         $fromform->bgimage = $bgdraftitemid;
@@ -160,7 +175,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $fromform->penalty = '0.3333333';
         $fromform->hint = [
             [
-                'text' => 'You are trying to draw 2 lines by placing the stert and end markers for each line on the map.',
+                'text' => 'You are trying to draw 2 lines by placing the start and end markers for each line on the map.',
                 'format' => FORMAT_HTML,
             ],
             [
@@ -178,9 +193,9 @@ class qtype_drawlines_test_helper extends question_test_helper {
     }
 
     /**
-     * Returns a qtype_oumatrix_single question.
+     * Returns a qtype_drawlines question.
      *
-     * @return qtype_oumatrix_multiple
+     * @return qtype_drawlines_question
      */
     public function make_drawlines_question_mkmap_twolines(): qtype_drawlines_question {
         global $CFG, $USER;
@@ -205,9 +220,9 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $question->qtype = 'qtype_drawlines_question';
         $question->name = 'drawlines_mkmap_twolines';
         $question->questiontext = 'Draw 2 lines on the map. A line segent from A (line starting point) to B (line Ending point),' .
-                ' and another one from c to D. A is ..., B is ..., C is ... and D is ...';
+                ' and another one from C to D. A is ..., B is ..., C is ... and D is ...';
         $question->questiontextformat = FORMAT_HTML;
-        $question->generalfeedback = 'we draw lines from a starting to an end point.';
+        $question->generalfeedback = 'We draw lines from a starting to an end point.';
         $question->generalfeedbackformat = FORMAT_HTML;
         $question->defaultmark = 1;
         $question->length = 1;
@@ -224,13 +239,14 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $question->incorrectfeedback = test_question_maker::STANDARD_OVERALL_INCORRECT_FEEDBACK;
         $question->incorrectfeedbackformat = FORMAT_HTML;
         $question->shownumcorrect = 1;
+        $question->showmisplaced = 0;
 
         $question->lines = [
-                11 => new line(
-                        11, $question->id, 1, line::TYPE_LINE_INFINITE,
+                0 => new line(
+                        11, $question->id, 1, line::TYPE_LINE_SEGMENT,
                         'Start 1', 'Mid 1', '', '10,10;12', '300,10;12'),
-                12 => new line(
-                        11, $question->id, 1, line::TYPE_LINE_INFINITE,
+                1 => new line(
+                        11, $question->id, 1, line::TYPE_LINE_SEGMENT,
                         'Start 2', '', '', '10,100;12', '300,100;12'),
         ];
         $question->hints = [

@@ -28,7 +28,8 @@ class qtype_drawlines extends question_type {
     /** @var lines[], an array of line objects. */
     public $lines;
 
-    public function get_question_options($question): bool|stdClass {
+    #[\Override]
+    public function get_question_options($question): bool {
         global $DB, $OUTPUT;
         parent::get_question_options($question);
         if (!$question->options = $DB->get_record('qtype_drawlines_options', ['questionid' => $question->id])) {
@@ -39,15 +40,17 @@ class qtype_drawlines extends question_type {
             echo $OUTPUT->notification('Error: Missing drawlines question lines!');
             return false;
         }
-        return $question;
+        return true;
     }
 
+    #[\Override]
     public function save_defaults_for_new_questions(stdClass $fromform): void {
         parent::save_defaults_for_new_questions($fromform);
         $this->set_default_value('grademethod', $fromform->grademethod);
         $this->set_default_value('shownumcorrect', $fromform->shownumcorrect);
     }
 
+    #[\Override]
     public function save_question_options($fromform) {
         global $DB;
         parent::save_question_options($fromform);
@@ -68,6 +71,7 @@ class qtype_drawlines extends question_type {
         $options->showmisplaced = !empty($formdata->showmisplaced);
         $options = $this->save_combined_feedback_helper($options, $fromform, $context, true);
         $DB->insert_record('qtype_drawlines_options', $options);
+
         $this->save_lines($fromform);
         $this->save_hints($fromform, true);
     }
@@ -99,6 +103,7 @@ class qtype_drawlines extends question_type {
         }
     }
 
+    #[\Override]
     public function save_hints($fromform, $withparts = false) {
         global $DB;
         $context = $fromform->context;
@@ -169,46 +174,62 @@ class qtype_drawlines extends question_type {
         }
     }
 
+    #[\Override]
     protected function make_question_instance($questiondata) {
         question_bank::load_question_definition_classes($this->name());
-        return new qtype_drawlines_question();
+            return new qtype_drawlines_question;
     }
 
+    #[\Override]
     protected function initialise_question_instance(question_definition $question, $questiondata): void {
         parent::initialise_question_instance($question, $questiondata);
         $this->initialise_question_lines($question, $questiondata);
+        $this->initialise_combined_feedback($question, $questiondata, true);
     }
 
-    protected function initialise_question_lines(question_definition $question, stdClass $questiondata): void {
+    /**
+     * Inittialise the lines for this question.
+     *
+     * @param question_definition $question
+     * @param qtype_drawlines_question $questiondata
+     */
+    protected function initialise_question_lines(question_definition $question, $questiondata): void {
+        $question->numberoflines = count($questiondata->lines);
+        //print_object($question);
+        //print_object(' question above and questiondata below');
+        //print_object($questiondata);
         foreach ($questiondata->lines as $line) {
             $question->lines[$line->number - 1] = $this->make_line($line);
         }
     }
+
+    #[\Override]
     protected function initialise_combined_feedback(question_definition $question, $questiondata, $withparts = false) {
         parent::initialise_combined_feedback($question, $questiondata, $withparts);
-        $question->showmisplaced = $questiondata->options->showmisplaced;
+        $question->showmisplaced = $questiondata->options->showmisplaced ?? 0;
     }
 
     /**
      * Make a line.
      *
-     * @param stdClass $linedata
+     * @param stdClass $line
      * @return data
      */
-    public function make_line(stdClass $linedata): line {
-        return new line($linedata->id, $linedata->questionid, $linedata->number, $linedata->type,
-                $linedata->labelstart, $linedata->labelmiddle, $linedata->labelend,
-                $linedata->zonestart, $linedata->zoneend);
+    public function make_line(stdClass $line): line {
+        return new line($line->id, $line->questionid, $line->number, $line->type,
+                $line->labelstart, $line->labelmiddle, $line->labelend,
+                $line->zonestart, $line->zoneend);
     }
 
+    #[\Override]
     public function delete_question($questionid, $contextid) {
         global $DB;
         $DB->delete_records('qtype_drawlines_options', ['questionid' => $questionid]);
         $DB->delete_records('qtype_drawlines_lines', ['questionid' => $questionid]);
-        // TODO: user the answer table for storing drag items.
         parent::delete_question($questionid, $contextid);
     }
 
+    #[\Override]
     public function move_files($questionid, $oldcontextid, $newcontextid) {
         global $DB;
         $fs = get_file_storage();
@@ -237,16 +258,16 @@ class qtype_drawlines extends question_type {
         $fs->delete_area_files($contextid, 'question', 'incorrectfeedback', $questionid);
     }
 
+    #[\Override]
     public function export_to_xml($question, qformat_xml $format, $extra = null) {
-        $fs = get_file_storage();
-        $contextid = $question->contextid;
-
         $output = '';
         $output .= '    <grademethod>' . $format->xml_escape($question->options->grademethod) .
                 "</grademethod>\n";
         $output .= $format->write_combined_feedback($question->options,
                                                     $question->id,
                                                     $question->contextid);
+        $fs = get_file_storage();
+        $contextid = $question->contextid;
         $files = $fs->get_area_files($contextid, 'qtype_drawlines', 'bgimage', $question->id);
         $output .= "    " . $this->write_files($files, 2)."\n";;
 
@@ -255,12 +276,24 @@ class qtype_drawlines extends question_type {
         $output .= "    <lines>\n";
         foreach ($question->lines as $key => $line) {
             $output .= "    <line number=\"{$line->number}\">\n";
+            $output .= "        <type>\n";
             $output .= $format->writetext($line->type, $indent);
+            $output .= "        </type>\n";
+            $output .= "        <labelstart>\n";
             $output .= $format->writetext($line->labelstart, $indent);
+            $output .= "        </labelstart>\n";
+            $output .= "        <labelmiddle>\n";
             $output .= $format->writetext($line->labelmiddle, $indent);
+            $output .= "        </labelmiddle>\n";
+            $output .= "        <labelend>\n";
             $output .= $format->writetext($line->labelend, $indent);
+            $output .= "        </labelend>\n";
+            $output .= "        <zonestart>\n";
             $output .= $format->writetext($line->zonestart, $indent);
+            $output .= "        </zonestart>\n";
+            $output .= "        <zoneend>\n";
             $output .= $format->writetext($line->zonestart, $indent);
+            $output .= "        </zoneend>\n";
             $output .= "      </line>\n";
         }
         $output .= "    </lines>\n";
@@ -268,43 +301,76 @@ class qtype_drawlines extends question_type {
         return $output;
     }
 
+    #[\Override]
     public function import_from_xml($data, $question, qformat_xml $format, $extra=null) {
         if (!isset($data['@']['type']) || $data['@']['type'] != 'drawlines') {
             return false;
         }
-
         $question = $format->import_headers($data);
         $question->qtype = 'drawlines';
 
-        $question->showmisplaced = array_key_exists('showmisplaced',
-                                                    $format->getpath($data, ['#'], []));
-
         $filexml = $format->getpath($data, ['#', 'file'], []);
         $question->bgimage = $format->import_files_as_draft($filexml);
-        $drags = $data['#']['drag'];
-        $question->drags = [];
 
-        foreach ($drags as $dragxml) {
-            $dragno = $format->getpath($dragxml, ['#', 'no', 0, '#'], 0);
-            $dragindex = $dragno - 1;
-            $question->drags[$dragindex] = [];
-            $question->drags[$dragindex]['label'] =
-                        $format->getpath($dragxml, ['#', 'text', 0, '#'], '', true);
-            if (array_key_exists('infinite', $dragxml['#'])) {
-                $question->drags[$dragindex]['noofdrags'] = 0; // Means infinite in the form.
-            } else {
-                // Defaults to 1 if 'noofdrags' not set.
-                $question->drags[$dragindex]['noofdrags'] = $format->getpath($dragxml, ['#', 'noofdrags', 0, '#'], 1);
+        $question->grademethod = $format->import_text(
+                $format->getpath($data, ['#', 'grademethod'], 'partial'));
+        $question->showmisplaced = array_key_exists('showmisplaced',
+                $format->getpath($data, ['#'], []));
+
+        $lines = $format->getpath($data, ['#', 'lines', 0, '#', 'line'], false);
+        if ($lines) {
+            $question->numberoflines = count($lines);
+            $index = 0;
+            foreach ($lines as $line) {
+                $question->type[$index] = $format->getpath($line,
+                        ['#', 'type', 0, '#', 'text', 0, '#'], line::TYPE_LINE_SEGMENT);
+                $question->labelstart[$index] = $format->getpath($line,
+                        ['#', 'labelstart', 0, '#', 'text', 0, '#'],  '');
+                $question->labelmiddle[$index] = $format->getpath($line,
+                        ['#', 'labelmiddle', 0, '#', 'text', 0, '#'],  '');
+                $question->labelend[$index] = $format->getpath($line,
+                        ['#', 'labelend', 0, '#', 'text', 0, '#'],  '');
+                $question->zonestart[$index] = $format->getpath($line,
+                        ['#', 'zonestart', 0, '#', 'text', 0, '#'],  '');
+                $question->zoneend[$index] = $format->getpath($line,
+                        ['#', 'zoneend', 0, '#', 'text', 0, '#'],  '');
+                $index++;
             }
         }
 
         $format->import_combined_feedback($question, $data, true);
+
         $format->import_hints($question, $data, true, true,
                 $format->get_format($question->questiontextformat));
 
         return $question;
     }
 
+    /**
+     * Convert files into text output in the given format.
+     * This method is copied from qformat_default as a quick fix, as the method there is protected.
+     * @param array $files
+     * @param int $indent Number of spaces to indent
+     * @return string $string
+     */
+    public function write_files($files, $indent) {
+        if (empty($files)) {
+            return '';
+        }
+        $string = '';
+        foreach ($files as $file) {
+            if ($file->is_directory()) {
+                continue;
+            }
+            $string .= str_repeat('  ', $indent);
+            $string .= '<file name="' . $file->get_filename() . '" encoding="base64">';
+            $string .= base64_encode($file->get_content());
+            $string .= "</file>\n";
+        }
+        return $string;
+    }
+
+    #[\Override]
     public function get_random_guess_score($questiondata) {
         return null;
     }

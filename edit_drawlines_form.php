@@ -29,7 +29,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
     /** @var int Number of lines. */
     protected $numberoflines;
 
-    /** @var string gardemethod of rows. */
+    /** @var string grading method. */
     protected $grademethod;
 
     /**
@@ -74,7 +74,8 @@ class qtype_drawlines_edit_form extends question_edit_form {
         return $filepickeroptions;
     }
 
-    protected function definition_inner($mform) {
+    #[\Override]
+    protected function definition_inner($mform): void {
 
         $this->set_current_settings();
 
@@ -130,7 +131,8 @@ class qtype_drawlines_edit_form extends question_edit_form {
         return [$repeated, $repeatedoptions];
     }
 
-    public function data_preprocessing($question) {
+    #[\Override]
+    public function data_preprocessing($question): object {
         $question = parent::data_preprocessing($question);
         $question = $this->data_preprocessing_options($question);
         $question = $this->data_preprocessing_lines($question);
@@ -145,7 +147,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
                 self::file_picker_options());
         $question->bgimage = $draftitemid;
 
-        // TODO: Require js amd module for fom.
+        // TODO: Require js amd module for form.
 
         return $question;
     }
@@ -193,14 +195,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
         return $question;
     }
 
-    /**
-     * Perform the necessary preprocessing for the hint fields.
-     *
-     * @param object $question The data being passed to the form.
-     * @param bool $withclearwrong Clear wrong hints.
-     * @param bool $withshownumpartscorrect Show number correct.
-     * @return object The modified data.
-     */
+    #[\Override]
     protected function data_preprocessing_hints($question, $withclearwrong = false,
             $withshownumpartscorrect = false) {
         if (empty($question->hints)) {
@@ -216,7 +211,8 @@ class qtype_drawlines_edit_form extends question_edit_form {
         return $question;
     }
 
-    public function validation($data, $files) {
+    #[\Override]
+    public function validation($data, $files): array {
         $errors = parent::validation($data, $files);
         $bgimagesize = $this->get_image_size_in_draft_area($data['bgimage']);
         if (!$bgimagesize === null) {
@@ -275,9 +271,10 @@ class qtype_drawlines_edit_form extends question_edit_form {
      * @param string $label the label to use for each line.
      */
     protected function add_per_line_fields(MoodleQuickForm $mform, string $label) {
-        $repeatsatstart = line::LINE_NUMBER_START;
         if (isset($this->question->lines)) {
-            $repeatsatstart = count((array)$this->question->lines);
+            $repeatsatstart = count($this->question->lines);
+        } else {
+            $repeatsatstart = line::LINE_NUMBER_START;
         }
         $repeatedoptions = [];
         $this->repeat_elements($this->get_per_line_fields($mform, $label, $repeatedoptions),
