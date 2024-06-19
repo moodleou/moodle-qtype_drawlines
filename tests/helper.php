@@ -26,6 +26,7 @@ use qtype_drawlines\line;
  */
 class qtype_drawlines_test_helper extends question_test_helper {
 
+    #[\Override]
     public function get_test_questions(): array {
         return ['mkmap_twolines'];
     }

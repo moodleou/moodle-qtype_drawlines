@@ -21,7 +21,6 @@
  * @copyright 2024 The Open University
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 class restore_qtype_drawlines_plugin extends restore_qtype_plugin {
     /**
      * Returns the qtype name.

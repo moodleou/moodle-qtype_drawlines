@@ -58,6 +58,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         return 'c' . $choice;
     }
 
+    #[\Override]
     public function get_expected_data() {
         $vars = [];
         foreach ($this->choices[1] as $choice => $notused) {
@@ -65,6 +66,8 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         }
         return $vars;
     }
+
+    #[\Override]
     public function is_complete_response(array $response) {
         foreach ($this->choices[1] as $choiceno => $notused) {
             if (isset($response[$this->choice($choiceno)]) &&
@@ -74,10 +77,13 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         }
         return false;
     }
+
+    #[\Override]
     public function is_gradable_response(array $response) {
         return $this->is_complete_response($response);
     }
 
+    #[\Override]
     public function is_same_response(array $prevresponse, array $newresponse) {
         foreach ($this->choices[1] as $choice => $notused) {
             $fieldname = $this->choice($choice);
@@ -88,6 +94,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         }
         return true;
     }
+
     /**
      * Tests to see whether two arrays have the same set of coords at a particular key. Coords
      * can be in any order.
@@ -121,6 +128,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         }
     }
 
+    #[\Override]
     public function get_validation_error(array $response) {
         if ($this->is_complete_response($response)) {
             return '';
@@ -128,6 +136,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         return get_string('pleasedragatleastonemarker', 'qtype_drawlines');
     }
 
+    #[\Override]
     public function get_num_parts_right(array $response) {
         $chosenhits = $this->choose_hits($response);
         $divisor = max(count($this->rightchoices), $this->total_number_of_items_dragged($response));
@@ -156,6 +165,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         return $chosenhits;
     }
 
+    #[\Override]
     public function total_number_of_items_dragged(array $response) {
         $total = 0;
         foreach ($this->choiceorder[1] as $choice) {

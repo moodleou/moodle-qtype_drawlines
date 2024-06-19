@@ -13,6 +13,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 use qtype_drawlines\line;
 
 /**
@@ -20,7 +21,6 @@ use qtype_drawlines\line;
  *
  * @package   qtype_drawlines
  * @copyright 2024 The Open University
- * @author    The Open University
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class qtype_drawlines extends question_type {
@@ -195,9 +195,6 @@ class qtype_drawlines extends question_type {
      */
     protected function initialise_question_lines(question_definition $question, $questiondata): void {
         $question->numberoflines = count($questiondata->lines);
-        //print_object($question);
-        //print_object(' question above and questiondata below');
-        //print_object($questiondata);
         foreach ($questiondata->lines as $line) {
             $question->lines[$line->number - 1] = $this->make_line($line);
         }
