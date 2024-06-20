@@ -28,3 +28,41 @@ form.mform fieldset#id_previewareaheader .dropbackground {
 .que.drawlines line.color6 {
     fill: #e50de5;
 }
+
+.que.drawlines .dropzone.color7 .shape {
+    fill: #f0e68c;
+}
+
+.que.drawlines .dropzone .shapeLabel {
+    text-anchor: middle;
+}
+
+.que.drawlines .dropzone .handlestart,
+.que.drawlines .dropzone .handleend {
+    fill: #fff;
+    fill-opacity: 0.1; /* Need a small amount of opacity of the handle can't be grabbed. */
+    stroke-width: 1;
+    display: none;
+    cursor: move;
+}
+
+.que.drawlines .dropzone .startcircle,
+.que.drawlines .dropzone .endcircle {
+    fill: #fff;
+    fill-opacity: 0.5;
+    stroke: black;
+    stroke-width: 1;
+}
+
+.que.drawlines .dropzone .handlestart.move,
+.que.drawlines .dropzone .handleend.move {
+    stroke: #800;
+}
+.que.drawlines .dropzone .handlestart.edit,
+.que.drawlines .dropzone .handleend.edit {
+    stroke: #008;
+}
+.que.drawlines .dropzone.active .handlestart,
+.que.drawlines .dropzone.active .handleend {
+    display: inherit;
+}
