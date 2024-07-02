@@ -53,11 +53,11 @@ class backup_qtype_drawlines_plugin extends backup_qtype_plugin {
         $lines = new backup_nested_element('lines');
         $line = new backup_nested_element('line', ['id'], ['number', 'type',
                 'labelstart', 'labelmiddle', 'labelend', 'zonestart', 'zoneend']);
-        $pluginwrapper->add_child($lines);
         $lines->add_child($line);
+        $pluginwrapper->add_child($lines);
 
         $options->set_source_table('qtype_drawlines_options', ['questionid' => backup::VAR_PARENTID]);
-        $lines->set_source_table('qtype_drawlines_lines', ['questionid' => backup::VAR_PARENTID]);
+        $line->set_source_table('qtype_drawlines_lines', ['questionid' => backup::VAR_PARENTID]);
 
         return $plugin;
     }

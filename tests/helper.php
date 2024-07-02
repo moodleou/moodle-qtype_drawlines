@@ -59,7 +59,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $qdata->modifiedby = $USER->id;
         $qdata->qtype = 'drawlines';
         $qdata->name = 'drawlines_mkmap01';
-        $qdata->questiontext = 'Draw 2 lines on the map. A line segent from A (line starting point) to B (line Ending point),' .
+        $qdata->questiontext = 'Draw 2 lines on the map. A line segment from A (line starting point) to B (line Ending point),' .
                     ' and another one from C to D. A is ..., B is ..., C is ... and D is ...';
         $qdata->questiontextformat = FORMAT_HTML;
         $qdata->generalfeedback = 'We draw lines from a starting to an end point.';
@@ -149,7 +149,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $fromform->id = 123;
         $fromform->name = 'MK landmarks';
         $fromform->questiontext = [
-            'text' => 'Draw 2 lines on the map. A line segent from A (line starting point) to B (line Ending point),' .
+            'text' => 'Draw 2 lines on the map. A line segment from A (line starting point) to B (line Ending point),' .
                     ' and another one from C to D. A is ..., B is ..., C is ... and D is ...',
             'format' => FORMAT_HTML,
         ];
@@ -220,7 +220,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $question->modifiedby = $USER->id;
         $question->qtype = 'qtype_drawlines_question';
         $question->name = 'drawlines_mkmap_twolines';
-        $question->questiontext = 'Draw 2 lines on the map. A line segent from A (line starting point) to B (line Ending point),' .
+        $question->questiontext = 'Draw 2 lines on the map. A line segennt from A (line starting point) to B (line Ending point),' .
                 ' and another one from C to D. A is ..., B is ..., C is ... and D is ...';
         $question->questiontextformat = FORMAT_HTML;
         $question->generalfeedback = 'We draw lines from a starting to an end point.';

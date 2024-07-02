@@ -6,7 +6,7 @@
       <text>Drawline edited</text>
     </name>
     <questiontext format="html">
-      <text><![CDATA[<p>Draw 2 lines on the map. A line segent from A (line starting point) to B (line Ending point), and another one from C to D. A is ..., B is ..., C is ... and D is ...</p>]]></text>
+      <text><![CDATA[<p>Draw 2 lines on the map. A line segment from A (line starting point) to B (line Ending point), and another one from C to D. A is ..., B is ..., C is ... and D is ...</p>]]></text>
     </questiontext>
     <generalfeedback format="html">
       <text><![CDATA[<p>We draw lines from a starting to an end point.</p>]]></text>
