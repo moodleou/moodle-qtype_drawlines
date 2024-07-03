@@ -147,7 +147,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
                 self::file_picker_options());
         $question->bgimage = $draftitemid;
 
-        // TODO: Require js amd module for form.
+        $this->js_call();
 
         return $question;
     }
@@ -211,8 +211,13 @@ class qtype_drawlines_edit_form extends question_edit_form {
         return $question;
     }
 
+    public function js_call() {
+        global $PAGE;
+        $PAGE->requires->js_call_amd('qtype_drawlines/form', 'init');
+    }
+
     #[\Override]
-    public function validation($data, $files): array {
+    public function validation($data, $files) {
         $errors = parent::validation($data, $files);
         $bgimagesize = $this->get_image_size_in_draft_area($data['bgimage']);
         if (!$bgimagesize === null) {

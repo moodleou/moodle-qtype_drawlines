@@ -21,7 +21,7 @@ Feature: Test exporting DrawLines questions
       | questioncategory | qtype     | name          | template       |
       | Test questions   | drawlines | Draw lines 01 | mkmap_twolines |
 
-    @javascript
+  @javascript
   Scenario: Export a DrawLines question
     When I am on the "Course 1" "core_question > course question export" page logged in as teacher
     And I set the field "id_format_xml" to "1"
