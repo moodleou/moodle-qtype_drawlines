@@ -32,6 +32,12 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
     /** @var int The number of lines. */
     public $numberoflines;
 
+    /** @var lines[], an array of start zones. */
+    public $startzones;
+
+    /** @var lines[], an array of end zones. */
+    public $endzones;
+
     #[\Override]
     public function check_file_access($qa, $options, $component, $filearea, $args, $forcedownload) {
         if ($filearea === 'bgimage') {
@@ -143,28 +149,6 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         return [count($chosenhits), $divisor];
     }
 
-    /**
-     * Choose hits to maximize grade where drop targets may have more than one hit and drop targets
-     * can overlap.
-     * @param array $response
-     * @return array chosen hits
-     */
-    protected function choose_hits(array $response) {
-        $allhits = $this->get_all_hits($response);
-        $chosenhits = [];
-        foreach ($allhits as $placeno => $hits) {
-            foreach ($hits as $itemno => $hit) {
-                $choice = $this->get_right_choice_for($placeno);
-                $choiceitem = "$choice $itemno";
-                if (!in_array($choiceitem, $chosenhits)) {
-                    $chosenhits[$placeno] = $choiceitem;
-                    break;
-                }
-            }
-        }
-        return $chosenhits;
-    }
-
     #[\Override]
     public function total_number_of_items_dragged(array $response) {
         $total = 0;
@@ -177,57 +161,6 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         return $total;
     }
 
-    /**
-     * Get's an array of all hits on drop targets. Needs further processing to find which hits
-     * to select in the general case that drop targets may have more than one hit and drop targets
-     * can overlap.
-     * @param array $response
-     * @return array all hits
-     */
-    protected function get_all_hits(array $response) {
-        $hits = [];
-        foreach ($this->places as $placeno => $place) {
-            $rightchoice = $this->get_right_choice_for($placeno);
-            $rightchoicekey = $this->choice($rightchoice);
-            if (!array_key_exists($rightchoicekey, $response)) {
-                continue;
-            }
-            $choicecoords = $response[$rightchoicekey];
-            $coords = explode(';', $choicecoords);
-            foreach ($coords as $itemno => $coord) {
-                if (trim($coord) === '') {
-                    continue;
-                }
-                $pointxy = explode(',', $coord);
-                $pointxy[0] = round($pointxy[0]);
-                $pointxy[1] = round($pointxy[1]);
-                if ($place->drop_hit($pointxy)) {
-                    if (!isset($hits[$placeno])) {
-                        $hits[$placeno] = [];
-                    }
-                    $hits[$placeno][$itemno] = $coord;
-                }
-            }
-        }
-        // Reverse sort in order of number of hits per place (if two or more
-        // hits per place then we want to make sure hits do not hit elsewhere).
-        $sortcomparison = function ($a1, $a2){
-            return (count($a1) - count($a2));
-        };
-        uasort($hits, $sortcomparison);
-        return $hits;
-    }
-
-    #[\Override]
-    public function get_right_choice_for($place) {
-        $group = $this->places[$place]->group;
-        foreach ($this->choiceorder[$group] as $choicekey => $choiceid) {
-            if ($this->rightchoices[$place] == $choiceid) {
-                return $choicekey;
-            }
-        }
-        return null;
-    }
     #[\Override]
     public function grade_response(array $response) {
         list($right, $total) = $this->get_num_parts_right($response);
@@ -240,8 +173,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         $maxitemsdragged = 0;
         $wrongtries = [];
         foreach ($responses as $i => $response) {
-            $maxitemsdragged = max($maxitemsdragged,
-                                                $this->total_number_of_items_dragged($response));
+            $maxitemsdragged = max($maxitemsdragged, $this->total_number_of_items_dragged($response));
             $hits = $this->choose_hits($response);
             foreach ($hits as $place => $choiceitem) {
                 if (!isset($wrongtries[$place])) {
@@ -281,43 +213,33 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
     }
 
     #[\Override]
-    public function get_correct_response() {
-        $responsecoords = [];
-        foreach ($this->places as $placeno => $place) {
-            $rightchoice = $this->get_right_choice_for($placeno);
-            if ($rightchoice !== null) {
-                $rightchoicekey = $this->choice($rightchoice);
-                $correctcoords = $place->correct_coords();
-                if ($correctcoords !== null) {
-                    if (!isset($responsecoords[$rightchoicekey])) {
-                        $responsecoords[$rightchoicekey] = [];
-                    }
-                    $responsecoords[$rightchoicekey][] = join(',', $correctcoords);
-                }
-            }
-        }
+    public function get_correct_response(): ?array {
         $response = [];
-        foreach ($responsecoords as $choicekey => $coords) {
-            $response[$choicekey] = join(';', $coords);
+        foreach ($this->lines as $key => $line) {
+            $response['zonestart_'  . $line->number . '_' . $line->questionid] = $line->zonestart;
+            $response['zoneend_' . $line->number . '_' . $line->questionid] = $line->zoneend;
         }
         return $response;
     }
 
     #[\Override]
-    public function summarise_response(array $response): null|string {
-        $hits = $this->choose_hits($response);
-        $goodhits = [];
-        foreach ($this->places as $placeno => $place) {
-            if (isset($hits[$placeno])) {
-                $shuffledchoiceno = $this->get_right_choice_for($placeno);
-                $choice = $this->get_selected_choice(1, $shuffledchoiceno);
-                $goodhits[] = "{".$place->summarise()." -> ". $choice->summarise(). "}";
+    public function summarise_response(array $response): ?string {
+        $responsewords = [];
+        $answers = [];
+        foreach ($this->lines as $key => $line) {
+            $linestartresponse = $line->labelstart . ' → ' . $line->zonestart;
+            $lineendresponse = $line->labelend . ' → ' . $line->zoneend;
+            if (array_key_exists('zonestart_' . $line->number, $response)) {
+                $answers[] = $line->labelstart . ' → ' . $line->zonestart;
+            }
+            if (array_key_exists('zoneend_' . $line->number, $response)) {
+                $answers[] = $line->labelend . ' → ' . $line->zoneend;
+            }
+            if (count($answers) > 0) {
+                $responsewords[] = "Line $line->number " . implode(', ', $answers);
             }
         }
-        if (count($goodhits) == 0) {
-            return null;
-        }
-        return implode(', ', $goodhits);
+        return implode('; ', $responsewords);
     }
 
     #[\Override]
@@ -325,7 +247,3 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         return null;
     }
 }
-
-// TODO: what are we dragging?, are we droping a symbole to zonestart and draw the line and finish in zoneend?
-
-
