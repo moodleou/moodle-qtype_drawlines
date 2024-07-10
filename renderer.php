@@ -70,6 +70,37 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
         return null;
     }
 
+    /**
+     * Returns a hidden field for a qt variable
+     *
+     * @param object $qa Question attempt object
+     * @param string $varname The hidden var name
+     * @param string $value The hidden value
+     * @param array $classes Any additional css classes to apply
+     * @return array Array with field name and the html of the tag
+     */
+    protected function hidden_field_for_qt_var(question_attempt $qa, $varname, $value = null, $classes = null) {
+        if ($value === null) {
+            $value = $qa->get_last_qt_var($varname);
+        }
+        $fieldname = $qa->get_qt_field_name($varname);
+        $attributes = array('type' => 'hidden',
+                'id' => str_replace(':', '_', $fieldname),
+                'name' => $fieldname,
+                'value' => $value);
+        if ($classes !== null) {
+            $attributes['class'] = join(' ', $classes);
+        }
+        return array($fieldname, html_writer::empty_tag('input', $attributes)."\n");
+    }
+
+    protected function hidden_field_choice(question_attempt $qa, $choiceno, $value = null, $class = null) {
+        $varname = 'c'.$choiceno;
+        $classes = ['choices', 'choice'.$choiceno];
+        list(, $html) = $this->hidden_field_for_qt_var($qa, $varname, null, $classes);
+        return $html;
+    }
+
     public function formulation_and_controls(question_attempt $qa, question_display_options $options) {
         $question = $qa->get_question();
         $response = $qa->get_last_qt_data();
@@ -102,10 +133,24 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
         }
 
         // Display the lines.
+        $hiddenfields = '';
         foreach ($question->lines as $key => $line) {
             // TODO:Aadd data attribute to be used by question.js.
-            //$output .= html_writer::div(implode('  ', (array)$line));
-            $output .= html_writer::div('Line ' . $line->number . ' will be displayed here');
+            $classes = ['line' . $line->number, 'user-select-none', 'choice' . $line->number];
+            $attr = [];
+            $classes[] = 'dragno' . (count($question->lines) * 2);
+            $dragoutput = html_writer::start_span(join(' ', $classes), $attr);
+            $targeticonhtml = $this->output->image_icon('crosshairs', '', $componentname, ['class' => 'target']);
+            $labelstart = html_writer::span($line->labelstart, 'labelstart');
+            $labelend = html_writer::span($line->labelend, 'labelend');
+            $dragoutput .= $targeticonhtml . $labelstart;
+            $dragoutput .= $targeticonhtml . $labelend;
+            $dragoutput .= html_writer::end_span();
+            $output .= $dragoutput;
+            $hiddenfields .= $this->hidden_field_choice($qa, $line->number, $line->labelstart, null);
+
+            $output .= html_writer::div(implode('  ', (array)$line));
+            //$output .= html_writer::div('Line ' . $line->number . ' will be displayed here');
         }
 
         if ($question->showmisplaced && $qa->get_state()->is_finished()) {
