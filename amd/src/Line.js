@@ -179,11 +179,11 @@ define(function() {
         // Set start and end label attributes.
         svgEl.childNodes[3].textContent = this.labelstart;
         svgEl.childNodes[3].setAttribute('x', this.centre1.x);
-        svgEl.childNodes[3].setAttribute('y', this.centre1.y + 20);
+        svgEl.childNodes[3].setAttribute('y', parseInt(this.centre1.y) + 20);
 
         svgEl.childNodes[4].textContent = this.labelend;
         svgEl.childNodes[4].setAttribute('x', this.centre2.x);
-        svgEl.childNodes[4].setAttribute('y', this.centre2.y + 20);
+        svgEl.childNodes[4].setAttribute('y', parseInt(this.centre2.y) + 20);
     };
 
     /**
@@ -350,6 +350,115 @@ define(function() {
                 this.y2 = maxY - this.endRadius;
             }
         }
+    };
+
+    /**
+     * Move the entire line by this offset.
+     *
+     * @param {int} dx x offset.
+     * @param {int} dy y offset.
+     * @param {int} maxX ensure that after editing, the shape lies between 0 and maxX on the x-axis.
+     * @param {int} maxY ensure that after editing, the shape lies between 0 and maxX on the y-axis.
+     * @param {String} whichSVG The svg containing the drag.
+     * @param {int} lineNo The line number
+     */
+    Line.prototype.moveDrags = function(dx, dy, maxX, maxY, whichSVG, lineNo) {
+        this.centre1.move(dx, dy);
+        this.centre2.move(dx, dy);
+        if (whichSVG === 'svgDropZones') {
+            this.centre1.x = 50;
+            this.centre1.y = 25 + lineNo * 50;
+            this.x1 = 50;
+            this.y1 = 25 + lineNo * 50;
+            this.centre2.x = 200;
+            this.x2 = 200;
+            this.centre2.y = 25 + lineNo * 50;
+            this.y2 = 25 + lineNo * 50;
+        } else {
+            if (this.centre1.x < this.startRadius) {
+                this.centre1.x = this.startRadius;
+                this.x1 = this.startRadius;
+            }
+            if (this.centre1.x > maxX - this.startRadius) {
+                this.centre1.x = maxX - this.startRadius;
+                this.x1 = maxX - this.startRadius;
+            }
+            if (this.centre2.x < this.startRadius) {
+                this.centre2.x = this.startRadius;
+                this.x2 = this.startRadius;
+            }
+            if (this.centre2.x > maxX - this.startRadius) {
+                this.centre2.x = maxX - this.startRadius;
+                this.x2 = maxX - this.startRadius;
+            }
+            if (this.centre1.y < this.endRadius) {
+                this.centre1.y = this.endRadius;
+                this.y1 = this.endRadius;
+            }
+            if (this.centre1.y > maxY - this.endRadius) {
+                this.centre1.y = maxY - this.endRadius;
+                this.y1 = maxY - this.endRadius;
+            }
+            if (this.centre2.y < this.endRadius) {
+                this.centre2.y = this.endRadius;
+                this.y2 = this.endRadius;
+            }
+            if (this.centre2.y > maxY - this.endRadius) {
+                this.centre2.y = maxY - this.endRadius;
+                this.y2 = maxY - this.endRadius;
+            }
+        }
+    };
+
+    /**
+     * Move the g element to the dropzone.
+     * @param {SVGElement} svgDrags Svg element containing the drags.
+     * @param {SVGElement} svgDropZones Svg element containing the dropZone.
+     * @param {SVGElement} selectedElement The element selected for dragging.
+     * @param {int} dropX
+     * @param {int} dropY
+     */
+    Line.prototype.addToDropZone = function(svgDrags, svgDropZones, selectedElement, dropX, dropY) {
+        var maxY = 0;
+        var dropzoneNo = selectedElement.getAttribute('data-dropzone-no');
+
+        if (this.isInsideSVG(svgDrags, dropX, dropY)) {
+            // Append the element to the second SVG
+            // Get the height of the dropZone SVG.
+            maxY = svgDropZones.height.baseVal.value;
+            svgDropZones.appendChild(selectedElement);
+            selectedElement.getAttribute('data-dropzone-no');
+
+            // Caluculate the position of line drop.
+            this.centre1.y = maxY - (2 * this.startRadius) - (dropzoneNo * 50);
+            this.y1 = maxY - (2 * this.startRadius) - (dropzoneNo * 50);
+            this.centre2.y = maxY - (2 * this.endRadius) - (dropzoneNo * 50);
+            this.y2 = maxY - (2 * this.endRadius) - (dropzoneNo * 50);
+        } else if (this.isInsideSVG(svgDropZones, dropX, dropY)) {
+            // Append the element to the first SVG (to ensure it stays in the same SVG if dropped there)
+            svgDrags.appendChild(selectedElement);
+
+            // We want to drop the lines from the top, depending on the line number.
+            // Caluculate the position of line drop.
+            this.centre1.x = 50;
+            this.centre1.y = this.startRadius + (dropzoneNo * 50);
+            this.y1 = this.startRadius + (dropzoneNo * 50);
+            this.centre2.x = 200;
+            this.centre2.y = this.endRadius + (dropzoneNo * 50);
+            this.y2 = this.endRadius + (dropzoneNo * 50);
+        }
+    };
+
+    /**
+     * Check if the current selected element is in the svg .
+     * @param {SVGElement} svg Svg element containing the drags.
+     * @param {int} dropX
+     * @param {int} dropY
+     * @return {bool}
+     */
+    Line.prototype.isInsideSVG = function(svg, dropX, dropY){
+        const rect = svg.getBoundingClientRect();
+        return dropX >= rect.left && dropX <= rect.right && dropY >= rect.top && dropY <= rect.bottom;
     };
 
     /**
@@ -529,8 +638,8 @@ define(function() {
          * @return {line} the similar line of a different linetype.
          */
         getSimilar: function(lineType, line) {
-            return new Line(line.labelstart, line.x1, line.y1, line.startRadius, line.labelend,
-                line.x2, line.y2, line.endRadius, lineType);
+            return new Line(line.labelstart, parseInt(line.x1), parseInt(line.y1), parseInt(line.startRadius),
+                parseInt(line.labelend), parseInt(line.x2), parseInt(line.y2), parseInt(line.endRadius), lineType);
         }
     };
 });

@@ -1,44 +1,45 @@
-/* Styles for . */
-.que. .qtext {
+/* Styles for DrawLines. */
+.que.drawlines .qtext {
     display: block;
     margin-bottom: 0.5em;
 }
 
-.que. .dropbackground,
+.que.drawlines .dropbackground,
 form.mform fieldset#id_previewareaheader .dropbackground {
     margin: 0 auto;
     border: 1px solid black;
 }
 
-.que. line.color1 {
+.que.drawlines line.color1 {
     fill: #1d1e1d;
 }
-.que. line.color2 {
+.que.drawlines line.color2 {
     fill: #1c5fa1;
 }
-.que. line.color3 {
+.que.drawlines line.color3 {
     fill: #39da20;
 }
-.que. line.color4 {
+.que.drawlines line.color4 {
     fill: rgba(255, 165, 0, 0.98);
 }
-.que. line.color5 {
+.que.drawlines line.color5 {
     fill: #a11c1c;
 }
-.que. line.color6 {
+.que.drawlines line.color6 {
     fill: #e50de5;
 }
 
-.que. .dropzone.color7 .shape {
+.que.drawlines .dropzone.color7 .shape {
     fill: #f0e68c;
 }
 
-.que. .dropzone .shapeLabel {
+.que.drawlines .dropzone .shapeLabel {
     text-anchor: middle;
+    font-size: large;
 }
 
-.que. .dropzone .handlestart,
-.que. .dropzone .handleend {
+.que.drawlines .dropzone .handlestart,
+.que.drawlines .dropzone .handleend {
     fill: #fff;
     fill-opacity: 0.1; /* Need a small amount of opacity of the handle can't be grabbed. */
     stroke-width: 1;
@@ -46,64 +47,81 @@ form.mform fieldset#id_previewareaheader .dropbackground {
     cursor: move;
 }
 
-.que. .dropzone .startcircle,
-.que. .dropzone .endcircle {
+.que.drawlines .dropzone .startcircle,
+.que.drawlines .dropzone .endcircle {
     fill: #fff;
     fill-opacity: 0.5;
     stroke: black;
     stroke-width: 1;
 }
 
-.que. .dropzone .handlestart.move,
-.que. .dropzone .handleend.move {
+.que.drawlines .dropzone .handlestart.move,
+.que.drawlines .dropzone .handleend.move {
     stroke: #800;
 }
-.que. .dropzone .handlestart.edit,
-.que. .dropzone .handleend.edit {
+.que.drawlines .dropzone .handlestart.edit,
+.que.drawlines .dropzone .handleend.edit {
     stroke: #008;
 }
-.que. .dropzone.active .handlestart,
-.que. .dropzone.active .handleend {
+.que.drawlines .dropzone.active .handlestart,
+.que.drawlines .dropzone.active .handleend {
     display: inherit;
 }
 
-.que.ddmarker .draghomes .marker,
-.que.ddmarker .droparea .marker {
+.que.drawlines .draghomes .marker,
+.que.drawlines .droparea .marker {
     vertical-align: top;
     cursor: move;
 }
 
-.que.ddmarker .draghomes.readonly .marker,
-.que.ddmarker .droparea.readonly .marker {
+.que.drawlines .draghomes.readonly .marker,
+.que.drawlines .droparea.readonly .marker {
     cursor: auto;
 }
 
-.que.ddmarker .droparea .marker {
+.que.drawlines .droparea .marker {
     position: absolute;
 }
 
-.que.ddmarker .draghomes .marker {
+.que.drawlines .draghomes .marker {
     position: relative;
     display: inline-block;
     margin: 10px;
 }
 
-.que.ddmarker .draghomes .marker.dragplaceholder {
+.que.drawlines .draghomes .marker.dragplaceholder {
     display: none;
 }
 
-.que.ddmarker .draghomes .marker.dragplaceholder.active {
+.que.drawlines .draghomes .marker.dragplaceholder.active {
     visibility: hidden;
     display: inline-block;
 }
 
-.que.ddmarker .droparea .marker img.target,
-.que.ddmarker .draghomes .marker img.target {
-    position: absolute;
+.que.drawlines .droparea .marker img.target,
+.que.drawlines .draghomes .marker img.target {
     left: -7px; /* This must be half the size of the target image, minus 0.5. */
     top: -7px;  /* In other words, this works for a 15x15 cross-hair. */
 }
 
-.que.ddmarker div.dragitems div.draghome img.target {
+.que.drawlines .draghomes .marker .icon {
+    margin-right: 0;
+}
+
+.que.drawlines div.dragitems div.draghome img.target {
     display: none;
+}
+
+.que.drawlines .droparea {
+    position: relative;
+    background-color: #e7f3f5;
+}
+
+.que.drawlines div.ddarea,
+form.mform fieldset#id_previewareaheader div.ddarea {
+    text-align: center;
+}
+
+.que.drawlines polyline.shape {
+    cursor: move;
 }

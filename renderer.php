@@ -118,39 +118,19 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
         $output = html_writer::div($questiontext, 'qtext');
 
         $output .= html_writer::start_div('ddarea');
-        $output .= html_writer::start_div($dropareaclass);
+        $output .= html_writer::start_div($dropareaclass, ['id' => 'que-dlines-droparea']);
         $output .= html_writer::img(self::get_url_for_image($qa, 'bgimage'), get_string('dropbackground', 'qtype_drawlines'),
-                ['class' => 'dropbackground img-fluid w-100']);
+                ['class' => 'dropbackground img-fluid']);
+        $output .= html_writer::start_div('', ['id' => 'que-dlines-dropzone']);
+        $output .= html_writer::end_div();
+        $output .= html_writer::end_div();
 
-        $output .= html_writer::div('', 'dropzones');
         $output .= html_writer::div('', 'markertexts');
 
-        $output .= html_writer::end_div();
         $output .= html_writer::start_div($draghomesclass);
 
         if (!$options->readonly) {
             $attr['tabindex'] = 0;
-        }
-
-        // Display the lines.
-        $hiddenfields = '';
-        foreach ($question->lines as $key => $line) {
-            // TODO:Aadd data attribute to be used by question.js.
-            $classes = ['line' . $line->number, 'user-select-none', 'choice' . $line->number];
-            $attr = [];
-            $classes[] = 'dragno' . (count($question->lines) * 2);
-            $dragoutput = html_writer::start_span(join(' ', $classes), $attr);
-            $targeticonhtml = $this->output->image_icon('crosshairs', '', $componentname, ['class' => 'target']);
-            $labelstart = html_writer::span($line->labelstart, 'labelstart');
-            $labelend = html_writer::span($line->labelend, 'labelend');
-            $dragoutput .= $targeticonhtml . $labelstart;
-            $dragoutput .= $targeticonhtml . $labelend;
-            $dragoutput .= html_writer::end_span();
-            $output .= $dragoutput;
-            $hiddenfields .= $this->hidden_field_choice($qa, $line->number, $line->labelstart, null);
-
-            $output .= html_writer::div(implode('  ', (array)$line));
-            //$output .= html_writer::div('Line ' . $line->number . ' will be displayed here');
         }
 
         if ($question->showmisplaced && $qa->get_state()->is_finished()) {
@@ -165,7 +145,7 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
 
         // Call to js
         $this->page->requires->js_call_amd('qtype_drawlines/question', 'init',
-                [$qa->get_outer_question_div_unique_id(), $options->readonly, $visibledropzones]);
+                [$qa->get_outer_question_div_unique_id(), $options->readonly, $visibledropzones, $question->lines]);
 
         $output .= html_writer::end_div();
         $output .= html_writer::end_div();

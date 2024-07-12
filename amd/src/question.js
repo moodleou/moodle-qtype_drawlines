@@ -26,13 +26,13 @@ define([
     'core/dragdrop',
     'qtype_drawlines/Line',
     'core/key_codes',
-    'core_form/changechecker'
+    'core_form/changechecker',
 ], function(
     $,
     dragDrop,
     Lines,
     keys,
-    FormChangeChecker
+    FormChangeChecker,
 ) {
 
     "use strict";
@@ -44,18 +44,19 @@ define([
      * @param {boolean} readOnly whether the question is being displayed read-only.
      * @param {Object[]} visibleDropZones the geometry of any drop-zones to show.
      *      Objects have fields line, coords and markertext.
+     * @param {line[]} questionLines
      * @constructor
      */
-    function DrawlinesQuestion(containerId, readOnly, visibleDropZones) {
-        window.console.log('containerId ---------------------------------------------');
-        window.console.log('containerId = ' + containerId);
+    function DrawlinesQuestion(containerId, readOnly, visibleDropZones, questionLines) {
         var thisQ = this;
         this.containerId = containerId;
         this.visibleDropZones = visibleDropZones;
+        this.questionLines = questionLines;
         this.lineSVGs = [];
         this.lines = [];
         this.isPrinting = false;
         this.questionAnswer = {};
+        this.svgEl = null;
         if (readOnly) {
             this.getRoot().addClass('qtype_drawlines-readonly');
         }
@@ -67,74 +68,119 @@ define([
     }
 
     /**
-     * Draws the svg lines of any drop zones that should be visible for feedback purposes.
+     * Update the coordinates from a particular string.
      */
-    DrawlinesQuestion.prototype.drawDropzones = function() {
-        if (this.visibleDropZones.length > 0) {
-            var bgImage = this.bgImage();
-
-            this.getRoot().find('div.dropzones').html('<svg xmlns="http://www.w3.org/2000/svg" class="dropzones" ' +
-                'width="' + bgImage.outerWidth() + '" ' +
-                'height="' + bgImage.outerHeight() + '"></svg>');
-            var svg = this.getRoot().find('svg.dropzones');
-
-            var nextColourIndex = 0;
-            for (var dropZoneNo = 0; dropZoneNo < this.visibleDropZones.length; dropZoneNo++) {
-                var colourClass = 'color' + nextColourIndex;
-                nextColourIndex = (nextColourIndex + 1) % 8;
-                this.addDropzone(svg, dropZoneNo, colourClass);
+    DrawlinesQuestion.prototype.updateCoordinates = function() {
+        // We don't need to scale the shape for editing form.
+        for (var line = 0; line < this.lineSVGs.length; line++) {
+            var coordinates = this.getCoordinates(this.lineSVGs[line]);
+            if (!this.lines[line].parse(coordinates[0], coordinates[1], 1)) {
+                // Invalid coordinates. Don't update the preview.
+                return;
             }
+            this.updateSvgEl(line);
         }
     };
 
     /**
-     * Adds a dropzone line with colour, coords and link provided to the array of Lines.
-     *
-     * @param {jQuery} svg the SVG image to which to add this drop zone.
-     * @param {int} dropZoneNo which drop-zone to add.
-     * @param {string} colourClass class name
+     * Draws the svg lines of any drop zones.
+     * @param {Object[]} questionLines
      */
-    DrawlinesQuestion.prototype.addDropzone = function(svg, dropZoneNo, colourClass) {
-        var dropZone = this.visibleDropZones[dropZoneNo],
-            line = Lines.make(dropZone.line, ''),
-            existingmarkertext,
-            bgRatio = this.bgRatio();
-        if (!line.parse(dropZone.coords, bgRatio)) {
-            return;
+    DrawlinesQuestion.prototype.drawSVGLines = function(questionLines) {
+        var bgImage = document.querySelector('img.dropbackground');
+
+        var drags = document.querySelector('.draghomes');
+        drags.innerHTML =
+            '<svg xmlns="http://www.w3.org/2000/svg" class="drags" ' +
+                'id= "que-dlines-svg-drags" ' +
+                'width="' + bgImage.width + '" ' +
+                'height="' + questionLines.length * 50 + '"' +
+            '></svg>';
+
+        var dragsSvg = document.getElementById('que-dlines-svg-drags');
+        var initialHeight = 25;
+        for (let line = 0; line < questionLines.length; line++) {
+            var height = initialHeight + line * 50;
+            var startcoordinates = '50,' + height + ';10';
+            var endcoordinates = '200,' + height + ';10';
+            this.lines[line] = Lines.make([startcoordinates, endcoordinates],
+                [questionLines[line].labelstart, questionLines[line].labelend], questionLines[line].type);
+            this.addToSvg(line, dragsSvg);
         }
-
-        existingmarkertext = this.getRoot().find('div.markertexts span.markertext' + dropZoneNo);
-        if (existingmarkertext.length) {
-            if (dropZone.markertext !== '') {
-                existingmarkertext.html(dropZone.markertext);
-            } else {
-                existingmarkertext.remove();
-            }
-        } else if (dropZone.markertext !== '') {
-            var classnames = 'markertext markertext' + dropZoneNo;
-            this.getRoot().find('div.markertexts').append('<span class="' + classnames + '">' +
-                dropZone.markertext + '</span>');
-            var markerspan = this.getRoot().find('div.ddarea div.markertexts span.markertext' + dropZoneNo);
-            if (markerspan.length) {
-                var handles = line.getHandlePositions();
-                var positionLeft = handles.moveHandle.x - (markerspan.outerWidth() / 2) - 4;
-                var positionTop = handles.moveHandle.y - (markerspan.outerHeight() / 2);
-                markerspan
-                    .css('left', positionLeft)
-                    .css('top', positionTop);
-                markerspan
-                    .data('originX', markerspan.position().left / bgRatio)
-                    .data('originY', markerspan.position().top / bgRatio);
-                this.handleElementScale(markerspan, 'center');
-            }
-        }
-
-        var lineSVG = line.makeSvg(svg[0]);
-        lineSVG.setAttribute('class', 'dropzone ' + colourClass);
-
-        this.lines[this.Lines.length] = line;
-        this.lineSVGs[this.lineSVGs.length] = lineSVG;
     };
+
+    /**
+     * Draws the svg lines of any drop zones that should be visible for feedback purposes.
+     */
+    DrawlinesQuestion.prototype.drawDropzone = function() {
+        var bgImage = document.querySelector('img.dropbackground');
+        var svg = document.querySelector('svg.dropzones');
+        document.getElementById('que-dlines-dropzone').style.position = 'relative';
+        document.getElementById('que-dlines-dropzone').style.top = (bgImage.height + 1) * -1 + "px";
+        document.getElementById('que-dlines-dropzone').style.height = bgImage.height + "px";
+        document.getElementById('que-dlines-droparea').style.height = bgImage.height + "px";
+        if (!svg) {
+            var dropZone = document.querySelector('#que-dlines-dropzone');
+            dropZone.innerHTML =
+                '<svg xmlns="http://www.w3.org/2000/svg" ' +
+                    'id= "que-dlines-svg" ' +
+                    'class= "dropzones" ' +
+                    'width="' + bgImage.width + '" ' +
+                    'height="' + bgImage.height + '" ' +
+                '></svg>';
+        }
+        this.drawSVGLines(this.questionLines);
+    };
+
+    //
+    // /**
+    //  * Adds a dropzone line with colour, coords and link provided to the array of Lines.
+    //  *
+    //  * @param {jQuery} svg the SVG image to which to add this drop zone.
+    //  * @param {int} dropZoneNo which drop-zone to add.
+    //  * @param {string} colourClass class name
+    //  */
+    // DrawlinesQuestion.prototype.addDropzone = function(svg, dropZoneNo, colourClass) {
+    //     var dropZone = this.visibleDropZones[dropZoneNo],
+    //         line = Lines.make(dropZone.line, ''),
+    //         existingmarkertext,
+    //         bgRatio = this.bgRatio();
+    //     if (!line.parse(dropZone.coords, bgRatio)) {
+    //         return;
+    //     }
+    //
+    //     existingmarkertext = this.getRoot().find('div.markertexts span.markerlabelstart' + dropZoneNo);
+    //     if (existingmarkertext.length) {
+    //         if (dropZone.markertext !== '') {
+    //             existingmarkertext.html(dropZone.markertext);
+    //         } else {
+    //             existingmarkertext.remove();
+    //         }
+    //     } else if (dropZone.markertext !== '') {
+    //         var classnames = 'markertext markertext' + dropZoneNo;
+    //         this.getRoot().find('div.markertexts').append('<span class="' + classnames + '">' +
+    //             dropZone.markertext + '</span>');
+    //         var markerspan = this.getRoot().find('div.ddarea div.markertexts span.markertext' + dropZoneNo);
+    //         if (markerspan.length) {
+    //             var handles = line.getHandlePositions();
+    //             var positionLeft = handles.moveHandles.x - (markerspan.outerWidth() / 2) - 4;
+    //             var positionTop = handles.moveHandles.y - (markerspan.outerHeight() / 2);
+    //             markerspan
+    //                 .css('left', positionLeft)
+    //                 .css('top', positionTop);
+    //             markerspan
+    //                 .data('originX', markerspan.position().left / bgRatio)
+    //                 .data('originY', markerspan.position().top / bgRatio);
+    //             this.handleElementScale(markerspan, 'center');
+    //         }
+    //     }
+    //
+    //     var lineSVG = line.makeSvg(svg[0]);
+    //     lineSVG.setAttribute('class', 'dropzone ' + colourClass);
+    //
+    //     this.lines[this.Lines.length] = line;
+    //     this.lineSVGs[this.lineSVGs.length] = lineSVG;
+    // };
 
     /**
      * Draws the drag items on the page (and drop zones if required).
@@ -152,6 +198,7 @@ define([
         root.find('input.choices').each(function(key, input) {
             var choiceNo = thisQ.getChoiceNoFromElement(input),
                 imageCoords = thisQ.getImageCoords(input);
+
             if (imageCoords.length) {
                 var drag = thisQ.getRoot().find('.draghomes' + ' span.marker' + '.choice' + choiceNo).not('.dragplaceholder');
                 drag.remove();
@@ -302,7 +349,6 @@ define([
         if (!info.start) {
             return;
         }
-
         dragged.addClass('beingdragged').css('transform', '');
 
         var placed = !dragged.hasClass('unneeded');
@@ -357,6 +403,167 @@ define([
         }
 
         this.saveCoordsForChoice(choiceNo);
+    };
+
+
+    /**
+     * Returns the coordinates for the line from the text input in the form.
+     * @param {SVGElement} svgEl
+     * @returns {Array} the coordinates.
+     */
+    DrawlinesQuestion.prototype.getCoordinates = function(svgEl) {
+
+        var circleStartXCoords = svgEl.childNodes[1].getAttribute('cx');
+        var circleStartYCoords = svgEl.childNodes[1].getAttribute('cy');
+        var circleStartRCoords = svgEl.childNodes[1].getAttribute('r');
+        var circleEndXCoords = svgEl.childNodes[2].getAttribute('cx');
+        var circleEndYCoords = svgEl.childNodes[2].getAttribute('cy');
+        var circleEndRCoords = svgEl.childNodes[2].getAttribute('r');
+        return [circleStartXCoords + ',' + circleStartYCoords + ';' + circleStartRCoords,
+            circleEndXCoords + ',' + circleEndYCoords + ';' + circleEndRCoords];
+    };
+
+    /**
+     * Return the background ratio.
+     *
+     * @returns {number} Background ratio.
+     */
+    DrawlinesQuestion.prototype.bgRatio = function() {
+        var bgImg = this.bgImage();
+        var bgImgNaturalWidth = bgImg.get(0).naturalWidth;
+        var bgImgClientWidth = bgImg.width();
+
+        return bgImgClientWidth / bgImgNaturalWidth;
+    };
+
+
+    /**
+     * Add this line to an SVG graphic.
+     *
+     * @param {int} lineNumber Line Number
+     * @param {SVGElement} svg the SVG image to which to add this drop zone.
+     */
+    DrawlinesQuestion.prototype.addToSvg = function(lineNumber, svg) {
+        this.lineSVGs[lineNumber] = this.lines[lineNumber].makeSvg(svg);
+        if (!this.lineSVGs[lineNumber]) {
+            return;
+        }
+        this.lineSVGs[lineNumber].setAttribute('class', 'dropzone');
+        this.lineSVGs[lineNumber].setAttribute('data-dropzone-no', lineNumber);
+    };
+
+    /**
+     * Update the shape of this drop zone (but not type) in an SVG image.
+     * @param {int} dropzoneNo
+     */
+    DrawlinesQuestion.prototype.updateSvgEl = function(dropzoneNo) {
+        this.lines[dropzoneNo].updateSvg(this.lineSVGs[dropzoneNo]);
+    };
+
+    /**
+     * Start responding to dragging the move handle.
+     * @param {Event} e Event object
+     * @param {String} handleIndex
+     * @param {int} dropzoneNo
+     */
+    DrawlinesQuestion.prototype.handleMove = function(e, handleIndex, dropzoneNo) {
+        var info = dragDrop.prepare(e);
+        if (!info.start) {
+            return;
+        }
+        var movingDropZone = this,
+            lastX = info.x,
+            lastY = info.y,
+            dragProxy = this.makeDragProxy(info.x, info.y),
+            svg = document.querySelector('svg.dropzones'),
+            maxX = svg.width.baseVal.value,
+            maxY = svg.height.baseVal.value;
+
+        dragDrop.start(e, $(dragProxy), function(pageX, pageY) {
+            movingDropZone.lines[dropzoneNo].move(handleIndex,
+                parseInt(pageX) - parseInt(lastX), parseInt(pageY) - parseInt(lastY), parseInt(maxX), parseInt(maxY));
+            lastX = pageX;
+            lastY = pageY;
+            movingDropZone.updateSvgEl(dropzoneNo);
+        }, function() {
+            document.body.removeChild(dragProxy);
+        });
+    };
+
+
+    /**
+     * Start responding to dragging the move handle.
+     * @param {Event} e Event object
+     * @param {int} dropzoneNo
+     */
+    DrawlinesQuestion.prototype.handleDragMove = function(e, dropzoneNo) {
+        var info = dragDrop.prepare(e);
+        if (!info.start) {
+            return;
+        }
+        var movingDrag = this,
+            lastX = info.x,
+            lastY = info.y,
+            dragProxy = this.makeDragProxy(info.x, info.y),
+            svgDrags = document.querySelector('svg.drags'),
+            svgDropZones = document.querySelector('svg.dropzones'),
+            maxX = svgDrags.width.baseVal.value,
+            maxY = svgDrags.height.baseVal.value,
+            whichSVG = "";
+
+        var selectedElement = this.lineSVGs[dropzoneNo];
+        const dropX = e.clientX;
+        const dropY = e.clientY;
+
+        dragDrop.start(e, $(dragProxy), function(pageX, pageY) {
+            var svgDragsbBox = svgDrags.getBBox();
+            var svgDropZonesbBox = svgDropZones.getBBox();
+
+            // Check if the drags need to be moved from one svg to another.
+            // If true, the drag is moved from draghomes SVG to dropZone SVG.
+            if (movingDrag.lines[dropzoneNo].centre1.y === 10 && svgDragsbBox.y === 0) {
+                movingDrag.lines[dropzoneNo].addToDropZone(svgDrags, svgDropZones, selectedElement,
+                    dropX, dropY);
+                maxX = svgDropZones.width.baseVal.value;
+                maxY = svgDropZones.height.baseVal.value;
+                whichSVG = "svgDropZones";
+            } else if (movingDrag.lines[dropzoneNo].centre1.y === svgDropZonesbBox.y + 10) {
+                // Move drags from dropZone SVG to draghomes SVG.
+                movingDrag.lines[dropzoneNo].addToDropZone(svgDrags, svgDropZones, selectedElement,
+                    dropX, dropY);
+                whichSVG = "svgDrags";
+            }
+
+            // Drag the lines within the SVG
+            movingDrag.lines[dropzoneNo].moveDrags(
+                parseInt(pageX) - parseInt(lastX), parseInt(pageY) - parseInt(lastY),
+                parseInt(maxX), parseInt(maxY), whichSVG, dropzoneNo);
+            lastX = pageX;
+            lastY = pageY;
+
+            movingDrag.updateSvgEl(dropzoneNo);
+        }, function() {
+            document.body.removeChild(dragProxy);
+        });
+    };
+
+
+    /**
+     * Make an invisible drag proxy.
+     *
+     * @param {int} x x position .
+     * @param {int} y y position.
+     * @returns {HTMLElement} the drag proxy.
+     */
+    DrawlinesQuestion.prototype.makeDragProxy = function(x, y) {
+        var dragProxy = document.createElement('div');
+        dragProxy.style.position = 'absolute';
+        dragProxy.style.top = y + 'px';
+        dragProxy.style.left = x + 'px';
+        dragProxy.style.width = '1px';
+        dragProxy.style.height = '1px';
+        document.body.appendChild(dragProxy);
+        return dragProxy;
     };
 
     /**
@@ -540,28 +747,28 @@ define([
             var handles = line.getHandlePositions();
             var markerSpan = this.getRoot().find('div.ddarea div.markertexts span.markertext' + dropZoneNo);
             markerSpan
-                .css('left', handles.moveHandle.x - (markerSpan.outerWidth() / 2) - 4)
-                .css('top', handles.moveHandle.y - (markerSpan.outerHeight() / 2));
+                .css('left', handles.moveHandles.x - (markerSpan.outerWidth() / 2) - 4)
+                .css('top', handles.moveHandles.y - (markerSpan.outerHeight() / 2));
             thisQ.handleElementScale(markerSpan, 'center');
         }
     };
 
-    // /**
-    //  * Clone the drag.
-    //  */
-    // DrawlinesQuestion.prototype.cloneDrags = function() {
-    //     var thisQ = this;
-    //     this.getRoot().find('div.draghomes span.marker').each(function(index, draghome) {
-    //         var drag = $(draghome);
-    //         var placeHolder = drag.clone();
-    //         placeHolder.removeClass();
-    //         placeHolder.addClass('marker');
-    //         placeHolder.addClass('choice' + thisQ.getChoiceNoFromElement(drag));
-    //         placeHolder.addClass(thisQ.getDragNoClass(drag, false));
-    //         placeHolder.addClass('dragplaceholder');
-    //         drag.before(placeHolder);
-    //     });
-    // };
+    /**
+     * Clone the drag.
+     */
+    DrawlinesQuestion.prototype.cloneDrags = function() {
+        var thisQ = this;
+        this.getRoot().find('div.draghomes span.marker').each(function(index, draghome) {
+            var drag = $(draghome);
+            var placeHolder = drag.clone();
+            placeHolder.removeClass();
+            placeHolder.addClass('marker');
+            placeHolder.addClass('choice' + thisQ.getChoiceNoFromElement(drag));
+            placeHolder.addClass(thisQ.getDragNoClass(drag, false));
+            placeHolder.addClass('dragplaceholder');
+            drag.before(placeHolder);
+        });
+    };
 
     /**
      * Get the drag number of a drag.
@@ -593,16 +800,16 @@ define([
         return className;
     };
 
-    // /**
-    //  * Get drag clone for a given drag.
-    //  *
-    //  * @param {jQuery} drag the drag.
-    //  * @returns {jQuery} the drag's clone.
-    //  */
-    // DrawlinesQuestion.prototype.getDragClone = function(drag) {
-    //     return this.getRoot().find('.draghomes' + ' span.marker' +
-    //         '.choice' + this.getChoiceNoFromElement(drag) + this.getDragNoClass(drag, true) + '.dragplaceholder');
-    // };
+    /**
+     * Get drag clone for a given drag.
+     *
+     * @param {jQuery} drag the drag.
+     * @returns {jQuery} the drag's clone.
+     */
+    DrawlinesQuestion.prototype.getDragClone = function(drag) {
+        return this.getRoot().find('.draghomes' + ' span.marker' +
+            '.choice' + this.getChoiceNoFromElement(drag) + this.getDragNoClass(drag, true) + '.dragplaceholder');
+    };
 
     /**
      * Get the drop area element.
@@ -710,19 +917,6 @@ define([
     };
 
     /**
-     * Return the background ratio.
-     *
-     * @returns {number} Background ratio.
-     */
-    DrawlinesQuestion.prototype.bgRatio = function() {
-        var bgImg = this.bgImage();
-        var bgImgNaturalWidth = bgImg.get(0).naturalWidth;
-        var bgImgClientWidth = bgImg.width();
-
-        return bgImgClientWidth / bgImgNaturalWidth;
-    };
-
-    /**
      * Scale the drag if needed.
      *
      * @param {jQuery} element the item to place.
@@ -783,9 +977,9 @@ define([
 
         // We now have all images. Carry on, but only after giving the layout a chance to settle down.
         this.allImagesLoaded = true;
-        //this.cloneDrags();
+        this.cloneDrags();
         this.repositionDrags();
-        this.drawDropzones();
+        this.drawDropzone();
     };
 
     /**
@@ -844,19 +1038,34 @@ define([
         questions: {}, // An object containing all the information about each question on the page.
 
         /**
+         * @var {int} the number of lines on the form.
+         */
+        noOfLines: null,
+
+        /**
+         * @var {DrawlinesQuestion[]} the lines in the preview, indexed by line number.
+         */
+        dropZones: [],
+
+        /**
+         * @var {line[]} the question lines in the preview, indexed by line number.
+         */
+        questionLines: [],
+
+        /**
          * Initialise one question.
          *
          * @param {String} containerId the id of the div.que that contains this question.
          * @param {boolean} readOnly whether the question is read-only.
          * @param {Object[]} visibleDropZones data on any drop zones to draw as part of the feedback.
+         * @param {Object[]} questionLines
          */
-        init: function(containerId, readOnly, visibleDropZones) {
+        init: function(containerId, readOnly, visibleDropZones, questionLines) {
             questionManager.questions[containerId] =
-                new DrawlinesQuestion(containerId, readOnly, visibleDropZones);
-            if (!questionManager.eventHandlersInitialised) {
-                questionManager.setupEventHandlers();
-                questionManager.eventHandlersInitialised = true;
-            }
+                new DrawlinesQuestion(containerId, readOnly, visibleDropZones, questionLines);
+
+            questionManager.questions[containerId].updateCoordinates();
+
             if (!questionManager.markerEventHandlersInitialised.hasOwnProperty(containerId)) {
                 questionManager.markerEventHandlersInitialised[containerId] = true;
                 // We do not use the body event here to prevent the other event on Mobile device, such as scroll event.
@@ -864,30 +1073,96 @@ define([
                 if (questionContainer.classList.contains('drawlines') &&
                     !questionContainer.classList.contains('qtype_drawlines-readonly')) {
                     // TODO: Convert all the jQuery selectors and events to native Javascript.
-                    questionManager.addEventHandlersToMarker($(questionContainer).find('div.draghomes .marker'));
-                    questionManager.addEventHandlersToMarker($(questionContainer).find('div.droparea .marker'));
+                    // questionManager.addEventHandlersToMarker($(questionContainer).find('div.draghomes .marker'));
+                    // questionManager.addEventHandlersToMarker($(questionContainer).find('div.droparea .marker'));
+                    // Add event listeners to the 'previewArea'.
+
+                    var dropArea = document.querySelector('.droparea');
+                    dropArea.addEventListener('mousedown', questionManager.handleEventMove);
+                    dropArea.addEventListener('touchstart', questionManager.handleEventMove);
+
+                    var drags = document.querySelector('.draghomes');
+                    drags.addEventListener('mousedown', questionManager.handleEventDragMove);
+                    drags.addEventListener('touchstart', questionManager.handleEventDragMove);
                 }
             }
         },
 
+        // TODO: commented as currently we are not using this function. To be removed later if not needed.
+        // /**
+        //  * Set up the event handlers that make this question type work. (Done once per page.)
+        //  */
+        // setupEventHandlers: function() {
+        //     $(window).on('resize', function() {
+        //         questionManager.handleWindowResize(false);
+        //     });
+        //     window.addEventListener('beforeprint', function() {
+        //         questionManager.isPrinting = true;
+        //         questionManager.handleWindowResize(questionManager.isPrinting);
+        //     });
+        //     window.addEventListener('afterprint', function() {
+        //         questionManager.isPrinting = false;
+        //         questionManager.handleWindowResize(questionManager.isPrinting);
+        //     });
+        //     setTimeout(function() {
+        //         questionManager.fixLayoutIfThingsMoved();
+        //     }, 100);
+        // },
+
+        handleEventMove: function(event) {
+            var dropzoneElement, dropzoneNo, handleIndex;
+            var question = questionManager.getQuestionForEvent(event);
+            if (event.target.closest('.dropzone .startcircle.shape')) {
+                dropzoneElement = event.target.closest('g');
+                dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                handleIndex = "0";
+                question.handleMove(event, handleIndex, dropzoneNo);
+            } else if (event.target.closest('.dropzone .endcircle.shape')) {
+                dropzoneElement = event.target.closest('g');
+                dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                handleIndex = "1";
+                question.handleMove(event, handleIndex, dropzoneNo);
+            } else if (event.target.closest('polyline.shape')) {
+                dropzoneElement = event.target.closest('g');
+                dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                question.handleDragMove(event, dropzoneNo);
+            }
+        },
+
+        handleEventDragMove: function(event) {
+            var dropzoneElement, dropzoneNo;
+            var question = questionManager.getQuestionForEvent(event);
+            if (event.target.closest('.dropzone polyline.shape')) {
+                dropzoneElement = event.target.closest('g');
+                dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                question.handleDragMove(event, dropzoneNo);
+            }
+        },
+
         /**
-         * Set up the event handlers that make this question type work. (Done once per page.)
+         * Get the SVG element, if there is one, otherwise return null.
+         *
+         * @returns {SVGElement|null} the SVG element or null.
          */
-        setupEventHandlers: function() {
-            $(window).on('resize', function() {
-                questionManager.handleWindowResize(false);
-            });
-            window.addEventListener('beforeprint', function() {
-                questionManager.isPrinting = true;
-                questionManager.handleWindowResize(questionManager.isPrinting);
-            });
-            window.addEventListener('afterprint', function() {
-                questionManager.isPrinting = false;
-                questionManager.handleWindowResize(questionManager.isPrinting);
-            });
-            setTimeout(function() {
-                questionManager.fixLayoutIfThingsMoved();
-            }, 100);
+        getSvg: function() {
+            var svg = document.querySelector('.droparea svg');
+            if (svg === null) {
+                return null;
+            } else {
+                return svg;
+            }
+        },
+
+        /**
+         * Helper to get the value of a form elements with name like "zonestart[0]".
+         *
+         * @param {String} name the base name, e.g. 'zonestart'.
+         * @param {String[]} indexes the indexes, e.g. ['0'].
+         * @return {String} the value of that field.
+         */
+        getFormValue: function(name, indexes) {
+            var el = this.getEl(name, indexes);
+            return el.value;
         },
 
         /**
@@ -996,10 +1271,10 @@ define([
          * Initialise one drag-drop markers question.
          *
          * @param {String} containerId id of the outer div for this question.
-         * @param {String} bgImgUrl the URL of the background image.
          * @param {boolean} readOnly whether the question is being displayed read-only.
          * @param {String[]} visibleDropZones the geometry of any drop-zones to show.
+         * @param {Object[]} questionLines
          */
-        init: questionManager.init
+        init: questionManager.init,
     };
 });
