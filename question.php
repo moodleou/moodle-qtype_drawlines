@@ -32,11 +32,26 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
     /** @var int The number of lines. */
     public $numberoflines;
 
-    /** @var lines[], an array of start zones. */
-    public $startzones;
+    /**
+     * @var array of arrays. The outer keys are the choice group numbers.
+     * The inner keys for most question types number sequentialy from 1. However
+     * for ddimageortext questions it is strange (and difficult to change now).
+     * the first item in each group gets numbered 1, and the other items get numbered
+     * $choice->no. Be careful!
+     * The values are arrays of qtype_gapselect_choice objects (or a subclass).
+     */
+    public $dragchoices;
 
-    /** @var lines[], an array of end zones. */
-    public $endzones;
+    /**
+     * Answer field name.
+     *
+     * @param $zone
+     * @param int $linenumber  The linenumber key.
+     * @return string
+     */
+    protected function field($zone, int $linenumber): string {
+        return $zone . '_' . $linenumber;
+    }
 
     #[\Override]
     public function check_file_access($qa, $options, $component, $filearea, $args, $forcedownload) {
@@ -67,15 +82,42 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
     #[\Override]
     public function get_expected_data() {
         $vars = [];
-        foreach ($this->choices[1] as $choice => $notused) {
-            $vars[$this->choice($choice)] = PARAM_NOTAGS;
+        foreach ($this->lines as $key => $line) {
+            $fieldnamezonestart = $this->field('zonestart', $line->number);
+            $fieldnamezoneend = $this->field('zoneend', $line->number);
+
+            $vars[$fieldnamezonestart] = PARAM_NOTAGS;
+            $vars[$fieldnamezoneend] = PARAM_NOTAGS;
         }
+        $this->dragchoices = $vars;
         return $vars;
     }
 
     #[\Override]
+    public function total_number_of_items_dragged(array $response) {
+        $total = 0;
+        foreach ($this->choiceorder[1] as $choice) {
+            $choicekey = $this->choice($choice);
+            if (array_key_exists($choicekey, $response) && trim($response[$choicekey] !== '')) {
+                $total += count(explode(';', $response[$choicekey]));
+            }
+        }
+        return $total;
+    }
+
+    #[\Override]
     public function is_complete_response(array $response) {
-        foreach ($this->choices[1] as $choiceno => $notused) {
+        print_object($response);
+        foreach ($this->lines as $key => $line) {
+            $fieldnamezonestart = $this->field('zonestart', $line->number);
+            if (!question_utils::arrays_same_at_key_integer($prevresponse, $newresponse, $fieldnamezonestart)) {
+                return false;
+            }
+            $fieldnamezoneend = $this->field('zoneend', $line->number);
+            if (!question_utils::arrays_same_at_key_integer($prevresponse, $newresponse, $fieldnamezoneend)) {
+                return false;
+            }
+
             if (isset($response[$this->choice($choiceno)]) &&
                     trim($response[$this->choice($choiceno) != ''])) {
                 return true;
@@ -90,11 +132,14 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
     }
 
     #[\Override]
-    public function is_same_response(array $prevresponse, array $newresponse) {
-        foreach ($this->choices[1] as $choice => $notused) {
-            $fieldname = $this->choice($choice);
-            if (!$this->arrays_same_at_key_integer(
-                    $prevresponse, $newresponse, $fieldname)) {
+    public function is_same_response(array $prevresponse, array $newresponse): bool {
+        foreach ($this->lines as $key => $line) {
+            $fieldnamezonestart = $this->field('zonestart', $line->number);
+            if (!question_utils::arrays_same_at_key_integer($prevresponse, $newresponse, $fieldnamezonestart)) {
+                return false;
+            }
+            $fieldnamezoneend = $this->field('zoneend', $line->number);
+            if (!question_utils::arrays_same_at_key_integer($prevresponse, $newresponse, $fieldnamezoneend)) {
                 return false;
             }
         }
@@ -147,18 +192,6 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         $chosenhits = $this->choose_hits($response);
         $divisor = max(count($this->rightchoices), $this->total_number_of_items_dragged($response));
         return [count($chosenhits), $divisor];
-    }
-
-    #[\Override]
-    public function total_number_of_items_dragged(array $response) {
-        $total = 0;
-        foreach ($this->choiceorder[1] as $choice) {
-            $choicekey = $this->choice($choice);
-            if (array_key_exists($choicekey, $response) && trim($response[$choicekey] !== '')) {
-                $total += count(explode(';', $response[$choicekey]));
-            }
-        }
-        return $total;
     }
 
     #[\Override]
@@ -216,8 +249,8 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
     public function get_correct_response(): ?array {
         $response = [];
         foreach ($this->lines as $key => $line) {
-            $response['zonestart_'  . $line->number . '_' . $line->questionid] = $line->zonestart;
-            $response['zoneend_' . $line->number . '_' . $line->questionid] = $line->zoneend;
+            $response['zonestart_' . $line->number] = $line->zonestart;
+            $response['zoneend_' . $line->number] = $line->zoneend;
         }
         return $response;
     }
@@ -245,5 +278,44 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
     #[\Override]
     public function get_random_guess_score() {
         return null;
+    }
+
+    /**
+     * Choose hits to maximize grade where drop targets may have more than one hit and drop targets
+     * can overlap.
+     * @param array $response
+     * @return array chosen hits
+     */
+    protected function choose_hits(array $response) {
+        $allhits = $this->get_all_hits($response);
+        $chosenhits = array();
+        foreach ($allhits as $placeno => $hits) {
+            foreach ($hits as $itemno => $hit) {
+                $choice = $this->get_right_choice_for($placeno);
+                $choiceitem = "$choice $itemno";
+                if (!in_array($choiceitem, $chosenhits)) {
+                    $chosenhits[$placeno] = $choiceitem;
+                    break;
+                }
+            }
+        }
+        return $chosenhits;
+    }
+
+    public function get_drop_zones_without_hit(array $response) {
+        $hits = $this->choose_hits($response);
+
+        $nohits = array();
+        foreach ($this->places as $placeno => $place) {
+            $choice = $this->get_right_choice_for($placeno);
+            if (!isset($hits[$placeno])) {
+                $nohit = new stdClass();
+                $nohit->coords = $place->coords;
+                $nohit->shape = $place->shape->name();
+                $nohit->markertext = $this->choices[1][$this->choiceorder[1][$choice]]->text;
+                $nohits[] = $nohit;
+            }
+        }
+        return $nohits;
     }
 }

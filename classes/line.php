@@ -43,8 +43,8 @@ class line {
     const TYPE_LINE_INFINITE = 'lineinfinite';
 
 
-    /** @var string lineinfinite (Infinite line --o--o--). */
-    const VALIDATE_ZONE_COORDINATES = "/([0-9]+),([0-9]+);([0-9]+)/";
+    /** @var string validate-zone-coordinates for start and the end of the line */
+    const VALIDATE_ZONE_COORDINATES = "/^([^-][0-9]+),([^-][0-9]+);([^-][0-9]+)$/";
 
     /** @var int The line id. */
     public $id;
@@ -124,15 +124,17 @@ class line {
      * @return bool
      */
     public static function is_zone_coordinates_valid(string $zone): bool {
-        preg_match_all(self::VALIDATE_ZONE_COORDINATES, $zone, $matches);
+        preg_match_all(self::VALIDATE_ZONE_COORDINATES, $zone, $matches, PREG_SPLIT_NO_EMPTY);
         // If the zone is empty return false.
         if (trim($zone) === '') {
             return false;
         }
         // If there is no match return false.
         foreach ($matches as $i => $match) {
-            if (empty($matches[$i])) {
+            if (empty($match)) {
                 return false;
+            } else {
+                break;
             }
         }
         // Match found.

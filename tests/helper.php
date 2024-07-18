@@ -203,18 +203,6 @@ class qtype_drawlines_test_helper extends question_test_helper {
 
         question_bank::load_question_definition_classes('drawlines');
         $question = new qtype_drawlines_question();
-        $bgdraftitemid = 0;
-        file_prepare_draft_area($bgdraftitemid, null, null, null, null);
-        $fs = get_file_storage();
-        $filerecord = new stdClass();
-        $filerecord->contextid = context_user::instance($USER->id)->id;
-        $filerecord->component = 'user';
-        $filerecord->filearea = 'draft';
-        $filerecord->itemid = $bgdraftitemid;
-        $filerecord->filepath = '/';
-        $filerecord->filename = 'mkmap.png';
-        $fs->create_file_from_pathname($filerecord, $CFG->dirroot .
-                '/question/type/drawlines/tests/fixtures/mkmap.png');
         $question->id = 1234;
         $question->createdby = $USER->id;
         $question->modifiedby = $USER->id;
@@ -247,7 +235,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
                         11, $question->id, 1, line::TYPE_LINE_SEGMENT,
                         'Start 1', 'Mid 1', '', '10,10;12', '300,10;12'),
                 1 => new line(
-                        11, $question->id, 1, line::TYPE_LINE_SEGMENT,
+                        11, $question->id, 2, line::TYPE_LINE_SEGMENT,
                         'Start 2', '', '', '10,100;12', '300,100;12'),
         ];
         $question->hints = [
@@ -257,5 +245,4 @@ class qtype_drawlines_test_helper extends question_test_helper {
 
         return  $question;
     }
-
 }
