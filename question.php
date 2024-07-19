@@ -32,15 +32,8 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
     /** @var int The number of lines. */
     public $numberoflines;
 
-    /**
-     * @var array of arrays. The outer keys are the choice group numbers.
-     * The inner keys for most question types number sequentialy from 1. However
-     * for ddimageortext questions it is strange (and difficult to change now).
-     * the first item in each group gets numbered 1, and the other items get numbered
-     * $choice->no. Be careful!
-     * The values are arrays of qtype_gapselect_choice objects (or a subclass).
-     */
-    public $dragchoices;
+    /** @var array of draggable items (list of start and end of lines). */
+    public $dragableitems;
 
     /**
      * Answer field name.
@@ -69,34 +62,22 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
         }
     }
 
-    /**
-     * Get a choice identifier
-     *
-     * @param int $choice stem number
-     * @return string the question-type variable name.
-     */
-    public function choice($choice) {
-        return 'c' . $choice;
-    }
-
     #[\Override]
     public function get_expected_data() {
-        $vars = [];
+        $draggableitems = [];
         foreach ($this->lines as $key => $line) {
-            $fieldnamezonestart = $this->field('zonestart', $line->number);
-            $fieldnamezoneend = $this->field('zoneend', $line->number);
-
-            $vars[$fieldnamezonestart] = PARAM_NOTAGS;
-            $vars[$fieldnamezoneend] = PARAM_NOTAGS;
+            $dragableitems[$this->field('zonestart', $line->number)] = PARAM_NOTAGS;
+            $dragableitems[$this->field('zoneend', $line->number)] = PARAM_NOTAGS;
         }
-        $this->dragchoices = $vars;
-        return $vars;
+        $this->dragableitems = $dragableitems;
+        return $dragableitems;
     }
 
     #[\Override]
     public function total_number_of_items_dragged(array $response) {
         $total = 0;
-        foreach ($this->choiceorder[1] as $choice) {
+        foreach ($this->dragableitems as $key => $choice) {
+            print_object($this->dragableitems);
             $choicekey = $this->choice($choice);
             if (array_key_exists($choicekey, $response) && trim($response[$choicekey] !== '')) {
                 $total += count(explode(';', $response[$choicekey]));
@@ -106,22 +87,17 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
     }
 
     #[\Override]
-    public function is_complete_response(array $response) {
-        print_object($response);
+    public function is_complete_response(array $response): bool {
+        $linesfound = 0;
         foreach ($this->lines as $key => $line) {
             $fieldnamezonestart = $this->field('zonestart', $line->number);
-            if (!question_utils::arrays_same_at_key_integer($prevresponse, $newresponse, $fieldnamezonestart)) {
-                return false;
-            }
             $fieldnamezoneend = $this->field('zoneend', $line->number);
-            if (!question_utils::arrays_same_at_key_integer($prevresponse, $newresponse, $fieldnamezoneend)) {
-                return false;
+            if (isset($response[$fieldnamezonestart]) && isset($response[$fieldnamezoneend])) {
+                $linesfound++;
             }
-
-            if (isset($response[$this->choice($choiceno)]) &&
-                    trim($response[$this->choice($choiceno) != ''])) {
-                return true;
-            }
+        }
+        if ($linesfound && $linesfound === count($this->lines)) {
+            return true;
         }
         return false;
     }
@@ -149,6 +125,7 @@ class qtype_drawlines_question extends question_graded_automatically_with_countb
     /**
      * Tests to see whether two arrays have the same set of coords at a particular key. Coords
      * can be in any order.
+     *
      * @param array $array1 the first array.
      * @param array $array2 the second array.
      * @param string $key an array key.

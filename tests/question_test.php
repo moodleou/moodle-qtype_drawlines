@@ -60,6 +60,18 @@ class question_test extends \basic_testcase {
         $this->assertEquals($correctresponse, $question->get_correct_response());
     }
 
+    public function test_is_complete_response() {
+        $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
+        $question->start_attempt(new question_attempt_step(), 1);
+        $correctresponse = $question->get_correct_response();
+        $this->assertTrue($question->is_complete_response($correctresponse));
+        $this->assertFalse($question->is_complete_response([]));
+        $this->assertTrue($question->is_complete_response(['zonestart_1' => '10,10', 'zoneend_1' => '300,10', 'zonestart_2' => '10,100', 'zoneend_2' => '300,100']));
+        $this->assertTrue($question->is_complete_response(['zonestart_1' => '10,10', 'zoneend_1' => '200,10', 'zonestart_2' => '10,100', 'zoneend_2' => '300,100']));
+        $this->assertFalse($question->is_complete_response(['zonestart_1' => '10,10', 'zoneend_1' => '300,10']));
+        $this->assertFalse($question->is_complete_response(['zonestart_2' => '10,100', 'zoneend_2' => '300,100']));
+    }
+
     public function test_is_same_response(): void {
         $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
         $question->start_attempt(new question_attempt_step(), 1);
