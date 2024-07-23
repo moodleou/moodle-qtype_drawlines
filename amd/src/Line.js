@@ -360,21 +360,20 @@ define(function() {
      * @param {int} maxX ensure that after editing, the shape lies between 0 and maxX on the x-axis.
      * @param {int} maxY ensure that after editing, the shape lies between 0 and maxX on the y-axis.
      * @param {String} whichSVG The svg containing the drag.
-     * @param {int} lineNo The line number
      */
-    Line.prototype.moveDrags = function(dx, dy, maxX, maxY, whichSVG, lineNo) {
-        this.centre1.move(dx, dy);
-        this.centre2.move(dx, dy);
-        if (whichSVG === 'svgDropZones') {
+    Line.prototype.moveDrags = function(dx, dy, maxX, maxY, whichSVG) {
+        // If the drags are in the dragHomes then we want to keep the x coordinates fixed.
+        if (whichSVG === 'DragsSVG') {
+            // We don't want to move drags horizontally in this SVG.
+            this.centre1.move(0, dy);
+            this.centre2.move(0, dy);
             this.centre1.x = 50;
-            this.centre1.y = 25 + lineNo * 50;
             this.x1 = 50;
-            this.y1 = 25 + lineNo * 50;
             this.centre2.x = 200;
             this.x2 = 200;
-            this.centre2.y = 25 + lineNo * 50;
-            this.y2 = 25 + lineNo * 50;
         } else {
+            this.centre1.move(dx, dy);
+            this.centre2.move(dx, dy);
             if (this.centre1.x < this.startRadius) {
                 this.centre1.x = this.startRadius;
                 this.x1 = this.startRadius;
@@ -391,27 +390,27 @@ define(function() {
                 this.centre2.x = maxX - this.startRadius;
                 this.x2 = maxX - this.startRadius;
             }
-            if (this.centre1.y < this.endRadius) {
-                this.centre1.y = this.endRadius;
-                this.y1 = this.endRadius;
-            }
-            if (this.centre1.y > maxY - this.endRadius) {
-                this.centre1.y = maxY - this.endRadius;
-                this.y1 = maxY - this.endRadius;
-            }
-            if (this.centre2.y < this.endRadius) {
-                this.centre2.y = this.endRadius;
-                this.y2 = this.endRadius;
-            }
-            if (this.centre2.y > maxY - this.endRadius) {
-                this.centre2.y = maxY - this.endRadius;
-                this.y2 = maxY - this.endRadius;
-            }
+        }
+        if (this.centre1.y < this.endRadius) {
+            this.centre1.y = this.endRadius;
+            this.y1 = this.endRadius;
+        }
+        if (this.centre1.y > maxY - this.endRadius) {
+            this.centre1.y = maxY - this.endRadius;
+            this.y1 = maxY - this.endRadius;
+        }
+        if (this.centre2.y < this.endRadius) {
+            this.centre2.y = this.endRadius;
+            this.y2 = this.endRadius;
+        }
+        if (this.centre2.y > maxY - this.endRadius) {
+            this.centre2.y = maxY - this.endRadius;
+            this.y2 = maxY - this.endRadius;
         }
     };
 
     /**
-     * Move the g element to the dropzone.
+     * Move the g element between the dropzones and dragHomes.
      * @param {SVGElement} svgDrags Svg element containing the drags.
      * @param {SVGElement} svgDropZones Svg element containing the dropZone.
      * @param {SVGElement} selectedElement The element selected for dragging.
@@ -430,16 +429,20 @@ define(function() {
             selectedElement.getAttribute('data-dropzone-no');
 
             // Caluculate the position of line drop.
-            this.centre1.y = maxY - (2 * this.startRadius) - (dropzoneNo * 50);
-            this.y1 = maxY - (2 * this.startRadius) - (dropzoneNo * 50);
-            this.centre2.y = maxY - (2 * this.endRadius) - (dropzoneNo * 50);
-            this.y2 = maxY - (2 * this.endRadius) - (dropzoneNo * 50);
+            // this.centre1.y = maxY - (2 * this.startRadius) - (dropzoneNo * 50);
+            // this.y1 = maxY - (2 * this.startRadius) - (dropzoneNo * 50);
+            // this.centre2.y = maxY - (2 * this.endRadius) - (dropzoneNo * 50);
+            // this.y2 = maxY - (2 * this.endRadius) - (dropzoneNo * 50);
+            this.centre1.y = maxY - (2 * this.startRadius);
+            this.y1 = maxY - (2 * this.startRadius);
+            this.centre2.y = maxY - (2 * this.endRadius);
+            this.y2 = maxY - (2 * this.endRadius);
         } else if (this.isInsideSVG(svgDropZones, dropX, dropY)) {
             // Append the element to the first SVG (to ensure it stays in the same SVG if dropped there)
             svgDrags.appendChild(selectedElement);
 
             // We want to drop the lines from the top, depending on the line number.
-            // Caluculate the position of line drop.
+            // Calculate the position of line drop.
             this.centre1.x = 50;
             this.centre1.y = this.startRadius + (dropzoneNo * 50);
             this.y1 = this.startRadius + (dropzoneNo * 50);

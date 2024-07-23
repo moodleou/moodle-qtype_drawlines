@@ -509,35 +509,44 @@ define([
             svgDropZones = document.querySelector('svg.dropzones'),
             maxX = svgDrags.width.baseVal.value,
             maxY = svgDrags.height.baseVal.value,
-            whichSVG = "";
+            whichSVG = "",
+            bgImage = document.querySelector('img.dropbackground');
 
         var selectedElement = this.lineSVGs[dropzoneNo];
         const dropX = e.clientX;
         const dropY = e.clientY;
 
         dragDrop.start(e, $(dragProxy), function(pageX, pageY) {
-            var svgDragsbBox = svgDrags.getBBox();
-            var svgDropZonesbBox = svgDropZones.getBBox();
 
             // Check if the drags need to be moved from one svg to another.
             // If true, the drag is moved from draghomes SVG to dropZone SVG.
-            if (movingDrag.lines[dropzoneNo].centre1.y === 10 && svgDragsbBox.y === 0) {
+            var closeTo = selectedElement.closest('svg');
+            var svgClass = closeTo.getAttribute('class');
+
+            // Moving the drags between the SVG's.
+            var isMoveFromDragsToDropzones = (svgClass === "drags") &&
+                (movingDrag.lines[dropzoneNo].centre1.y === 10);
+            var isMoveFromDropzonesToDrags = (svgClass === 'dropzones') &&
+                (movingDrag.lines[dropzoneNo].centre1.y > (bgImage.height - 20));
+            if (isMoveFromDragsToDropzones || isMoveFromDropzonesToDrags) {
                 movingDrag.lines[dropzoneNo].addToDropZone(svgDrags, svgDropZones, selectedElement,
                     dropX, dropY);
-                maxX = svgDropZones.width.baseVal.value;
-                maxY = svgDropZones.height.baseVal.value;
-                whichSVG = "svgDropZones";
-            } else if (movingDrag.lines[dropzoneNo].centre1.y === svgDropZonesbBox.y + 10) {
-                // Move drags from dropZone SVG to draghomes SVG.
-                movingDrag.lines[dropzoneNo].addToDropZone(svgDrags, svgDropZones, selectedElement,
-                    dropX, dropY);
-                whichSVG = "svgDrags";
             }
 
             // Drag the lines within the SVG
+            closeTo = selectedElement.closest('svg');
+            if (closeTo.getAttribute('class') === 'drags') {
+                maxX = svgDrags.width.baseVal.value;
+                maxY = svgDrags.height.baseVal.value;
+                whichSVG = "DragsSVG";
+            } else {
+                maxX = svgDropZones.width.baseVal.value;
+                maxY = svgDropZones.height.baseVal.value;
+                whichSVG = "DropZonesSVG";
+            }
             movingDrag.lines[dropzoneNo].moveDrags(
                 parseInt(pageX) - parseInt(lastX), parseInt(pageY) - parseInt(lastY),
-                parseInt(maxX), parseInt(maxY), whichSVG, dropzoneNo);
+                parseInt(maxX), parseInt(maxY), whichSVG);
             lastX = pageX;
             lastY = pageY;
 
