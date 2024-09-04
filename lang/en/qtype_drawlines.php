@@ -54,6 +54,7 @@ $string['linedoublearrows'] = 'Double arrows ←--→';
 $string['lineinfinite'] = 'Infinite line --o--o--';
 $string['linexheader'] = 'Line {no}';
 
+$string['pleasedragalllines'] = 'Your answer is not complete; you must place all lines on the image.';
 $string['pluginname'] = 'DrawLines';
 $string['pluginname_help'] = 'DrawLines require the respondent to position the lines on a background image.';
 $string['pluginname_link'] = 'question/type/drawlines';
@@ -67,12 +68,21 @@ $string['previewareamessage'] = 'Select a background image file, enter text labe
 $string['privacy:preference:defaultmark'] = 'The default mark set for a given question.';
 $string['privacy:preference:grademethod'] = 'The penalty for each incorrect try when questions are run using the \'Interactive with multiple tries\' or \'Adaptive mode\' behaviour.';
 $string['privacy:preference:penalty'] = 'The penalty for each incorrect try when questions are run using the \'Interactive with multiple tries\' or \'Adaptive mode\' behaviour.';
+
 $string['refresh'] = 'Refresh preview';
 
 $string['showmisplaced'] = 'State which zones are incorrectly placed';
+$string['summarisechoice'] = '{$a->no}. {$a->text}';
+$string['summariseplace'] = '{$a->no}. {$a->text}';
+$string['summarisechoiceno'] = 'Item {$a}';
+$string['summariseplaceno'] = 'Drop zone {$a}';
 
 $string['type'] = 'Type';
 $string['type_help'] = 'You can choose whether the line doesn’t have a beginning or end (line), has one or more ends (right, left, and double arrows), or it only matters that the line intersects specific points on the graph (intersect points).';
+
+$string['xleft'] = 'Left';
+
+$string['ytop'] = 'Top';
 
 $string['zonecoordinates'] = 'x,y;r (where x,y are the coordinates of the centre of the circle and r is the radius)';
 $string['zonestart'] = 'Start zone coordinates';

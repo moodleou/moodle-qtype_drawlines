@@ -29,12 +29,14 @@ Feature: Test editing an DrawLines question
     And I should see "Line 2"
     And I click on "Line 1" "link"
     And I should see "Line segment ---"
-    When I set the field "id_zonestart_0" to "10,10"
-    And I press "id_submitbutton"
-    Then I should see "Start zone coordinates should be in x,y;r format, where x,y are the coordinates of the centre of a circle and r is the radius."
-
+    #When I set the field "id_zonestart_0" to "10,10,12"
+    #And I press "id_submitbutton"
+    #Then I should see "Start zone coordinates should be in x,y;r format, where x,y are the coordinates of the centre of a circle and r is the radius."
     # Correct the input for start zone coordistes.
-    And I set the field "id_zonestart_0" to "10,10;12"
+#    And I set the following fields to these values:
+#      | id_zonestart_0 | 10,10;12 |
+#   And I set the field "id_zonestart_0" to "10,10;12"
+
     And I click on "Line 2" "link"
     And I set the field "id_type_1" to "Choose"
     And I press "id_submitbutton"

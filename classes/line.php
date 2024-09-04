@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace qtype_drawlines;
+use qtype_drawlines\dragitem;
+use qtype_drawlines\dropzone;
 
 /**
  * Represents a line objet of drawlines question.
@@ -116,6 +118,66 @@ class line {
         ];
     }
 
+    public static function is_dragitem_in_the_right_place($dragcoord, $dropcood): bool {
+        [$cx, $cy, $r] = self::parse_into_cx_cy_with_or_without_radius($dropcood, true);
+        [$rescx, $rescy] = self::parse_into_cx_cy_with_or_without_radius($dragcoord);
+
+        $xcoord = false;
+        if ((($cx - $r) <= $rescx) && ($rescx <= ($cx + $r))) {
+            $xcoord = true;
+        }
+        $ycoord = false;
+        if ((($cy - $r) <= $rescy) && ($rescy <= ($cy + $r))) {
+            $ycoord = true;
+        }
+        if ($xcoord && $ycoord) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Parse the input and return the parts in a list of 'cx', 'cy' with or whothout 'r'.
+     *
+     * @param string $dropzone, the string in a given format with or whithout radius
+     * @param bool $radius, if set to true, return the list with radius, otherwise with radius
+     * @return int[], a list of 'cx', 'cy' with or whothout 'r'.
+     */
+    public static function parse_into_cx_cy_with_or_without_radius(string $dropzone, bool $radius = false): array {
+        if ($radius === true) {
+            $dropzonecontent = explode(';', $dropzone);
+            $coordinates = explode(',', $dropzonecontent[0]);
+
+            // Return the parsts in a list of 'cx', 'cy' and 'r' in numbers.
+            return [(int)$coordinates[0], (int)$coordinates[1], (int)$dropzonecontent[1]];
+        }
+        $coordinates = explode(',', $dropzone);
+        // Return the parsts in a list of 'cx'and 'cy'in numbers.
+        return [(int)$coordinates[0], (int)$coordinates[1]];
+    }
+
+    /**
+     * Return the coordinates for a given dropzone (strat or end of the line).
+     *
+     * @param string $zone
+     * @return string
+     */
+    public static function get_coordinates(string $zone): string {
+        $zonestart = explode(';', $zone);
+        return $zonestart[0];
+    }
+
+    /**
+     * Return the radius for a given dropzone circle (strat or end of the line).
+     *
+     * @param string $zone
+     * @return int
+     */
+    public static function get_radius(string $zone): int {
+        $zonestart = explode(';', $zone);
+        return (int)$zonestart[1];
+    }
+
     /**
      * Validate the zone coordinates for Start or End zone of a line.
      * The correct format is x,y;r  where x,y are the coordinates of the centre of a circle and r is the radius.
@@ -139,5 +201,51 @@ class line {
         }
         // Match found.
         return true;
+    }
+
+    public static function make_drop_zone(int $linenumber, string $label, string $zone): drop_zone {
+        [$xleft, $ytop] = self::parse_into_cx_cy_with_or_without_radius($zone);
+        return  new drop_zone($linenumber, $label, $xleft, $ytop);
+    }
+
+}
+
+/**
+ * Represents a drop-zone objet for start or end of a line.
+ *
+ * @package   qtype_drawlines
+ * @copyright 2024 The Open University
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class drop_zone {
+    /** @var int The number of the line */
+    public $linenumber;
+
+    /** @var string Alt text for the drop zone item */
+    public $label;
+
+    /** @var array X and Y location of the drop zone */
+    public $xy;
+
+    /**
+     * Create a drop zone object.
+     *
+     * @param int $linenumber Which line the drop zone belong to
+     * @param string $alttextlabel The alt text of the drop zone
+     * @param int $x X location
+     * @param int $y Y location
+     */
+    public function __construct($linenumber, $label, $x, $y) {
+        $this->linenumber = $linenumber;
+        $this->label = $label;
+        $this->xy = [$x, $y];
+    }
+
+    /**
+     * Returns the line number for this droo zone.
+     *
+     */
+    public function get_linenumber(): int {
+        return $this->linenumber;
     }
 }

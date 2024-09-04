@@ -91,15 +91,15 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
         if ($classes !== null) {
             $attributes['class'] = join(' ', $classes);
         }
-        return array($fieldname, html_writer::empty_tag('input', $attributes)."\n");
+        return [$fieldname, html_writer::empty_tag('input', $attributes)."\n"];
     }
 
-    protected function hidden_field_choice(question_attempt $qa, $choiceno, $value = null, $class = null) {
-        $varname = 'c'.$choiceno;
-        $classes = ['choices', 'choice'.$choiceno];
-        list(, $html) = $this->hidden_field_for_qt_var($qa, $varname, null, $classes);
-        return $html;
-    }
+   protected function hidden_field_choice(question_attempt $qa, $choicenumber, $value = null, $class = null) {
+       $varname = 'c'. $choicenumber;
+       $classes = ['choices', 'choice'. $choicenumber];
+       [, $html] = $this->hidden_field_for_qt_var($qa, $varname, $value, $classes);
+       return $html;
+   }
 
     public function formulation_and_controls(question_attempt $qa, question_display_options $options) {
         $question = $qa->get_question();
@@ -142,6 +142,13 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
         if ($qa->get_state() == question_state::$invalid) {
             $output .= html_writer::div($question->get_validation_error($qa->get_last_qt_data()), 'validationerror');
         }
+
+        $hiddenfields = '';
+        $question = $qa->get_question();
+        foreach($question->choices as $choiceno => $choice) {
+            $hiddenfields .= $this->hidden_field_choice($qa, $choiceno, $choice);
+        }
+        $output .= html_writer::div($hiddenfields, '');
 
         // Call to js
         $this->page->requires->js_call_amd('qtype_drawlines/question', 'init',

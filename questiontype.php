@@ -15,6 +15,8 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 use qtype_drawlines\line;
+use qtype_drawlines\drag_item;
+use qtype_drawlines\drop_zone;
 
 /**
  * The Draw lines question type class.
@@ -27,6 +29,14 @@ class qtype_drawlines extends question_type {
 
     /** @var lines[], an array of line objects. */
     public $lines;
+
+    //protected function make_choice(stdClass $dragdata) {
+    //    return new drag_item($dragdata->linenumber, $dragdata->label);
+    //}
+
+    //protected function make_place(stdclass $dropdata) {
+    //    return new drop_zone($dropdata->linenumber, $dropdata->label, $dropdata->xleft, $dropdata->ytop);
+    //}
 
     #[\Override]
     public function get_question_options($question): bool {
@@ -195,8 +205,30 @@ class qtype_drawlines extends question_type {
      */
     protected function initialise_question_lines(question_definition $question, $questiondata): void {
         $question->numberoflines = count($questiondata->lines);
+
+        // Initialise question choices, places and right choices.
+        if ($question->choices === null) {
+            $question->choices = [];
+        }
+        if ($question->places === null) {
+            $question->places = [];
+        }
+        if ($question->rightchoices === null) {
+            $question->rightchoices = [];
+        }
+
+        $choicecount = 1;
+        $index = 1;
+        $placeinex = 1;
         foreach ($questiondata->lines as $line) {
             $question->lines[$line->number - 1] = $this->make_line($line);
+            $question->choices[$index++] = 'c' . $choicecount++; // zonestart.
+            $question->choices[$index++] = 'c' . $choicecount++; // zoneend
+
+            $question->places[$placeinex++] = line::make_drop_zone(
+                    $line->number,  $line->labelstart ?? 's' . $line->number, $line->zonestart);
+            $question->places[$placeinex++] = line::make_drop_zone(
+                    $line->number,  $line->labelend ?? 'e' . $line->number, $line->zoneend);
         }
     }
 

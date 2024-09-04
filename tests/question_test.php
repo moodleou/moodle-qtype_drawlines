@@ -19,6 +19,8 @@ namespace drawlines;
 use question_attempt_step;
 use question_classified_response;
 use question_state;
+use qtype_drawlines\line;
+
 
 defined('MOODLE_INTERNAL') || die();
 global $CFG;
@@ -41,35 +43,54 @@ class question_test extends \basic_testcase {
         $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
         $question->start_attempt(new question_attempt_step(), 1);
 
-        $expected = [];
-        foreach ($question->lines as $key => $line) {
-            $expected['zonestart_' . $line->number] = PARAM_NOTAGS;
-            $expected['zoneend_' . $line->number] = PARAM_NOTAGS;
-        }
+        $expected = [
+                'c1' => PARAM_RAW, 'c2' => PARAM_RAW,
+                'c3' => PARAM_RAW, 'c4' => PARAM_RAW
+        ];
         $this->assertEquals($expected, $question->get_expected_data());
     }
 
     public function test_get_correct_response(): void {
         $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
         $question->start_attempt(new question_attempt_step(), 1);
-        $correctresponse = [];
-        foreach ($question->lines as $key => $line) {
-            $correctresponse['zonestart_'  . $line->number] = $line->zonestart;
-            $correctresponse['zoneend_' . $line->number] = $line->zoneend;
-        }
+        $correctresponse =
+                [
+                        'c1' => '10,10', 'c2' => '300,10',
+                        'c3' => '300,10', 'c4' => '300,100',
+                ];
         $this->assertEquals($correctresponse, $question->get_correct_response());
     }
 
-    public function test_is_complete_response() {
+    public function test_is_complete_response(): void {
         $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
         $question->start_attempt(new question_attempt_step(), 1);
         $correctresponse = $question->get_correct_response();
         $this->assertTrue($question->is_complete_response($correctresponse));
         $this->assertFalse($question->is_complete_response([]));
-        $this->assertTrue($question->is_complete_response(['zonestart_1' => '10,10', 'zoneend_1' => '300,10', 'zonestart_2' => '10,100', 'zoneend_2' => '300,100']));
-        $this->assertTrue($question->is_complete_response(['zonestart_1' => '10,10', 'zoneend_1' => '200,10', 'zonestart_2' => '10,100', 'zoneend_2' => '300,100']));
-        $this->assertFalse($question->is_complete_response(['zonestart_1' => '10,10', 'zoneend_1' => '300,10']));
-        $this->assertFalse($question->is_complete_response(['zonestart_2' => '10,100', 'zoneend_2' => '300,100']));
+        $this->assertTrue($question->is_complete_response(
+                [
+                        'c1' => '10,10', 'c2' => '200,10',
+                        'c3' => '10,100', 'c4' => '200,100'
+                ]
+        ));
+        $this->assertFalse($question->is_complete_response(['c1' => '10,10', 'c2' => '300,10']));
+        $this->assertFalse($question->is_complete_response(['c3' => '10,100', 'c4' => '300,100']));
+    }
+
+    public function test_is_gradable_response(): void {
+        $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
+        $question->start_attempt(new question_attempt_step(), 1);
+        $correctresponse = $question->get_correct_response();
+        $this->assertTrue($question->is_gradable_response($correctresponse));
+        $this->assertFalse($question->is_gradable_response([]));
+        $this->assertTrue($question->is_gradable_response(
+                [
+                        'c1' => '10,10', 'c2' => '300,10',
+                        'c3' => '10,100', 'c4' => '200,100'
+                ]
+        ));
+        $this->assertFalse($question->is_gradable_response(['c1' => '10,10', 'c2' => '300,10']));
+        $this->assertFalse($question->is_gradable_response(['c3' => '10,100', 'c4' => '300,100']));
     }
 
     public function test_is_same_response(): void {
@@ -77,19 +98,18 @@ class question_test extends \basic_testcase {
         $question->start_attempt(new question_attempt_step(), 1);
 
         $response = $question->get_correct_response();
-        $expected = [
-                'zonestart_1' => '10,10;12', 'zoneend_1' => '300,10;12',
-                'zonestart_2' => '10,100;12', 'zoneend_2' => '300,100;12'
-        ];
+        $expected = ['c1' => '10,10', 'c2' => '300,10', 'c3' => '300,10', 'c4' => '300,100'];
         $this->assertEquals($expected, $response);
 
         $this->assertTrue($question->is_same_response(
-                ['zonestart_1' => '100,100', 'zoneend_1' => '100,200', 'zonestart_2' => '200,100', 'zoneend_2' => '200,200'],
-                ['zonestart_1' => '100,100', 'zoneend_1' => '100,200', 'zonestart_2' => '200,100', 'zoneend_2' => '200,200']));
+                ['c1' => '100,100', 'c2' => '100,200', 'c3' => '200,100', 'c4' => '200,200'],
+                ['c1' => '100,100', 'c2' => '100,200', 'c3' => '200,100', 'c4' => '200,200']
+        ));
 
         $this->assertFalse($question->is_same_response(
-                ['zonestart_1' => '100,100', 'zoneend_1' => '100,200', 'zonestart_2' => '200,100', 'zoneend_2' => '200,200'],
-                ['zonestart_1' => '10,100', 'zoneend_1' => '100,300', 'zonestart_2' => '200,100', 'zoneend_2' => '200,200']));
+                ['c1' => '100,100', 'c2' => '100,200', 'c3' => '200,100', 'c4' => '200,200'],
+                ['c1' => '10,100', 'c2' => '100,200', 'c3' => '200,100', 'c4' => '200,200']
+        ));
      }
 
     public function test_get_question_summary(): void {
@@ -106,13 +126,18 @@ class question_test extends \basic_testcase {
     }
 
     public function test_get_random_guess_score() {
-        $dl = \test_question_maker::make_question('drawlines');
-        $this->assertEquals(null, $dl->get_random_guess_score());
+        $question = \test_question_maker::make_question('drawlines');
+        $this->assertEquals(null, $question->get_random_guess_score());
     }
 
     public function test_get_num_parts_right() {
-        $dl = \test_question_maker::make_question('drawlines');
-        $dl->start_attempt(new question_attempt_step(), 1);
+        $question = \test_question_maker::make_question('drawlines');
+        $question->start_attempt(new question_attempt_step(), 1);
 
+        $response = $question->get_correct_response();
+        $this->assertEquals(4, $question->get_num_parts_right($response));
+
+        $response = ['c1' => '10,10', 'c2' => '200,10', 'c3' => '10,100', 'c4' => '300,100'];
+        $this->assertEquals(2, $question->get_num_parts_right($response));
     }
 }

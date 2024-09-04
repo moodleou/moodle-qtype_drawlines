@@ -79,6 +79,12 @@ class qtype_drawlines_edit_form extends question_edit_form {
 
         $this->set_current_settings();
 
+        // Add hidden form elements, for choices.
+        for ($number = 1; $number <= ($this->numberoflines * 2); $number++) {
+            $mform->addElement('hidden', 'c' . $number);
+            $mform->setType('c' . $number, PARAM_RAW);
+        }
+
         $grademethodmenu = [
                 'partial' => get_string('gradepartialcredit', 'qtype_' . $this->qtype()),
                 'allnone' => get_string('gradeallornothing', 'qtype_drawlines'),

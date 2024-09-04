@@ -57,4 +57,53 @@ class line_test extends \advanced_testcase {
                 'zone coordinate is valid' => ['300,200;12', true],
         ];
     }
+
+    /**
+     * Validate zone coordinates input format
+     *
+     * @dataProvider parse_into_cx_cy_radius_provider
+     * @param string $zonecooredinates
+     * @param array $coordslist
+     * @param bool $radius
+     * @return void
+     */
+    public function test_parse_into_cx_cy_with_or_without_radius(string $zonecooredinates, array $coordslist, bool $radius): void {
+        $this->resetAfterTest();
+        $this->assertEquals($coordslist, line::parse_into_cx_cy_with_or_without_radius($zonecooredinates, $radius));
+    }
+    public function parse_into_cx_cy_radius_provider(): array {
+        return [
+                'Coords with radius' => ['10,100;15', [10, 100, 15], true],
+                'Coords without radiust' => ['10,100', [10, 100], false],
+        ];
+    }
+
+    /**
+     * Validate zone coordinates input format
+     *
+     * @dataProvider is_dragitem_in_the_right_place_provider
+     * @param string $dragcoord
+     * @param array $dropcoord
+     * @param bool $radius
+     * @return void
+     */
+    public function test_is_dragitem_in_the_right_place($dragcoord, $dropcoord, $radius) {
+        $this->assertEquals($radius, Line::is_dragitem_in_the_right_place($dragcoord, $dropcoord));
+
+    }
+    public function is_dragitem_in_the_right_place_provider(): array {
+        $dropcoord = '10,100;5'; // The correct coords and the given radius.
+        return [
+                'Exac match' => ['10,100', $dropcoord, true],
+                'incorrect match x-6' => ['5,100', $dropcoord, false],
+                'incorrect match x-6' => ['16,100', $dropcoord, false],
+                'correct match x-5' => ['5,100', $dropcoord, true],
+                'correct match x+5' => ['15,100', $dropcoord, true],
+
+                'incorrect match y-6' => ['10,94', $dropcoord, false],
+                'incorrect match y+6' => ['10,106', $dropcoord, false],
+                'correct match y-5' => ['10,95', $dropcoord, true],
+                'correct match y+5' => ['10,105', $dropcoord, true],
+        ];
+    }
 }

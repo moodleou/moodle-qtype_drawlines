@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 use qtype_drawlines\line;
+use qtype_drawlines\drop_zone;
 
 /**
  * Test helper for the draw lines  question type.
@@ -233,11 +234,27 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $question->lines = [
                 0 => new line(
                         11, $question->id, 1, line::TYPE_LINE_SEGMENT,
-                        'Start 1', 'Mid 1', '', '10,10;12', '300,10;12'),
+                        'Start1', 'Mid1', 'End1', '10,10;12', '300,10;12'),
                 1 => new line(
                         11, $question->id, 2, line::TYPE_LINE_SEGMENT,
-                        'Start 2', '', '', '10,100;12', '300,100;12'),
+                        'Start2', '', 'End2', '300,10;12', '300,100;12'),
         ];
+
+        $question->choices = [
+                'c1' => '10,10',
+                'c2' => '300,10',
+                'c3' => '300,10',
+                'c4' => '300,100',
+        ];
+
+        $question->places = [
+                '1' => new drop_zone(1, 'Start1', 10,10),
+                '2' => new drop_zone(1, 'End1', 300, 10),
+                '3' => new drop_zone(2, 'Start2', 300,10),
+                '4' => new drop_zone(2, 'End2', 300,100),
+        ];
+        //$question->rightchoices = array(1 => 1, 2 => 2, 3 => 3);
+
         $question->hints = [
                 1 => new question_hint_with_parts(1, 'Hint 1.', FORMAT_HTML, 1, 0),
                 2 => new question_hint_with_parts(2, 'Hint 2.', FORMAT_HTML, 1, 1),

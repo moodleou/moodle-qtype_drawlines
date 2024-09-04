@@ -23,4 +23,5 @@ Feature: Preview a drag-drop marker question
   @javascript @_bug_phantomjs
   Scenario: Preview a question using the mouse
     When I am on the "Drawlines to preview" "core_question > preview" page logged in as teacher
+  And I pause
 # TODO: Finishing this scenario after Js completed and adding other  possible scenarios.
