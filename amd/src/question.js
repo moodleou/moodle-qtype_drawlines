@@ -83,29 +83,73 @@ define([
     };
 
     /**
+     * Parse the coordinates from a particular string.
+     * @param {String} coordinates The coordinates to be parsed. The values are in the format: x1,y1 x2,y2.
+     *                             Except for infinite line type where it's in the format x1,y1 x2,y2, x3,y3, x4,y4.
+     *                             Here, x1,y1 and x4,y4 are the two very end points of the infinite line and
+     *                             x2,y2 and x3,y3 are the pints with the handles.
+     * @param {String} lineType The type of the line.
+     */
+    DrawlinesQuestion.prototype.parseCoordinates = function(coordinates, lineType) {
+        var bits = coordinates.split(' ');
+        if (lineType === 'lineinfinite') {
+            // Remove the first and last coordinates.
+            bits = bits.slice(1, -1);
+        }
+        if (bits.length !== 2) {
+            throw new Error(coordinates + ' is not a valid point');
+        }
+        return bits;
+    };
+
+    /**
      * Draws the svg lines of any drop zones.
      * @param {Object[]} questionLines
      */
     DrawlinesQuestion.prototype.drawSVGLines = function(questionLines) {
-        var bgImage = document.querySelector('img.dropbackground');
+        var bgImage = document.querySelector('img.dropbackground'),
+            height, startcoordinates, endcoordinates, draginitialcoords;
 
         var drags = document.querySelector('.draghomes');
         drags.innerHTML =
-            '<svg xmlns="http://www.w3.org/2000/svg" class="drags" ' +
-                'id= "que-dlines-svg-drags" ' +
+            '<svg xmlns="http://www.w3.org/2000/svg" class="dragshome" ' +
+                'id= "que-dlines-svg-dragshome" ' +
                 'width="' + bgImage.width + '" ' +
                 'height="' + questionLines.length * 50 + '"' +
             '></svg>';
 
-        var dragsSvg = document.getElementById('que-dlines-svg-drags');
-        var initialHeight = 25;
+        var draghomeSvg = document.getElementById('que-dlines-svg-dragshome');
+        var dropzoneSvg = document.getElementById('que-dlines-svg');
+        var initialHeight = 25,
+            dragSVG, bits;
         for (let line = 0; line < questionLines.length; line++) {
-            var height = initialHeight + line * 50;
-            var startcoordinates = '50,' + height + ';10';
-            var endcoordinates = '200,' + height + ';10';
+            height = initialHeight + line * 50;
+            startcoordinates = '50,' + height + ';10';
+            endcoordinates = '200,' + height + ';10';
+
+
+            // Check if the lines are to be set with initial coordinates.
+            // The visibleDropZones array holds the response in the format x1,y1 x2,y2;placed - if the line is in the svgdropzone
+            // else x1,y1 x2,y2;inactive - if the line is in the svg draghomes.
+            dragSVG = '';
+            draginitialcoords = this.visibleDropZones['c' + line];
+            if (draginitialcoords !== undefined && draginitialcoords !== '') {
+                bits = draginitialcoords.split(';');
+                dragSVG = bits[1];
+                var coords = this.parseCoordinates(bits[0], questionLines[line].type);
+                if (dragSVG === 'placed') {
+                    startcoordinates = coords[0] + ';10';
+                    endcoordinates = coords[1] + ';10';
+                }
+            }
+
             this.lines[line] = Lines.make([startcoordinates, endcoordinates],
                 [questionLines[line].labelstart, questionLines[line].labelend], questionLines[line].type);
-            this.addToSvg(line, dragsSvg);
+            if (dragSVG === 'placed') {
+                this.addToSvg(line, dropzoneSvg);
+            } else {
+                this.addToSvg(line, draghomeSvg);
+            }
         }
     };
 
@@ -275,7 +319,7 @@ define([
         var imageCoords = [],
             val = $(inputNode).val();
         if (val !== '') {
-            var coordsStrings = val.split(';');
+            var coordsStrings = val.split(' ');
             for (var i = 0; i < coordsStrings.length; i++) {
                 imageCoords[i] = Lines.Point.parse(coordsStrings[i]);
             }
@@ -448,8 +492,12 @@ define([
         if (!this.lineSVGs[lineNumber]) {
             return;
         }
-        this.lineSVGs[lineNumber].setAttribute('class', 'dropzone');
         this.lineSVGs[lineNumber].setAttribute('data-dropzone-no', lineNumber);
+        if (svg.getAttribute('class') === 'dropzones') {
+            this.lineSVGs[lineNumber].setAttribute('class', 'dropzone choice' + lineNumber + ' placed');
+        } else {
+            this.lineSVGs[lineNumber].setAttribute('class', 'dropzone choice' + lineNumber + ' inactive');
+        }
     };
 
     /**
@@ -485,6 +533,7 @@ define([
             lastX = pageX;
             lastY = pageY;
             movingDropZone.updateSvgEl(dropzoneNo);
+            movingDropZone.saveCoordsForChoice(dropzoneNo);
         }, function() {
             document.body.removeChild(dragProxy);
         });
@@ -505,12 +554,15 @@ define([
             lastX = info.x,
             lastY = info.y,
             dragProxy = this.makeDragProxy(info.x, info.y),
-            svgDrags = document.querySelector('svg.drags'),
+            svgDragsHome = document.querySelector('svg.dragshome'),
             svgDropZones = document.querySelector('svg.dropzones'),
-            maxX = svgDrags.width.baseVal.value,
-            maxY = svgDrags.height.baseVal.value,
+            maxX = svgDragsHome.width.baseVal.value,
+            maxY = svgDragsHome.height.baseVal.value,
             whichSVG = "",
-            bgImage = document.querySelector('img.dropbackground');
+            bgImage = document.querySelector('img.dropbackground'),
+            isMoveFromDragsToDropzones,
+            isMoveFromDropzonesToDrags,
+            svgClass = '';
 
         var selectedElement = this.lineSVGs[dropzoneNo];
         const dropX = e.clientX;
@@ -521,23 +573,23 @@ define([
             // Check if the drags need to be moved from one svg to another.
             // If true, the drag is moved from draghomes SVG to dropZone SVG.
             var closeTo = selectedElement.closest('svg');
-            var svgClass = closeTo.getAttribute('class');
+            svgClass = closeTo.getAttribute('class');
 
             // Moving the drags between the SVG's.
-            var isMoveFromDragsToDropzones = (svgClass === "drags") &&
+            isMoveFromDragsToDropzones = (svgClass === "dragshome") &&
                 (movingDrag.lines[dropzoneNo].centre1.y === 10);
-            var isMoveFromDropzonesToDrags = (svgClass === 'dropzones') &&
+            isMoveFromDropzonesToDrags = (svgClass === 'dropzones') &&
                 (movingDrag.lines[dropzoneNo].centre1.y > (bgImage.height - 20));
             if (isMoveFromDragsToDropzones || isMoveFromDropzonesToDrags) {
-                movingDrag.lines[dropzoneNo].addToDropZone(svgDrags, svgDropZones, selectedElement,
+                movingDrag.lines[dropzoneNo].addToDropZone(svgDragsHome, svgDropZones, selectedElement,
                     dropX, dropY);
             }
 
             // Drag the lines within the SVG
             closeTo = selectedElement.closest('svg');
-            if (closeTo.getAttribute('class') === 'drags') {
-                maxX = svgDrags.width.baseVal.value;
-                maxY = svgDrags.height.baseVal.value;
+            if (closeTo.getAttribute('class') === 'dragshome') {
+                maxX = svgDragsHome.width.baseVal.value;
+                maxY = svgDragsHome.height.baseVal.value;
                 whichSVG = "DragsSVG";
             } else {
                 maxX = svgDropZones.width.baseVal.value;
@@ -551,6 +603,7 @@ define([
             lastY = pageY;
 
             movingDrag.updateSvgEl(dropzoneNo);
+            movingDrag.saveCoordsForChoice(dropzoneNo);
         }, function() {
             document.body.removeChild(dragProxy);
         });
@@ -578,34 +631,44 @@ define([
     /**
      * Save the coordinates for a dropped item in the form field.
      * @param {Number} choiceNo which copy of the choice this was.
-     */
+     **/
     DrawlinesQuestion.prototype.saveCoordsForChoice = function(choiceNo) {
         let imageCoords = [];
-        var items = this.getRoot().find('div.droparea span.marker.choice' + choiceNo),
-            thiQ = this,
-            bgRatio = this.bgRatio();
-
+        var items = this.getRoot().find('svg g.choice' + choiceNo),
+            gEleClassAttributes = '';
+            // thiQ = this,
+            // bgRatio = this.bgRatio();
         if (items.length) {
             items.each(function() {
                 var drag = $(this);
-                if (!drag.hasClass('beingdragged') && !drag.data('imageCoords')) {
-                    if (drag.data('scaleRatio') !== bgRatio) {
-                        // The scale ratio for the draggable item was changed. We need to update that.
-                        drag.data('pagex', drag.offset().left).data('pagey', drag.offset().top);
-                    }
-                    var dragXY = new Lines.Point(drag.data('pagex'), drag.data('pagey'));
-                    if (thiQ.coordsInBgImg(dragXY)) {
-                        var bgImgXY = thiQ.convertToBgImgXY(dragXY);
-                        bgImgXY = new Lines.Point(bgImgXY.x / bgRatio, bgImgXY.y / bgRatio);
-                        imageCoords[imageCoords.length] = bgImgXY;
-                    }
-                } else if (drag.data('imageCoords')) {
-                    imageCoords[imageCoords.length] = drag.data('imageCoords');
-                }
+                imageCoords = drag.children('polyline').attr('points');
+                gEleClassAttributes = drag.attr('class');
+                //     if (drag.data('scaleRatio') !== bgRatio) {
+                //         // The scale ratio for the draggable item was changed. We need to update that.
+                //         drag.data('pagex', drag.offset().left).data('pagey', drag.offset().top);
+                //     }
+                //     var dragXY = new Lines.Point(drag.data('pagex'), drag.data('pagey'));
+                //     window.console.log("dragXY:" + dragXY);
+                //
+                //     window.console.log("thiQ:" + thiQ);
+                //     if (thiQ.coordsInBgImg(dragXY)) {
+                //         var bgImgXY = thiQ.convertToBgImgXY(dragXY);
+                //         bgImgXY = new Lines.Point(bgImgXY.x / bgRatio, bgImgXY.y / bgRatio);
+                //         imageCoords[imageCoords.length] = bgImgXY;
+                //         window.console.log("bgImgXY:" + bgImgXY);
+                //     }
+                // } else if (drag.data('imageCoords')) {
+                //     imageCoords[imageCoords.length] = drag.data('imageCoords');
+                // }
+
             });
         }
-
-        this.getRoot().find('input.choice' + choiceNo).val(imageCoords.join(';'));
+        // this.getRoot().find('input.choice' + choiceNo).val(imageCoords);
+        if (gEleClassAttributes !== '' && gEleClassAttributes.includes('placed')) {
+            this.getRoot().find('input.choice' + choiceNo).val(imageCoords + ';' + 'placed');
+        } else if (gEleClassAttributes !== '' && gEleClassAttributes.includes('inactive')) {
+            this.getRoot().find('input.choice' + choiceNo).val(imageCoords + ';' + 'inactive');
+        }
         if (this.isQuestionInteracted()) {
             // The user has interacted with the draggable items. We need to mark the form as dirty.
             questionManager.handleFormDirty();
@@ -987,7 +1050,7 @@ define([
         // We now have all images. Carry on, but only after giving the layout a chance to settle down.
         this.allImagesLoaded = true;
         this.cloneDrags();
-        this.repositionDrags();
+        //this.repositionDrags();
         this.drawDropzone();
     };
 
@@ -1145,6 +1208,7 @@ define([
                 dropzoneElement = event.target.closest('g');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
                 question.handleDragMove(event, dropzoneNo);
+                question.saveCoordsForChoice(dropzoneNo);
             }
         },
 

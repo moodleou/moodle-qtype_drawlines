@@ -411,17 +411,17 @@ define(function() {
 
     /**
      * Move the g element between the dropzones and dragHomes.
-     * @param {SVGElement} svgDrags Svg element containing the drags.
+     * @param {SVGElement} svgDragsHome Svg element containing the drags.
      * @param {SVGElement} svgDropZones Svg element containing the dropZone.
      * @param {SVGElement} selectedElement The element selected for dragging.
      * @param {int} dropX
      * @param {int} dropY
      */
-    Line.prototype.addToDropZone = function(svgDrags, svgDropZones, selectedElement, dropX, dropY) {
+    Line.prototype.addToDropZone = function(svgDragsHome, svgDropZones, selectedElement, dropX, dropY) {
         var maxY = 0;
         var dropzoneNo = selectedElement.getAttribute('data-dropzone-no');
-
-        if (this.isInsideSVG(svgDrags, dropX, dropY)) {
+        var classattributes = '';
+        if (this.isInsideSVG(svgDragsHome, dropX, dropY)) {
             // Append the element to the second SVG
             // Get the height of the dropZone SVG.
             maxY = svgDropZones.height.baseVal.value;
@@ -437,9 +437,15 @@ define(function() {
             this.y1 = maxY - (2 * this.startRadius);
             this.centre2.y = maxY - (2 * this.endRadius);
             this.y2 = maxY - (2 * this.endRadius);
+
+            // Update the class attributes to 'placed' if the line is in the svgDropZone.
+            classattributes = selectedElement.getAttribute('class');
+            classattributes = classattributes.replace('inactive', 'placed');
+            selectedElement.setAttribute('class', classattributes);
+
         } else if (this.isInsideSVG(svgDropZones, dropX, dropY)) {
             // Append the element to the first SVG (to ensure it stays in the same SVG if dropped there)
-            svgDrags.appendChild(selectedElement);
+            svgDragsHome.appendChild(selectedElement);
 
             // We want to drop the lines from the top, depending on the line number.
             // Calculate the position of line drop.
@@ -449,7 +455,13 @@ define(function() {
             this.centre2.x = 200;
             this.centre2.y = this.endRadius + (dropzoneNo * 50);
             this.y2 = this.endRadius + (dropzoneNo * 50);
+
+            // Update the class attributes to 'inactive' if the line is in the svg draghome.
+            classattributes = selectedElement.getAttribute('class');
+            classattributes = classattributes.replace('placed', 'inactive');
+            selectedElement.setAttribute('class', classattributes);
         }
+        return '';
     };
 
     /**

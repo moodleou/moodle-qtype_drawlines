@@ -123,9 +123,9 @@ class qtype_drawlines_question extends question_graded_automatically {
 
     #[\Override]
     public function get_expected_data() {
-        $expecteddata = [];
-        foreach($this->choices as $key =>$choice) {
-            $expecteddata[$key]= PARAM_RAW;
+        $expecteddata =[];
+        foreach ($this->lines as $line) {
+            $expecteddata[$this->choice($line->number - 1)] = PARAM_NOTAGS;
         }
         return $expecteddata;
     }
@@ -159,12 +159,12 @@ class qtype_drawlines_question extends question_graded_automatically {
 
     #[\Override]
     public function is_complete_response(array $response): bool {
-        foreach ($this->choices as $choiceno => $notused) {
-            if (!isset($response[$choiceno])) {
-                return false;
+        foreach ($this->lines as $choiceno => $line) {
+            if (isset($response[$this->choice($choiceno)])) {
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     #[\Override]
@@ -390,20 +390,31 @@ class qtype_drawlines_question extends question_graded_automatically {
     public function summarise_response(array $response): ?string {
         $responsewords = [];
         $answers = [];
-        foreach ($this->lines as $line) {
-            $linestartresponse = $line->labelstart . ' → ' . $line->zonestart;
-            $lineendresponse = $line->labelend . ' → ' . $line->zoneend;
-            if (array_key_exists('c' . $line->number, $response)) {
-                $answers[] = $line->labelstart . ' → ' . $line->zonestart;
-            }
-            if (array_key_exists('c' . $line->number, $response)) {
-                $answers[] = $line->labelend . ' → ' . $line->zoneend;
-            }
-            if (count($answers) > 0) {
-                $responsewords[] = "Line $line->number " . implode(', ', $answers);
+        foreach ($this->lines as $key => $line) {
+            if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] != '') {
+                $answer = $this->parse_coordinates($response[$this->choice($key)]);
+                if ($answer['inplace'] === 'placed') {
+                    $answers[] = 'Line ' . $line->number . ': ' . $answer['coords'];
+                }
             }
         }
+        if (count($answers) > 0) {
+            $responsewords[] = implode(', ', $answers);
+        }
         return implode('; ', $responsewords);
+    }
+
+    /**
+     * Return the coordinates from the response.
+     * @param string $responsechoice the response coordinates.
+     * @return array $coordinates The array of parsed coordinates.
+     */
+    public function parse_coordinates(string $responsechoice): array {
+        $coordinates = [];
+        $bits = explode(';', $responsechoice);
+        $coordinates['coords'] = $bits[0];
+        $coordinates['inplace'] = $bits[1];
+        return $coordinates;
     }
 
     #[\Override]
