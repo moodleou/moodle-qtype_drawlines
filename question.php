@@ -53,18 +53,6 @@ class qtype_drawlines_question extends question_graded_automatically {
      */
     public $places;
 
-    ///**
-    // * DrawLines item object setup.
-    // *
-    // * @param $questionid, The id of the question
-    // * @param $numberoflines, The number of lines
-    // */
-    //public function __construct($questionid, $numberoflines) {
-    //    $this->questionid = $questionid;
-    //    $this->numberoflines = $numberoflines;
-    //    $this->dragableitems = $this->get_dragable_items();
-    //}
-
     #[\Override]
     public function compute_final_grade($responses, $totaltries)
     {
@@ -101,26 +89,6 @@ class qtype_drawlines_question extends question_graded_automatically {
             return parent::check_file_access($qa, $options, $component, $filearea, $args, $forcedownload);
         }
     }
-
-    //public function set_choices(): void{
-    //    foreach ($this->lines as $line) {
-    //        $this->choices[$line->number]['zonestart'] = PARAM_RAW;
-    //        $this->choices[$line->number]['zoneend'] = PARAM_RAW;
-    //    }
-    //}
-
-
-    //public function get_dragable_items(): array {
-    //    $dragableitems = [];
-    //    foreach ($this->lines as $line) {
-    //        print_object($line);
-    //        $dragableitems[$this->field('zonestart', $line->number)] = PARAM_RAW;//$line->labelsrtat;
-    //        $dragableitems[$this->field('zoneend', $line->number)] = PARAM_RAW;//$line->labelend;
-    //    }
-    //    $this->dragableitems = $dragableitems;
-    //    return $dragableitems;
-    //}
-
     #[\Override]
     public function get_expected_data() {
         $expecteddata =[];
@@ -128,23 +96,6 @@ class qtype_drawlines_question extends question_graded_automatically {
             $expecteddata[$this->choice($line->number - 1)] = PARAM_NOTAGS;
         }
         return $expecteddata;
-    }
-
-    #[\Override]
-    public function total_number_of_items_dragged(array $response): int {
-        $total = 0;
-        print_object($response);
-        print_object('total_number_of_items_dragged ----------------');
-        foreach ($this->lines as $line) {
-            foreach ($this->choices[$line->number] as $key => $choice) {
-                print_object($this->dragableitems);
-                //$choicekey = $this->choice($choice);
-                if (array_key_exists($key, $response) && trim($response[$key] !== '')) {
-                    $total += count(explode(';', $response[$key]));
-                }
-            }
-        }
-        return $total;
     }
 
     //public function get_right_choice_for($placeno) {
@@ -191,20 +142,6 @@ class qtype_drawlines_question extends question_graded_automatically {
         }
         return true;
     }
-    //public function is_same_response(array $prevresponse, array $newresponse): bool {
-    //    foreach ($this->lines as $line) {
-    //        $fieldnamezonestart = $this->field('zonestart', $line->number);
-    //        if (!$this->arrays_same_at_key_integer($prevresponse, $newresponse, $fieldnamezonestart)) {
-    //            return false;
-    //        }
-    //        $fieldnamezoneend = $this->field('zoneend', $line->number);
-    //        if (!$this->arrays_same_at_key_integer($prevresponse, $newresponse, $fieldnamezoneend)) {
-    //            return false;
-    //        }
-    //    }
-    //    return true;
-    //}
-
     /**
      * Tests to see whether two arrays have the same set of coords at a particular key. Coords
      * can be in any order.
@@ -272,17 +209,25 @@ class qtype_drawlines_question extends question_graded_automatically {
     #[\Override]
     public function get_num_parts_right(array $response) {
         $numpartright = 0;
-        $correctcoords = [];
-        foreach($this->places as $key => $place) {
-            $correctcoords[$key] = implode(',', $place->xy);
-        };
-        foreach ($this->choices as $choicekey => $choice) {
-            if (array_key_exists($choicekey, $response) &&
-                    in_array($response[$choicekey], array_values($correctcoords))) {
+        foreach($this->lines as $key => $line) {
+            if (!array_key_exists($this->choice($key), $response)) {
+                continue;
+            }
+            $responsitems = explode( ';', $response[$this->choice($key)]);
+            $coords = explode( ' ', $responsitems[0]);
+            $state =  $responsitems[1];
+            if (!$state ||  $state !== 'placed') {
+                continue;
+            }
+            if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart)) {
                 $numpartright++;
             }
+            if (line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
+                    $numpartright++;
+            }
         }
-        return $numpartright;
+        $total = count($this->lines) * 2;
+        return [$numpartright, $total];
     }
 
     public function xxxget_num_parts_right(array $response) {
@@ -304,40 +249,12 @@ class qtype_drawlines_question extends question_graded_automatically {
 
     #[\Override]
     public function grade_response(array $response) {
-        print_object($response);
-        print_object('gradable_response ----------------');
         [$right, $total] = $this->get_num_parts_right($response);
-        $fraction = $right / ($total +1);
+        $fraction = $right / $total;
         return [$fraction, question_state::graded_state_for_fraction($fraction)];
     }
 
 
-    //#[\Override]
-    //public function compute_final_grade($responses, $totaltries) {
-    //    print_object($responses);
-    //    print_object('compute_final_grade --------------------------------');
-    //    $maxitemsdragged = 0;
-    //    $wrongtries = [];
-    //    foreach ($responses as $i => $response) {
-    //        $maxitemsdragged = max($maxitemsdragged, $this->total_number_of_items_dragged($response));
-    //        $hits = $this->choose_hits($response);
-    //        foreach ($hits as $place => $choiceitem) {
-    //            if (!isset($wrongtries[$place])) {
-    //                $wrongtries[$place] = $i;
-    //            }
-    //        }
-    //        foreach ($wrongtries as $place => $notused) {
-    //            if (!isset($hits[$place])) {
-    //                unset($wrongtries[$place]);
-    //            }
-    //        }
-    //    }
-    //    $numtries = count($responses);
-    //    $numright = count($wrongtries);
-    //    $penalty = array_sum($wrongtries) * $this->penalty;
-    //    $grade = ($numright - $penalty) / (max($maxitemsdragged, count($this->places)));
-    //    return $grade;
-    //}
 
     #[\Override]
     public function classify_response(array $response) {

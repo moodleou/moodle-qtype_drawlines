@@ -118,6 +118,13 @@ class line {
         ];
     }
 
+    /**
+     * Return true or false
+     *
+     * @param $dragcoord in 'cx,cy' format
+     * @param $dropcood in 'cx,cy;radius' format
+     * @return bool
+     */
     public static function is_dragitem_in_the_right_place($dragcoord, $dropcood): bool {
         [$cx, $cy, $r] = self::parse_into_cx_cy_with_or_without_radius($dropcood, true);
         [$rescx, $rescy] = self::parse_into_cx_cy_with_or_without_radius($dragcoord);
