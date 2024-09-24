@@ -204,11 +204,13 @@ define(function() {
         switch (this.lineType) {
             case 'linesinglearrow':
                 svgEl.childNodes[0].style['marker-end'] = "url(#arrow)";
+                svgEl.childNodes[0].setAttribute('class', 'shape singlearrow');
                 break;
 
             case 'linedoublearrows':
                 svgEl.childNodes[0].style['marker-start'] = "url(#arrow)";
                 svgEl.childNodes[0].style['marker-end'] = "url(#arrow)";
+                svgEl.childNodes[0].setAttribute('class', 'shape doublearrows');
                 break;
 
             case 'lineinfinite':
@@ -216,6 +218,7 @@ define(function() {
                 var infiniteLine = newCoordinates[0] + "," + newCoordinates[1] +
                     " " + points + " " + newCoordinates[2] + "," + newCoordinates[3];
                 svgEl.childNodes[0].setAttribute('points', infiniteLine);
+                svgEl.childNodes[0].setAttribute('class', 'shape infinite');
                 break;
         }
     };

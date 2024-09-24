@@ -23,6 +23,7 @@
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use qtype_drawlines\line;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -104,6 +105,8 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
     public function formulation_and_controls(question_attempt $qa, question_display_options $options) {
         $question = $qa->get_question();
         $response = $qa->get_last_qt_data();
+        $choicesorder = $qa->get_qt_field_name('choicesorder');
+        $visibilityzones = $response;
         $componentname = $question->qtype->plugin_name();
 
         $questiontext = $question->format_questiontext($qa);
@@ -134,7 +137,7 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
         }
 
         //if ($question->showmisplaced && $qa->get_state()->is_finished()) {
-        //    //$visibledropzones = $question->get_drop_zones_without_hit($response);
+        //    $visibledropzones = $question->get_drop_zones_without_hit($response);
         //    $visibledropzones = $response;
         //} else {
         //    $visibledropzones = [];
@@ -154,10 +157,70 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
 
         // Call to js
         $this->page->requires->js_call_amd('qtype_drawlines/question', 'init',
-                [$qa->get_outer_question_div_unique_id(), $options->readonly, $response, $question->lines]);
+                [$qa->get_outer_question_div_unique_id(), $options->readonly, $visibilityzones, $question->lines]);
 
         $output .= html_writer::end_div();
 
         return $output;
+    }
+
+    #[\Override]
+    public function correct_response(question_attempt $qa) {
+        $question = $qa->get_question();
+        $rightanswers = [];
+        $lineindicator = '';
+        foreach ($question->lines as $line) {
+            switch ($line->type) {
+                case 'linesinglearrow':
+                    $lineindicator = ' &xrarr; ';
+                    break;
+                case 'linedoublearrows':
+                    $lineindicator = ' &xharr; ';
+                    break;
+                case 'linesegment':
+                    $lineindicator = ' --- ';
+                    break;
+                case 'lineinfinite':
+                    $lineindicator = ' --o--o-- ';
+                    break;
+            }
+            $rightanswers[] = "Line " . $line->number . ': ' . line::get_coordinates($line->zonestart)
+                    . $lineindicator . line::get_coordinates($line->zoneend);
+        }
+        return $this->correct_choices($rightanswers);
+    }
+
+    /**
+     * Function returns string based on number of correct answers.
+     *
+     * @param array $right An Array of correct responses to the current question
+     * @return string based on number of correct responses
+     */
+    protected function correct_choices(array $right): string {
+        // Return appropriate string for single/multiple correct answer(s).
+        $correctanswers = "<br>" . implode("<br>", $right);
+        if (count($right) == 1) {
+            return get_string('correctansweris', 'qtype_drawlines', $correctanswers);
+        } else if (count($right) > 2) {
+            return get_string('correctanswersare', 'qtype_drawlines', $correctanswers);
+        } else {
+            return "";
+        }
+    }
+
+    #[\Override]
+    protected function num_parts_correct(question_attempt $qa): string {
+        $a = new stdClass();
+        list($a->num, $a->outof) = $qa->get_question()->get_num_parts_right(
+                $qa->get_last_qt_data());
+        if (is_null($a->outof)) {
+            return '';
+        } else if ($a->num == 1) {
+            return html_writer::tag('p', get_string('yougot1right', 'qtype_drawlines'));
+        } else {
+            $f = new NumberFormatter(current_language(), NumberFormatter::SPELLOUT);
+            $a->num = $f->format($a->num);
+            return html_writer::tag('p', get_string('yougotnright', 'qtype_drawlines', $a));
+        }
     }
 }

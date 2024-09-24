@@ -92,7 +92,7 @@ define([
      */
     DrawlinesQuestion.prototype.parseCoordinates = function(coordinates, lineType) {
         var bits = coordinates.split(' ');
-        if (lineType === 'lineinfinite') {
+        if (lineType === 'lineinfinite' && bits.length !== 2) {
             // Remove the first and last coordinates.
             bits = bits.slice(1, -1);
         }
@@ -120,8 +120,7 @@ define([
 
         var draghomeSvg = document.getElementById('que-dlines-svg-dragshome');
         var dropzoneSvg = document.getElementById('que-dlines-svg');
-        var initialHeight = 25,
-            dragSVG, bits;
+        var initialHeight = 25;
         for (let line = 0; line < questionLines.length; line++) {
             height = initialHeight + line * 50;
             startcoordinates = '50,' + height + ';10';
@@ -131,23 +130,17 @@ define([
             // Check if the lines are to be set with initial coordinates.
             // The visibleDropZones array holds the response in the format x1,y1 x2,y2;placed - if the line is in the svgdropzone
             // else x1,y1 x2,y2;inactive - if the line is in the svg draghomes.
-            dragSVG = '';
             draginitialcoords = this.visibleDropZones['c' + line];
             if (draginitialcoords !== undefined && draginitialcoords !== '') {
-                bits = draginitialcoords.split(';');
-                dragSVG = bits[1];
-                var coords = this.parseCoordinates(bits[0], questionLines[line].type);
-                if (dragSVG === 'placed') {
-                    startcoordinates = coords[0] + ';10';
-                    endcoordinates = coords[1] + ';10';
-                }
-            }
-
-            this.lines[line] = Lines.make([startcoordinates, endcoordinates],
-                [questionLines[line].labelstart, questionLines[line].labelend], questionLines[line].type);
-            if (dragSVG === 'placed') {
+                var coords = this.parseCoordinates(draginitialcoords, questionLines[line].type);
+                startcoordinates = coords[0] + ';10';
+                endcoordinates = coords[1] + ';10';
+                this.lines[line] = Lines.make([startcoordinates, endcoordinates],
+                    [questionLines[line].labelstart, questionLines[line].labelend], questionLines[line].type);
                 this.addToSvg(line, dropzoneSvg);
             } else {
+                this.lines[line] = Lines.make([startcoordinates, endcoordinates],
+                    [questionLines[line].labelstart, questionLines[line].labelend], questionLines[line].type);
                 this.addToSvg(line, draghomeSvg);
             }
         }
@@ -665,9 +658,9 @@ define([
         }
         // this.getRoot().find('input.choice' + choiceNo).val(imageCoords);
         if (gEleClassAttributes !== '' && gEleClassAttributes.includes('placed')) {
-            this.getRoot().find('input.choice' + choiceNo).val(imageCoords + ';' + 'placed');
+            this.getRoot().find('input.choice' + choiceNo).val(imageCoords);
         } else if (gEleClassAttributes !== '' && gEleClassAttributes.includes('inactive')) {
-            this.getRoot().find('input.choice' + choiceNo).val(imageCoords + ';' + 'inactive');
+            this.getRoot().find('input.choice' + choiceNo).val('');
         }
         if (this.isQuestionInteracted()) {
             // The user has interacted with the draggable items. We need to mark the form as dirty.

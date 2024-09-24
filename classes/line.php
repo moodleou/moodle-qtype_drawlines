@@ -121,8 +121,8 @@ class line {
     /**
      * Return true or false
      *
-     * @param $dragcoord in 'cx,cy' format
-     * @param $dropcood in 'cx,cy;radius' format
+     * @param $dragcoord string 'cx,cy' format
+     * @param $dropcood string 'cx,cy;radius' format
      * @return bool
      */
     public static function is_dragitem_in_the_right_place($dragcoord, $dropcood): bool {

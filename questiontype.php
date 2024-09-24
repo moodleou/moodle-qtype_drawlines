@@ -218,13 +218,12 @@ class qtype_drawlines extends question_type {
         }
 
         $choicecount = 1;
-        $index = 1;
+        $index = 0;
         $placeinex = 1;
         foreach ($questiondata->lines as $line) {
             $question->lines[$line->number - 1] = $this->make_line($line);
-            $question->choices[$index++] = 'c' . $choicecount++; // zonestart.
-            $question->choices[$index++] = 'c' . $choicecount++; // zoneend
-
+            $question->choices['c' . $index] = Line::get_coordinates($line->zonestart) . ' ' . Line::get_coordinates($line->zoneend);
+            $index++;
             $question->places[$placeinex++] = line::make_drop_zone(
                     $line->number,  $line->labelstart ?? 's' . $line->number, $line->zonestart);
             $question->places[$placeinex++] = line::make_drop_zone(
@@ -321,7 +320,7 @@ class qtype_drawlines extends question_type {
             $output .= $format->writetext($line->zonestart, $indent);
             $output .= "        </zonestart>\n";
             $output .= "        <zoneend>\n";
-            $output .= $format->writetext($line->zonestart, $indent);
+            $output .= $format->writetext($line->zoneend, $indent);
             $output .= "        </zoneend>\n";
             $output .= "      </line>\n";
         }

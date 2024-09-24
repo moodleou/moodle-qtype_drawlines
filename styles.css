@@ -53,6 +53,7 @@ form.mform fieldset#id_previewareaheader .dropbackground {
     fill-opacity: 0.5;
     stroke: black;
     stroke-width: 1;
+    cursor: move;
 }
 
 .que.drawlines .dropzone .handlestart.move,

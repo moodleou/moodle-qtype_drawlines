@@ -31,6 +31,9 @@ $string['correctansweris'] = 'The correct answer is: {$a}';
 
 $string['dropbackground'] = 'Background image for DrawLines';
 
+$string['correctansweris'] = 'The correct answer is: {$a}';
+$string['correctanswersare'] = 'The correct answers are: {$a}';
+
 $string['formerror_nobgimage'] = 'You need to select an image to use as the background for the drag and drop area.';
 $string['formerror_notype'] = 'You have to select a type for Line {$a}';
 $string['formerror_zonestart'] = 'Start zone coordinates should be in x,y;r format, where x,y are the coordinates of the centre of a circle and r is the radius.';
@@ -82,6 +85,10 @@ $string['type_help'] = 'You can choose whether the line doesn’t have a beginni
 
 $string['xleft'] = 'Left';
 
+$string['yougot1right'] = 'You have correctly selected one point.';
+$string['yougotnright'] = 'You have correctly selected {$a->num} points.';
+$string['yougot1rightline'] = 'You have correctly selected one line.';
+$string['yougotnrightline'] = 'You have correctly selected {$a->num} lines.';
 $string['ytop'] = 'Top';
 
 $string['zonecoordinates'] = 'x,y;r (where x,y are the coordinates of the centre of the circle and r is the radius)';

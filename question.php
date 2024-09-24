@@ -110,8 +110,8 @@ class qtype_drawlines_question extends question_graded_automatically {
 
     #[\Override]
     public function is_complete_response(array $response): bool {
-        foreach ($this->lines as $choiceno => $line) {
-            if (isset($response[$this->choice($choiceno)])) {
+        foreach ($this->lines as $key => $line) {
+            if (isset($response[$this->choice($key)])) {
                 return true;
             }
         }
@@ -210,20 +210,14 @@ class qtype_drawlines_question extends question_graded_automatically {
     public function get_num_parts_right(array $response) {
         $numpartright = 0;
         foreach($this->lines as $key => $line) {
-            if (!array_key_exists($this->choice($key), $response)) {
-                continue;
-            }
-            $responsitems = explode( ';', $response[$this->choice($key)]);
-            $coords = explode( ' ', $responsitems[0]);
-            $state =  $responsitems[1];
-            if (!$state ||  $state !== 'placed') {
-                continue;
-            }
-            if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart)) {
-                $numpartright++;
-            }
-            if (line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
+            if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
+                $coords = explode(' ', $response[$this->choice($key)]);
+                if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart)) {
                     $numpartright++;
+                }
+                if (line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
+                    $numpartright++;
+                }
             }
         }
         $total = count($this->lines) * 2;
@@ -293,14 +287,12 @@ class qtype_drawlines_question extends question_graded_automatically {
 
     #[\Override]
     public function get_correct_response() {
-        $responsecoords = [];
-        foreach ($this->places as $placeno => $place) {
-            $rightchoicekey = $this->get_right_choice_for($placeno);
-            if ($rightchoicekey !== null) {
-                $responsecoords[$rightchoicekey] = implode(',', $place->xy);
-            }
+        $response = [];
+        foreach ($this->lines as $key => $line) {
+            $response[$this->choice($key)] = line::get_coordinates($line->zonestart) . ' '
+                    . line::get_coordinates($line->zoneend);
         }
-        return $responsecoords;
+        return $response;
     }
 
     #[\Override]
@@ -309,10 +301,7 @@ class qtype_drawlines_question extends question_graded_automatically {
         $answers = [];
         foreach ($this->lines as $key => $line) {
             if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] != '') {
-                $answer = $this->parse_coordinates($response[$this->choice($key)]);
-                if ($answer['inplace'] === 'placed') {
-                    $answers[] = 'Line ' . $line->number . ': ' . $answer['coords'];
-                }
+                $answers[] = 'Line ' . $line->number . ': ' . $response[$this->choice($key)];
             }
         }
         if (count($answers) > 0) {
