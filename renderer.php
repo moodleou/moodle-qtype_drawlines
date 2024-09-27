@@ -164,6 +164,10 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
         return $output;
     }
 
+    public function specific_feedback(question_attempt $qa) {
+        return $this->combined_feedback($qa);
+    }
+
     #[\Override]
     public function correct_response(question_attempt $qa) {
         $question = $qa->get_question();

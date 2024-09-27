@@ -53,6 +53,23 @@ class qtype_drawlines_question extends question_graded_automatically {
      */
     public $places;
 
+    public $choicesorder;
+
+    #[\Override]
+    public function start_attempt(question_attempt_step $step, $variant) {
+        $choices = [];
+        $this->choicesorder = array_keys($this->choices);
+        if ($this->shuffleanswers) {
+            shuffle($this->choicesorder);
+        }
+        $step->set_qt_var('_choicesorder', implode(',', $this->choicesorder));
+    }
+
+    #[\Override]
+    public function apply_attempt_state(question_attempt_step $step) {
+        $this->choicesorder = explode(',', $step->get_qt_var('_choicesorder'));
+    }
+
     #[\Override]
     public function compute_final_grade($responses, $totaltries)
     {
@@ -125,19 +142,10 @@ class qtype_drawlines_question extends question_graded_automatically {
 
     #[\Override]
     public function is_same_response(array $prevresponse, array $newresponse) {
-        foreach ($this->lines as $line) {
-            if (array_key_exists($this->choice($line->number), $prevresponse) &&
-                    array_key_exists($this->choice($line->number + 1), $newresponse)) {
-
-                // Return false if the responses are not the same.
-                if ($prevresponse[$this->choice($line->number)] !==
-                        $newresponse[$this->choice($line->number)]) {
-                    return false;
-                }
-                if ($prevresponse[$this->choice($line->number + 1)] !==
-                        $newresponse[$this->choice($line->number + 1)]) {
-                    return false;
-                }
+        foreach ($this->choicesorder as $key => $notused) {
+            $fieldname = $this->choice($key);
+            if (!question_utils::arrays_same_at_key_missing_is_blank($prevresponse, $newresponse, $fieldname)) {
+                return false;
             }
         }
         return true;
@@ -247,8 +255,6 @@ class qtype_drawlines_question extends question_graded_automatically {
         $fraction = $right / $total;
         return [$fraction, question_state::graded_state_for_fraction($fraction)];
     }
-
-
 
     #[\Override]
     public function classify_response(array $response) {
