@@ -184,19 +184,17 @@ class qtype_drawlines_edit_form extends question_edit_form {
         if (empty($question->lines)) {
             return $question;
         }
-        $lineindex = 0;
         foreach ($question->lines as $line) {
             // If the line type has not been set correctly is assumed that the line is empty.
             if (!in_array($line->type, array_keys(line::get_line_types()))) {
                 continue;
             }
-            $question->type[$lineindex] = $line->type;
-            $question->labelstart[$lineindex] = $line->labelstart;
-            $question->labelmiddle[$lineindex] = $line->labelmiddle;
-            $question->labelend[$lineindex] = $line->labelend;
-            $question->zonestart[$lineindex] = $line->zonestart;
-            $question->zoneend[$lineindex] = $line->zoneend;
-            $lineindex++;
+            $question->type[$line->number - 1] = $line->type;
+            $question->labelstart[$line->number - 1] = $line->labelstart;
+            $question->labelmiddle[$line->number - 1] = $line->labelmiddle;
+            $question->labelend[$line->number - 1] = $line->labelend;
+            $question->zonestart[$line->number - 1] = $line->zonestart;
+            $question->zoneend[$line->number - 1] = $line->zoneend;
         }
         return $question;
     }
