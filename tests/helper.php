@@ -91,8 +91,8 @@ class qtype_drawlines_test_helper extends question_test_helper {
                         'labelstart' => 'Start 1',
                         'labelmiddle' => 'Mid 1',
                         'labelend' => '',
-                        'zonestart' => '100,100;10',
-                        'zoneend' => '322,213;10',
+                        'zonestart' => '10,10;10',
+                        'zoneend' => '300,10;10',
                 ],
                 2 => (object)[
                         'number' => 2,
@@ -100,8 +100,8 @@ class qtype_drawlines_test_helper extends question_test_helper {
                         'labelstart' => 'Start 2',
                         'labelmiddle' => '',
                         'labelend' => '',
-                        'zonestart' => '100,100;10',
-                        'zoneend' => '322,213;10',
+                        'zonestart' => '10,200;10',
+                        'zoneend' => '300,200;10',
                 ],
         ];
         $qdata->hints = [
@@ -169,8 +169,8 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $fromform->labelstart = ['0' => 'Start 1', '1' => 'Start 2'];
         $fromform->labelmiddle = ['0' => 'Mid 1', '1' => 'Mid 2'];
         $fromform->labelend = ['0' => '', '1' => 'End 2'];
-        $fromform->zonestart = ['0' => '10,10;12', '1' => '10,100;12'];
-        $fromform->zoneend = ['0' => '300,10;12', '1' => '300,100;12'];
+        $fromform->zonestart = ['0' => '10,10;12', '1' => '300,10;12'];
+        $fromform->zoneend = ['0' => '10,200;12', '1' => '300,200;12'];
 
         test_question_maker::set_standard_combined_feedback_form_data($fromform);
 
@@ -237,21 +237,19 @@ class qtype_drawlines_test_helper extends question_test_helper {
                         'Start1', 'Mid1', 'End1', '10,10;12', '300,10;12'),
                 1 => new line(
                         11, $question->id, 2, line::TYPE_LINE_SEGMENT,
-                        'Start2', '', 'End2', '300,10;12', '300,100;12'),
+                        'Start2', '', 'End2', '10,200;12', '300,200;12'),
         ];
 
         $question->choices = [
-                'c1' => '10,10',
-                'c2' => '300,10',
-                'c3' => '300,10',
-                'c4' => '300,100',
+                'c0' => '10,10 300,10',
+                'c1' => '10,200 300,200',
         ];
 
         $question->places = [
                 '1' => new drop_zone(1, 'Start1', 10,10),
                 '2' => new drop_zone(1, 'End1', 300, 10),
-                '3' => new drop_zone(2, 'Start2', 300,10),
-                '4' => new drop_zone(2, 'End2', 300,100),
+                '3' => new drop_zone(2, 'Start2', 10,200),
+                '4' => new drop_zone(2, 'End2', 300,200),
         ];
         //$question->rightchoices = array(1 => 1, 2 => 2, 3 => 3);
 

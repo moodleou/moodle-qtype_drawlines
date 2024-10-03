@@ -85,7 +85,7 @@ class backup_and_restore_test extends \restore_date_testcase {
         $this->assertSame('Mid 1', $questionlines[0]->labelmiddle);
         $this->assertSame('', $questionlines[0]->labelend);
         $this->assertSame('10,10;12', $questionlines[0]->zonestart);
-        $this->assertSame('300,10;12', $questionlines[0]->zoneend);
+        $this->assertSame('10,200;12', $questionlines[0]->zoneend);
 
         $this->assertSame($newdrawlines->id, $questionlines[1]->questionid);
         $this->assertSame('2', $questionlines[1]->number);
@@ -93,7 +93,7 @@ class backup_and_restore_test extends \restore_date_testcase {
         $this->assertSame('Start 2', $questionlines[1]->labelstart);
         $this->assertSame('Mid 2', $questionlines[1]->labelmiddle);
         $this->assertSame('End 2', $questionlines[1]->labelend);
-        $this->assertSame('10,100;12', $questionlines[1]->zonestart);
-        $this->assertSame('300,100;12', $questionlines[1]->zoneend);
+        $this->assertSame('300,10;12', $questionlines[1]->zonestart);
+        $this->assertSame('300,200;12', $questionlines[1]->zoneend);
     }
 }

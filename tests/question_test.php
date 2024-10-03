@@ -39,13 +39,14 @@ require_once($CFG->dirroot . '/question/type/drawlines/question.php');
  */
 class question_test extends \basic_testcase {
 
-    public function test_get_expected_data() {
+    public function test_get_expected_data(): void {
         $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
         $question->start_attempt(new question_attempt_step(), 1);
 
         $expected = [
-                'c1' => PARAM_RAW, 'c2' => PARAM_RAW,
-                'c3' => PARAM_RAW, 'c4' => PARAM_RAW
+                'c0' => PARAM_NOTAGS,
+                'c1' => PARAM_NOTAGS
+                //'c3' => PARAM_RAW, 'c4' => PARAM_RAW
         ];
         $this->assertEquals($expected, $question->get_expected_data());
     }
@@ -55,8 +56,8 @@ class question_test extends \basic_testcase {
         $question->start_attempt(new question_attempt_step(), 1);
         $correctresponse =
                 [
-                        'c1' => '10,10', 'c2' => '300,10',
-                        'c3' => '300,10', 'c4' => '300,100',
+                        'c0' => '10,10 300,10',
+                        'c1' => '10,200 300,200',
                 ];
         $this->assertEquals($correctresponse, $question->get_correct_response());
     }
@@ -69,12 +70,15 @@ class question_test extends \basic_testcase {
         $this->assertFalse($question->is_complete_response([]));
         $this->assertTrue($question->is_complete_response(
                 [
-                        'c1' => '10,10', 'c2' => '200,10',
-                        'c3' => '10,100', 'c4' => '200,100'
+                        'c0' => '10,10 200,10',
+                        'c1' => '10,100 200,100'
                 ]
         ));
-        $this->assertFalse($question->is_complete_response(['c1' => '10,10', 'c2' => '300,10']));
-        $this->assertFalse($question->is_complete_response(['c3' => '10,100', 'c4' => '300,100']));
+        $this->assertFalse($question->is_complete_response(['c0' => '10,10 300,10', 'c1' => '']));
+        if ($question->grademethod === 'allnone') {
+            $this->assertFalse($question->is_complete_response(['c1' => '10,100 300,100']));
+        }
+        $this->assertTrue($question->is_complete_response(['c0' => '10,10 300,10', 'c1' => '10,100 300,100']));
     }
 
     public function test_is_gradable_response(): void {
@@ -83,14 +87,16 @@ class question_test extends \basic_testcase {
         $correctresponse = $question->get_correct_response();
         $this->assertTrue($question->is_gradable_response($correctresponse));
         $this->assertFalse($question->is_gradable_response([]));
-        $this->assertTrue($question->is_gradable_response(
-                [
-                        'c1' => '10,10', 'c2' => '300,10',
-                        'c3' => '10,100', 'c4' => '200,100'
-                ]
-        ));
-        $this->assertFalse($question->is_gradable_response(['c1' => '10,10', 'c2' => '300,10']));
-        $this->assertFalse($question->is_gradable_response(['c3' => '10,100', 'c4' => '300,100']));
+        $this->assertTrue($question->is_gradable_response(['c0' => '10,10 300,10', 'c1' => '10,100 200,100']));
+        if ($question->grademethod === 'partial') {
+            $this->assertTrue($question->is_gradable_response(['c0' => '10,10 300,10']));
+            $this->asserttrue($question->is_gradable_response(['c1' => '10,100 300,100']));
+        }
+        $question->grademethod = 'allnone';
+        if ($question->grademethod === 'allnone') {
+            $this->assertTrue($question->is_gradable_response(['c0' => '10,10 300,10']));
+            $this->asserttrue($question->is_gradable_response(['c1' => '10,100 300,100']));
+        }
     }
 
     public function test_is_same_response(): void {
@@ -98,17 +104,17 @@ class question_test extends \basic_testcase {
         $question->start_attempt(new question_attempt_step(), 1);
 
         $response = $question->get_correct_response();
-        $expected = ['c1' => '10,10', 'c2' => '300,10', 'c3' => '300,10', 'c4' => '300,100'];
+        $expected = ['c0' => '10,10 300,10', 'c1' => '10,200 300,200'];
         $this->assertEquals($expected, $response);
 
         $this->assertTrue($question->is_same_response(
-                ['c1' => '100,100', 'c2' => '100,200', 'c3' => '200,100', 'c4' => '200,200'],
-                ['c1' => '100,100', 'c2' => '100,200', 'c3' => '200,100', 'c4' => '200,200']
+                ['c0' => '100,100 100,200', 'c1' => '200,100 200,200'],
+                ['c0' => '100,100 100,200', 'c1' => '200,100 200,200']
         ));
 
         $this->assertFalse($question->is_same_response(
-                ['c1' => '100,100', 'c2' => '100,200', 'c3' => '200,100', 'c4' => '200,200'],
-                ['c1' => '10,100', 'c2' => '100,200', 'c3' => '200,100', 'c4' => '200,200']
+                ['c0' => '100,100 100,200', 'c1' => '200,100 200,200'],
+                ['c0' => '10,100 100,200', 'c1' => '200,100 200,200']
         ));
      }
 
@@ -122,22 +128,84 @@ class question_test extends \basic_testcase {
         $this->assertEquals($expected, $summary);
     }
 
-    public function test_summarise_response() {
+    public function test_summarise_response(): void {
+        $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
+        $question->start_attempt(new question_attempt_step(), 1);
+
+        // Correct responses with full mark for both Lines (mark = 1).
+        $correctresponse = $question->get_correct_response();
+        $expected = 'Line 1: 10,10 300,10, Line 2: 10,200 300,200';
+        $actual = $question->summarise_response($correctresponse);
+        $this->assertEquals($expected, $actual);
+
+        // Partially correct responses with full makr for Line 1 and half of amrk for Line 2 (mark = 0.75).
+        $expected = 'Line 1: 10,10 300,10, Line 2: 10,200 300,123';
+        $actual = $question->summarise_response(['c0' => '10,10 300,10', 'c1' => '10,200 300,123']);
+        $this->assertEquals($expected, $actual);
+
+        // Partially correct responses with full makr for Line 1 and no amrk for Line 2 (mark = 0.5).
+        $expected = 'Line 1: 10,10 300,10, Line 2: 10,123 300,123';
+        $actual = $question->summarise_response(['c0' => '10,10 300,10', 'c1' => '10,123 300,123']);
+        $this->assertEquals($expected, $actual);
     }
 
-    public function test_get_random_guess_score() {
+
+    public function test_get_random_guess_score(): void {
         $question = \test_question_maker::make_question('drawlines');
         $this->assertEquals(null, $question->get_random_guess_score());
     }
 
-    public function test_get_num_parts_right() {
+    public function test_get_num_parts_right(): void {
         $question = \test_question_maker::make_question('drawlines');
         $question->start_attempt(new question_attempt_step(), 1);
 
-        $response = $question->get_correct_response();
-        $this->assertEquals(4, $question->get_num_parts_right($response));
+        $correctresponse = $question->get_correct_response();
 
-        $response = ['c1' => '10,10', 'c2' => '200,10', 'c3' => '10,100', 'c4' => '300,100'];
-        $this->assertEquals(2, $question->get_num_parts_right($response));
+        [$numpartright, $total] = $question->get_num_parts_right($correctresponse);
+        $this->assertEquals(4, $numpartright);
+        $this->assertEquals(4, $total);
+
+        $response = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123'];
+        [$numpartright, $total] = $question->get_num_parts_right($response);
+        $this->assertEquals(2, $numpartright);
+        $this->assertEquals(4, $total);
+
+        $response = ['c0' => '10,10 300,10', 'c1' => '10,200 300,123'];
+        [$numpartright, $total] = $question->get_num_parts_right($response);
+        $this->assertEquals(3, $numpartright);
+        $this->assertEquals(4, $total);
+    }
+
+    public function test_compute_final_grade(): void {
+        $question = \test_question_maker::make_question('drawlines');
+        $question->start_attempt(new question_attempt_step(), 1);
+        // TODO: To incorporate the question penalty for interactive with multiple tries behaviour.
+
+        $totaltries = 1;
+
+        $response = ['c0' => '100,10 300,100', 'c1' => '10,123 300,123'];
+        $responses[] = $response;
+        $fraction = $question->compute_final_grade($responses, $totaltries);
+        $this->assertEquals($fraction, 0 / $totaltries, 'Incorrect responses should return fraction of 0');
+
+        $responses = null;
+        $response = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123'];
+        $responses[] = $response;
+        $fraction = $question->compute_final_grade($responses, $totaltries);
+        $this->assertEquals($fraction, 0.5 / $totaltries,
+                'Partially correct responses(line 1 is correct and line 2 is incorrect) should return fraction of 0.5');
+
+        $responses = null;
+        $response = ['c0' => '10,10 300,10', 'c1' => '10,200 300,123'];
+        $responses[] = $response;
+        $fraction = $question->compute_final_grade($responses, $totaltries);
+        $this->assertEquals($fraction, 0.75 / $totaltries,
+                'Partially correct responses(line 1 is correct and line 2 is half-correct) should return fraction of 0.75');
+
+        $responses = null;
+        $correctresponse = $question->get_correct_response();
+        $responses[] = $correctresponse;
+        $fraction = $question->compute_final_grade($responses, $totaltries);
+        $this->assertEquals($fraction, 1 / $totaltries, 'All correct responses should return fraction of 1');
     }
 }

@@ -48,6 +48,11 @@ class line {
     /** @var string validate-zone-coordinates for start and the end of the line */
     const VALIDATE_ZONE_COORDINATES = "/^([^-][0-9]+),([^-][0-9]+);([^-][0-9]+)$/";
 
+    /** @var string validate-response-coordinates for a line
+     * as the start(scx,scy) and the end(ecx,ecy) coordinates of the line in 'scx,scy ecx,ecy' format.
+     */
+    const VALIDATE_RESPONSE_COORDINATES = "/^([^-][0-9]+),([^-][0-9]+)\b([^-][0-9]+),([^-][0-9]+)$/";
+
     /** @var int The line id. */
     public $id;
 
@@ -209,6 +214,32 @@ class line {
         // Match found.
         return true;
     }
+
+    /**
+     * Validate the response coordinates for Start or End zone of a line.
+     * The correct format is 'scx,scy ecx,ecy' where scx,scy are the coordinates for
+     * the start zone and ecx,ecy are the end zone coordinates of a line respectively.
+     *
+     * @param string $linecoordinates the coordinates for start and end of the line in 'scx,scy ecx,ecy' format.
+     * @return bool
+     */
+    public static function are_response_coordinates_valid(string $linecoordinates): bool {
+        // If the line-coordinates is empty return false.
+        if (trim($linecoordinates) === '') {
+            return false;
+        }
+        preg_match_all(self::VALIDATE_RESPONSE_COORDINATES, $linecoordinates, $matches, PREG_SPLIT_NO_EMPTY);
+
+        // If there is no match return false.
+        foreach ($matches as $i => $match) {
+            if (empty($match)) {
+                return false;
+            }
+        }
+        // Match found.
+        return true;
+    }
+
 
     public static function make_drop_zone(int $linenumber, string $label, string $zone): drop_zone {
         [$xleft, $ytop] = self::parse_into_cx_cy_with_or_without_radius($zone);

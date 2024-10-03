@@ -70,13 +70,26 @@ class qtype_drawlines_question extends question_graded_automatically {
         $this->choicesorder = explode(',', $step->get_qt_var('_choicesorder'));
     }
 
-    #[\Override]
-    public function compute_final_grade($responses, $totaltries)
-    {
+    /**
+     * Work out a final grade for this attempt, taking into account
+     * all the tries the student made and return the grade value.
+     *
+     * @param array $responses the response for each try. Each element of this
+     * array is a response array, as would be passed to {@link grade_response()}.
+     * There may be between 1 and $totaltries responses.
+     *
+     * @param int $totaltries The maximum number of tries allowed.
+     *
+     * @return float the fraction that should be awarded for this
+     * sequence of response.
+     */
+    public function compute_final_grade(array $responses, int $totaltries): float {
+        // TODO: To incorporate the question penalty for interactive with multiple tries behaviour.
+
         $grade_value = 0;
         foreach($responses as $response) {
-            $x = $this->grade_response($response);
-            $grade_value += $x[0];
+            [$fraction, $state] = $this->grade_response($response);
+            $grade_value += $fraction;
         }
         return $grade_value;
     }
@@ -115,24 +128,23 @@ class qtype_drawlines_question extends question_graded_automatically {
         return $expecteddata;
     }
 
-    //public function get_right_choice_for($placeno) {
-    //    $place = $this->places[$placeno];
-    //    foreach ($this->choiceorder[$place->group] as $choicekey => $choiceid) {
-    //        if ($this->rightchoices[$placeno] == $choiceid) {
-    //            return $choicekey;
-    //        }
-    //    }
-    //}
-    //
-
     #[\Override]
     public function is_complete_response(array $response): bool {
+        // If there is no response return false.
+        if (empty($response)) {
+            return false;
+        }
+        // If there is no response for each line return false for all-or-nothing grading method.
+        if ((count($response) !== count($this->lines)) && ($this->gradingmethod === 'allnone')) {
+            return false;
+        }
         foreach ($this->lines as $key => $line) {
-            if (isset($response[$this->choice($key)])) {
-                return true;
+            if (isset($response[$this->choice($key)]) &&
+                    !line::are_response_coordinates_valid($response[$this->choice($key)])) {
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     #[\Override]
@@ -215,39 +227,27 @@ class qtype_drawlines_question extends question_graded_automatically {
     }
 
     #[\Override]
-    public function get_num_parts_right(array $response) {
-        $numpartright = 0;
+    public function get_num_parts_right(array $response): array {
+        $numpartrightstart = 0;
+        $numpartrightend = 0;
+        if(!$response) {
+            return [0, 0];
+        }
         foreach($this->lines as $key => $line) {
             if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
                 $coords = explode(' ', $response[$this->choice($key)]);
                 if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart)) {
-                    $numpartright++;
+                    $numpartrightstart++;
                 }
                 if (line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
-                    $numpartright++;
+                    $numpartrightend++;
                 }
             }
         }
+        $numpartright = $numpartrightstart + $numpartrightend;
         $total = count($this->lines) * 2;
         return [$numpartright, $total];
     }
-
-    public function xxxget_num_parts_right(array $response) {
-        $numright = 0;
-        foreach ($this->stemorder as $key => $stemid) {
-            $fieldname = $this->field($key);
-            if (!array_key_exists($fieldname, $response)) {
-                continue;
-            }
-
-            $choice = $response[$fieldname];
-            if ($choice && $this->choiceorder[$choice] == $this->right[$stemid]) {
-                $numright += 1;
-            }
-        }
-        return array($numright, count($this->stemorder));
-    }
-
 
     #[\Override]
     public function grade_response(array $response) {
@@ -258,8 +258,6 @@ class qtype_drawlines_question extends question_graded_automatically {
 
     #[\Override]
     public function classify_response(array $response) {
-        //print_object($response);
-        //print_object('classify_response ----------------');
         $parts = [];
         //$hits = $this->choose_hits($response);
         foreach ($this->places as $placeno => $place) {
@@ -333,49 +331,4 @@ class qtype_drawlines_question extends question_graded_automatically {
     public function get_random_guess_score() {
         return null;
     }
-
-    /**
-     * Choose hits to maximize grade where drop targets may have more than one hit and drop targets
-     * can overlap.
-     *
-     * @param array $response
-     * @return array chosen hits
-     */
-    //protected function choose_hits(array $response) {
-    //    $allhits = $this->get_all_hits($response);
-    //    $chosenhits = array();
-    //    foreach ($allhits as $placeno => $hits) {
-    //        foreach ($hits as $itemno => $hit) {
-    //            $choice = $this->get_right_choice_for($placeno);
-    //            $choiceitem = "$choice $itemno";
-    //            if (!in_array($choiceitem, $chosenhits)) {
-    //                $chosenhits[$placeno] = $choiceitem;
-    //                break;
-    //            }
-    //        }
-    //    }
-    //    return $chosenhits;
-    //}
-
-    //public function get_drop_zones_without_hit(array $response) {
-    //    $hits = $this->choose_hits($response);
-    //
-    //    $nohits = array();
-    //    foreach ($this->places as $placeno => $place) {
-    //        $choice = $this->get_right_choice_for($placeno);
-    //        if (!isset($hits[$placeno])) {
-    //            $nohit = new stdClass();
-    //            $nohit->coords = $place->coords;
-    //            $nohit->shape = $place->shape->name();
-    //            $nohit->markertext = $this->choices[1][$this->choiceorder[1][$choice]]->text;
-    //            $nohits[] = $nohit;
-    //        }
-    //    }
-    //    return $nohits;
-    //}
-
-    //protected function are_coords_in_correct_zone(int $questionid, int $linenumber, string $currentcoords, string $expectedcoords) {
-    //
-    //    return true;
-    //}
 }
