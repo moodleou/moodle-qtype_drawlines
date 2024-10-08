@@ -502,12 +502,12 @@ define([
     };
 
     /**
-     * Start responding to dragging the move handle.
+     * Start responding to dragging the move handle attached to the line ends (circles).
      * @param {Event} e Event object
-     * @param {String} handleIndex
+     * @param {String} whichHandle which circle handle was moved, i.e., startcircle or endcircle.
      * @param {int} dropzoneNo
      */
-    DrawlinesQuestion.prototype.handleMove = function(e, handleIndex, dropzoneNo) {
+    DrawlinesQuestion.prototype.handleCircleMove = function(e, whichHandle, dropzoneNo) {
         var info = dragDrop.prepare(e);
         if (!info.start) {
             return;
@@ -521,7 +521,7 @@ define([
             maxY = svg.height.baseVal.value;
 
         dragDrop.start(e, $(dragProxy), function(pageX, pageY) {
-            movingDropZone.lines[dropzoneNo].move(handleIndex,
+            movingDropZone.lines[dropzoneNo].move(whichHandle,
                 parseInt(pageX) - parseInt(lastX), parseInt(pageY) - parseInt(lastY), parseInt(maxX), parseInt(maxY));
             lastX = pageX;
             lastY = pageY;
@@ -534,11 +534,11 @@ define([
 
 
     /**
-     * Start responding to dragging the move handle.
+     * Start responding to dragging the move handle attached to the line.
      * @param {Event} e Event object
      * @param {int} dropzoneNo
      */
-    DrawlinesQuestion.prototype.handleDragMove = function(e, dropzoneNo) {
+    DrawlinesQuestion.prototype.handleLineMove = function(e, dropzoneNo) {
         var info = dragDrop.prepare(e);
         if (!info.start) {
             return;
@@ -547,10 +547,8 @@ define([
             lastX = info.x,
             lastY = info.y,
             dragProxy = this.makeDragProxy(info.x, info.y),
-            svgDragsHome = document.querySelector('svg.dragshome'),
-            svgDropZones = document.querySelector('svg.dropzones'),
-            maxX = svgDragsHome.width.baseVal.value,
-            maxY = svgDragsHome.height.baseVal.value,
+            maxX,
+            maxY,
             whichSVG = "",
             bgImage = document.querySelector('img.dropbackground'),
             isMoveFromDragsToDropzones,
@@ -564,31 +562,29 @@ define([
         dragDrop.start(e, $(dragProxy), function(pageX, pageY) {
 
             // Check if the drags need to be moved from one svg to another.
-            // If true, the drag is moved from draghomes SVG to dropZone SVG.
             var closeTo = selectedElement.closest('svg');
             svgClass = closeTo.getAttribute('class');
 
             // Moving the drags between the SVG's.
-            isMoveFromDragsToDropzones = (svgClass === "dragshome") &&
-                (movingDrag.lines[dropzoneNo].centre1.y === 10);
+            // If true, the drag is moved from draghomes SVG to dropZone SVG.
+            isMoveFromDragsToDropzones = (svgClass === "dragshome");
+
+            // If true, the drag is moved from dropZone SVG to draghomes SVG.
             isMoveFromDropzonesToDrags = (svgClass === 'dropzones') &&
                 (movingDrag.lines[dropzoneNo].centre1.y > (bgImage.height - 20));
             if (isMoveFromDragsToDropzones || isMoveFromDropzonesToDrags) {
-                movingDrag.lines[dropzoneNo].addToDropZone(svgDragsHome, svgDropZones, selectedElement,
+                movingDrag.lines[dropzoneNo].addToDropZone('mouse', selectedElement,
                     dropX, dropY);
             }
 
             // Drag the lines within the SVG
+            // Get the dimensions of the selected element's svg.
             closeTo = selectedElement.closest('svg');
-            if (closeTo.getAttribute('class') === 'dragshome') {
-                maxX = svgDragsHome.width.baseVal.value;
-                maxY = svgDragsHome.height.baseVal.value;
-                whichSVG = "DragsSVG";
-            } else {
-                maxX = svgDropZones.width.baseVal.value;
-                maxY = svgDropZones.height.baseVal.value;
-                whichSVG = "DropZonesSVG";
-            }
+            var dimensions = movingDrag.getSvgDimensionsByClass(closeTo, closeTo.getAttribute('class'));
+            maxX = dimensions.maxX;
+            maxY = dimensions.maxY;
+            whichSVG = dimensions.whichSVG;
+
             movingDrag.lines[dropzoneNo].moveDrags(
                 parseInt(pageX) - parseInt(lastX), parseInt(pageY) - parseInt(lastY),
                 parseInt(maxX), parseInt(maxY), whichSVG);
@@ -601,7 +597,6 @@ define([
             document.body.removeChild(dragProxy);
         });
     };
-
 
     /**
      * Make an invisible drag proxy.
@@ -673,62 +668,99 @@ define([
     /**
      * Handle key down / press events on markers.
      * @param {KeyboardEvent} e
+     * @param {SVGElement} drag SVG element being dragged.
+     * @param {int} dropzoneNo
+     * @param {String} activeElement The string indicating the element being dragged.
      */
-    DrawlinesQuestion.prototype.handleKeyPress = function(e) {
-        var drag = $(e.target).closest('.marker'),
-            point = new Lines.Point(drag.offset().left, drag.offset().top),
-            choiceNo = this.getChoiceNoFromElement(drag);
+    DrawlinesQuestion.prototype.handleKeyPress = function(e, drag, dropzoneNo, activeElement) {
 
-        switch (e.keyCode) {
-            case keys.arrowLeft:
-            case 65: // A.
-                point.x -= 1;
+        var x = 0,
+            y = 0,
+            dropzoneElement,
+            question = questionManager.getQuestionForEvent(e);
+
+        dropzoneElement = event.target.closest('g');
+
+        switch (e.code) {
+            case 'ArrowLeft':
+            case 'KeyA': // A.
+                x = -1;
                 break;
-            case keys.arrowRight:
-            case 68: // D.
-                point.x += 1;
+            case 'ArrowRight':
+            case 'KeyD': // D.
+                x = 1;
                 break;
-            case keys.arrowDown:
-            case 83: // S.
-                point.y += 1;
+            case 'ArrowDown':
+            case 'KeyS': // S.
+                y = 1;
                 break;
-            case keys.arrowUp:
-            case 87: // W.
-                point.y -= 1;
+            case 'ArrowUp':
+            case 'KeyW': // W.
+                y = -1;
                 break;
-            case keys.space:
-            case keys.escape:
-                point = null;
+            case 'Space':
+            case 'Escape':
                 break;
             default:
                 return; // Ingore other keys.
         }
         e.preventDefault();
 
-        if (point !== null) {
-            point = this.constrainToBgImg(point);
-            drag.offset({'left': point.x, 'top': point.y});
-            drag.data('pagex', drag.offset().left).data('pagey', drag.offset().top);
-            var dragXY = this.convertToBgImgXY(new Lines.Point(drag.data('pagex'), drag.data('pagey')));
-            drag.data('originX', dragXY.x / this.bgRatio()).data('originY', dragXY.y / this.bgRatio());
-            if (this.coordsInBgImg(new Lines.Point(drag.offset().left, drag.offset().top))) {
-                if (drag.hasClass('unneeded')) {
-                    this.sendDragToDrop(drag, true);
-                    var hiddenDrag = this.getDragClone(drag);
-                    if (hiddenDrag.length) {
-                        hiddenDrag.addClass('active');
-                    }
-                    this.cloneDragIfNeeded(drag);
-                }
-            }
-        } else {
-            drag.css('left', '').css('top', '');
-            drag.data('pagex', drag.offset().left).data('pagey', drag.offset().top);
-            this.sendDragHome(drag);
-            this.removeDragIfNeeded(drag);
+        // Moving the drags between the SVG's.
+        var closeTo = drag.closest('svg');
+        var svgClass = closeTo.getAttribute('class');
+        var maxX,
+            maxY,
+            whichSVG;
+        var bgImage = document.querySelector('img.dropbackground');
+        var isMoveFromDragsToDropzones = (svgClass === "dragshome");
+        var isMoveFromDropzonesToDrags = (svgClass === 'dropzones') &&
+            (question.lines[dropzoneNo].centre1.y > (bgImage.height - 20));
+
+        if (isMoveFromDragsToDropzones) {
+            question.lines[dropzoneNo].addToDropZone('keyboard', dropzoneElement,
+                null, null, 'DragsSVG');
+        } else if (isMoveFromDropzonesToDrags) {
+            question.lines[dropzoneNo].addToDropZone('keyboard', dropzoneElement,
+                null, null, 'DropZonesSVG');
         }
+
+        // Get the dimensions of the selected element's svg.
+        closeTo = drag.closest('svg');
+        var dimensions = question.getSvgDimensionsByClass(closeTo, closeTo.getAttribute('class'));
+        maxX = dimensions.maxX;
+        maxY = dimensions.maxY;
+        whichSVG = dimensions.whichSVG;
+
+        if (activeElement === 'line') {
+            // Move the entire line when the focus is on it.
+            question.lines[dropzoneNo].moveDrags(x, y, parseInt(maxX), parseInt(maxY), whichSVG);
+        } else {
+            // Move the line endpoints.
+            question.lines[dropzoneNo].move(activeElement, x, y, parseInt(maxX), parseInt(maxY));
+        }
+        question.updateSvgEl(dropzoneNo);
+        this.saveCoordsForChoice(dropzoneNo);
         drag.focus();
-        this.saveCoordsForChoice(choiceNo);
+    };
+
+    /**
+     * Handle key down / press events on markers.
+     * @param {SVGElement} dragElement SVG element being dragged.
+     * @param {String}  className
+     * @returns {Object|null} An object containing maxX, maxY, and whichSVG if an SVG is found; otherwise, null.
+     // * @param {SVGElement} svgelement The SVG to which the dragElement belongs.
+     */
+    DrawlinesQuestion.prototype.getSvgDimensionsByClass = function(dragElement, className) {
+        const closeTo = dragElement.closest('svg');
+        if (closeTo && closeTo.classList.contains(className)) {
+            return {
+                maxX: closeTo.width.baseVal.value,
+                maxY: closeTo.height.baseVal.value,
+                whichSVG: className === 'dragshome' ? 'DragsSVG' : 'DropZonesSVG'
+            };
+        }
+        return null;
     };
 
     /**
@@ -1142,13 +1174,23 @@ define([
                     // questionManager.addEventHandlersToMarker($(questionContainer).find('div.droparea .marker'));
                     // Add event listeners to the 'previewArea'.
 
+                    // For dropzone SVG.
                     var dropArea = document.querySelector('.droparea');
-                    dropArea.addEventListener('mousedown', questionManager.handleEventMove);
-                    dropArea.addEventListener('touchstart', questionManager.handleEventMove);
+                    // Add event listener for mousedown and touchstart events
+                    dropArea.addEventListener('mousedown', questionManager.handleDropZoneEventMove);
+                    dropArea.addEventListener('touchstart', questionManager.handleDropZoneEventMove);
+                    // Add event listener for keydown and keypress events
+                    dropArea.addEventListener('keydown', questionManager.handleKeyPress);
+                    dropArea.addEventListener('keypress', questionManager.handleKeyPress);
 
+                    // For draghomes SVG.
                     var drags = document.querySelector('.draghomes');
-                    drags.addEventListener('mousedown', questionManager.handleEventDragMove);
-                    drags.addEventListener('touchstart', questionManager.handleEventDragMove);
+                    // Add event listener for mousedown and touchstart events
+                    drags.addEventListener('mousedown', questionManager.handleDragHomeEventMove);
+                    drags.addEventListener('touchstart', questionManager.handleDragHomeEventMove);
+                    // Add event listener for keydown and keypress events
+                    drags.addEventListener('keydown', questionManager.handleKeyPress);
+                    drags.addEventListener('keypress', questionManager.handleKeyPress);
                 }
             }
         },
@@ -1174,33 +1216,34 @@ define([
         //     }, 100);
         // },
 
-        handleEventMove: function(event) {
-            var dropzoneElement, dropzoneNo, handleIndex;
+        handleDropZoneEventMove: function(event) {
+            var dropzoneElement, dropzoneNo;
             var question = questionManager.getQuestionForEvent(event);
             if (event.target.closest('.dropzone .startcircle.shape')) {
+                // Dragging the move handle circle attached to the start of the line.
                 dropzoneElement = event.target.closest('g');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
-                handleIndex = "0";
-                question.handleMove(event, handleIndex, dropzoneNo);
+                question.handleCircleMove(event, 'startcircle', dropzoneNo);
             } else if (event.target.closest('.dropzone .endcircle.shape')) {
+                // Dragging the move handle circle attached to the end of the line.
                 dropzoneElement = event.target.closest('g');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
-                handleIndex = "1";
-                question.handleMove(event, handleIndex, dropzoneNo);
+                question.handleCircleMove(event, 'endcircle', dropzoneNo);
             } else if (event.target.closest('polyline.shape')) {
+                // Dragging the entire line.
                 dropzoneElement = event.target.closest('g');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
-                question.handleDragMove(event, dropzoneNo);
+                question.handleLineMove(event, dropzoneNo);
             }
         },
 
-        handleEventDragMove: function(event) {
+        handleDragHomeEventMove: function(event) {
             var dropzoneElement, dropzoneNo;
             var question = questionManager.getQuestionForEvent(event);
             if (event.target.closest('.dropzone polyline.shape')) {
                 dropzoneElement = event.target.closest('g');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
-                question.handleDragMove(event, dropzoneNo);
+                question.handleLineMove(event, dropzoneNo);
                 question.saveCoordsForChoice(dropzoneNo);
             }
         },
@@ -1266,8 +1309,25 @@ define([
          */
         handleKeyPress: function(e) {
             var question = questionManager.getQuestionForEvent(e);
-            if (question) {
-                question.handleKeyPress(e);
+            var dropzoneElement, dropzoneNo, drag, activeElement;
+            if (e.target.closest('.dropzone circle.startcircle')) {
+                dropzoneElement = e.target.closest('.dropzone');
+                dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                drag = e.target.closest('.dropzone circle.startcircle');
+                activeElement = 'startcircle';
+            } else if (e.target.closest('.dropzone circle.endcircle')) {
+                drag = e.target.closest('.dropzone circle.endcircle');
+                dropzoneElement = e.target.closest('.dropzone');
+                dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                activeElement = 'endcircle';
+            } else if (e.target.closest('.dropzone polyline.shape')) {
+                drag = e.target.closest('.dropzone polyline.shape');
+                dropzoneElement = e.target.closest('.dropzone');
+                dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                activeElement = 'line';
+            }
+            if (question && dropzoneElement) {
+                question.handleKeyPress(e, drag, dropzoneNo, activeElement);
             }
         },
 

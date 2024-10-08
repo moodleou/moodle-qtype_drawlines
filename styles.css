@@ -55,6 +55,13 @@ form.mform fieldset#id_previewareaheader .dropbackground {
     stroke-width: 1;
     cursor: move;
 }
+.que.drawlines .dropzone .startcircle:focus,
+.que.drawlines .dropzone .endcircle:focus {
+    outline: 3px solid orange;
+}
+.que.drawlines .dropzone polyline:focus {
+    outline: 3px solid orange;
+}
 
 .que.drawlines .dropzone .handlestart.move,
 .que.drawlines .dropzone .handleend.move {

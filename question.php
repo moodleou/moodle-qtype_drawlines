@@ -149,7 +149,12 @@ class qtype_drawlines_question extends question_graded_automatically {
 
     #[\Override]
     public function is_gradable_response(array $response) {
-        return $this->is_complete_response($response);
+        foreach ($this->lines as $key => $line) {
+            if (isset($response[$this->choice($key)]) && $response[$this->choice($key)] != '') {
+                return true;
+            }
+        }
+        return false;
     }
 
     #[\Override]

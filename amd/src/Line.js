@@ -282,12 +282,16 @@ define(function() {
     /**
      * Parse the coordinates from the string representation.
      *
-     * @param {String} startcoordinates "x1,y1".
-     * @param {String} endcoordinates "x1,y1".
+     * @param {String} startcoordinates "x1,y1;radius".
+     * @param {String} endcoordinates "x1,y1;radius".
      * @param {float} ratio .
-     * @return {Point} the point. Throws an exception if input is not valid.
+     * @return {boolean} True if the coordinates are parsed. False if the start and end coordinates are empty.
+*    *                  Throws an exception if input point is not valid.
      */
     Line.prototype.parse = function(startcoordinates, endcoordinates, ratio) {
+        if (startcoordinates === '' || endcoordinates === '') {
+            return false;
+        }
         var startcoordinatesbits = startcoordinates.split(';');
         var endcoordinatesbits = endcoordinates.split(';');
         this.centre1 = Point.parse(startcoordinatesbits[0]);
@@ -309,14 +313,14 @@ define(function() {
     /**
      * Move the entire shape by this offset.
      *
-     * @param {String} handleIndex which handle was moved.
+     * @param {String} whichHandle which circle handle was moved, i.e., startcircle or endcircle.
      * @param {int} dx x offset.
      * @param {int} dy y offset.
      * @param {int} maxX ensure that after editing, the shape lies between 0 and maxX on the x-axis.
      * @param {int} maxY ensure that after editing, the shape lies between 0 and maxX on the y-axis.
      */
-    Line.prototype.move = function(handleIndex, dx, dy, maxX, maxY) {
-        if (handleIndex === '0') {
+    Line.prototype.move = function(whichHandle, dx, dy, maxX, maxY) {
+        if (whichHandle === 'startcircle') {
             this.centre1.move(dx, dy);
             if (this.centre1.x < this.startRadius) {
                 this.centre1.x = this.startRadius;
@@ -356,7 +360,7 @@ define(function() {
     };
 
     /**
-     * Move the entire line by this offset.
+     * Move the line end points by this offset.
      *
      * @param {int} dx x offset.
      * @param {int} dy y offset.
@@ -414,28 +418,36 @@ define(function() {
 
     /**
      * Move the g element between the dropzones and dragHomes.
-     * @param {SVGElement} svgDragsHome Svg element containing the drags.
-     * @param {SVGElement} svgDropZones Svg element containing the dropZone.
+     * @param {String} eventType Whether it's a mouse event or a keyboard event.
      * @param {SVGElement} selectedElement The element selected for dragging.
-     * @param {int} dropX
-     * @param {int} dropY
+     * @param {int|null} dropX Used by mouse events to calculate the svg to which it belongs.
+     * @param {int|null} dropY
+     * @param {String|null} whichSVG
      */
-    Line.prototype.addToDropZone = function(svgDragsHome, svgDropZones, selectedElement, dropX, dropY) {
-        var maxY = 0;
-        var dropzoneNo = selectedElement.getAttribute('data-dropzone-no');
-        var classattributes = '';
-        if (this.isInsideSVG(svgDragsHome, dropX, dropY)) {
-            // Append the element to the second SVG
-            // Get the height of the dropZone SVG.
+    Line.prototype.addToDropZone = function(eventType, selectedElement, dropX, dropY, whichSVG) {
+        var maxY = 0,
+            dropzoneNo = selectedElement.getAttribute('data-dropzone-no'),
+            classattributes = '',
+            dropZone = false;
+        var svgDragsHome = document.querySelector('svg.dragshome');
+        var svgDropZones = document.querySelector('svg.dropzones');
+        if (eventType === 'mouse') {
+            dropZone = this.isInsideSVG(svgDragsHome, dropX, dropY);
+        } else {
+            dropZone = (whichSVG === 'DragsSVG');
+        }
+        if (dropZone) {
+            // Append the element to the dropzone SVG.
+            // Get the height of the dropZone SVG, to decide the position to where to drop the line.
             maxY = svgDropZones.height.baseVal.value;
             svgDropZones.appendChild(selectedElement);
             selectedElement.getAttribute('data-dropzone-no');
 
+            // Set tabindex to add keyevents to the circle movehandles.
+            selectedElement.childNodes[1].setAttribute('tabindex', '0');
+            selectedElement.childNodes[2].setAttribute('tabindex', '0');
+
             // Caluculate the position of line drop.
-            // this.centre1.y = maxY - (2 * this.startRadius) - (dropzoneNo * 50);
-            // this.y1 = maxY - (2 * this.startRadius) - (dropzoneNo * 50);
-            // this.centre2.y = maxY - (2 * this.endRadius) - (dropzoneNo * 50);
-            // this.y2 = maxY - (2 * this.endRadius) - (dropzoneNo * 50);
             this.centre1.y = maxY - (2 * this.startRadius);
             this.y1 = maxY - (2 * this.startRadius);
             this.centre2.y = maxY - (2 * this.endRadius);
@@ -446,8 +458,8 @@ define(function() {
             classattributes = classattributes.replace('inactive', 'placed');
             selectedElement.setAttribute('class', classattributes);
 
-        } else if (this.isInsideSVG(svgDropZones, dropX, dropY)) {
-            // Append the element to the first SVG (to ensure it stays in the same SVG if dropped there)
+        } else {
+            // Append the element to the draghmes SVG.
             svgDragsHome.appendChild(selectedElement);
 
             // We want to drop the lines from the top, depending on the line number.
@@ -463,6 +475,9 @@ define(function() {
             classattributes = selectedElement.getAttribute('class');
             classattributes = classattributes.replace('placed', 'inactive');
             selectedElement.setAttribute('class', classattributes);
+            // Set tabindex = -1, so the circle movehandles aren't focusable when in draghomes svg.
+            selectedElement.childNodes[1].setAttribute('tabindex', '-1');
+            selectedElement.childNodes[2].setAttribute('tabindex', '-1');
         }
         return '';
     };
@@ -583,9 +598,13 @@ define(function() {
      */
     function createSvgShapeGroup(svg, tagName) {
         var svgEl = createSvgElement(svg, 'g');
-        createSvgElement(svgEl, tagName).setAttribute('class', 'shape');
-        createSvgElement(svgEl, 'circle').setAttribute('class', 'startcircle shape');
-        createSvgElement(svgEl, 'circle').setAttribute('class', 'endcircle shape');
+        var lineEl = createSvgElement(svgEl, tagName);
+        lineEl.setAttribute('class', 'shape');
+        lineEl.setAttribute('tabindex', '0');
+        var startcircleEl = createSvgElement(svgEl, 'circle');
+        startcircleEl.setAttribute('class', 'startcircle shape');
+        var endcirleEl = createSvgElement(svgEl, 'circle');
+        endcirleEl.setAttribute('class', 'endcircle shape');
         createSvgElement(svgEl, 'text').setAttribute('class', 'labelstart shapeLabel');
         createSvgElement(svgEl, 'text').setAttribute('class', 'labelend shapeLabel');
         return svgEl;
