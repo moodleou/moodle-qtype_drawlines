@@ -261,6 +261,24 @@ class qtype_drawlines_question extends question_graded_automatically {
         return [$fraction, question_state::graded_state_for_fraction($fraction)];
     }
 
+    /**
+     * Compute the distance from the point ($x, $y) to the line through the two points ($x1, $y1) and ($x2, $y2).
+     *
+     * @param float $x1
+     * @param float $y1
+     * @param float $x2
+     * @param float $y2
+     * @param float $x
+     * @param float $y
+     * @return float distance from the point ($x, $y) to the line through points ($x1, $y1), ($x2, $y2).
+     */
+    public function compute_distance_to_line(float $x1, float $y1, float $x2, float $y2, float $x, float $y): float {
+        //print_object("float $x1, float $y1, float $x2, float $y2, float $x, float $y");
+        //print_object(($x2 - $x1)**2);
+        return sqrt(($x - $x1)**2 + ($y - $y1)**2 -
+                (($x2 - $x1) * ($x - $x1) + ($y2 - $y1)*($y - $y1))**2/(($x2 - $x1)**2 + ($y2 - $y1)**2));
+    }
+
     #[\Override]
     public function classify_response(array $response) {
         $parts = [];
