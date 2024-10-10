@@ -95,14 +95,20 @@ class qtype_drawlines extends question_type {
     public function save_lines(stdClass $fromform): void {
         global $DB;
         $numberoflines = $fromform->numberoflines;
+        $coordsregexp = "/^\d+,\d+;\d+$/";
+        $index = 1;
         for ($i = 0; $i < $numberoflines; $i++) {
             // If line type is not set do not save the line object.
             if (!in_array($fromform->type[$i], array_keys(line::get_line_types()))) {
                 continue;
             }
+            // If line coordinates are not set or not in the right format, then do not save the line object.
+            if (!preg_match($coordsregexp, $fromform->zonestart[$i]) || !preg_match($coordsregexp, $fromform->zoneend[$i])) {
+                continue;
+            }
             $line = new stdClass;
             $line->questionid = $fromform->id;
-            $line->number = $i + 1;
+            $line->number = $index++;
             $line->type = $fromform->type[$i];
             $line->labelstart = $fromform->labelstart[$i];
             $line->labelmiddle = $fromform->labelmiddle[$i];

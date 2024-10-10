@@ -1,4 +1,4 @@
-@qtype @qtype_drawlines @javascript
+@qtype @qtype_drawlines
 Feature: Test editing an DrawLines question
   As a teacher
   In order to be able to update my DrawLines question
@@ -29,15 +29,13 @@ Feature: Test editing an DrawLines question
     And I should see "Line 2"
     And I click on "Line 1" "link"
     And I should see "Line segment ---"
-    #When I set the field "id_zonestart_0" to "10,10,12"
-    #And I press "id_submitbutton"
-    #Then I should see "Start zone coordinates should be in x,y;r format, where x,y are the coordinates of the centre of a circle and r is the radius."
-    # Correct the input for start zone coordistes.
-#    And I set the following fields to these values:
-#      | id_zonestart_0 | 10,10;12 |
-#   And I set the field "id_zonestart_0" to "10,10;12"
+    When I set the field "id_zonestart_0" to "10,10,12"
+    And I press "id_submitbutton"
+    Then I should see "Start zone coordinates should be in x,y;r format, where x,y are the coordinates of the centre of a circle and r is the radius."
+    # Correct the input for end zone coordinates.
+    And I set the field "id_zonestart_0" to "10,10;12"
 
-    And I click on "Line 2" "link"
+    And I click on "Line 2" "button"
     And I set the field "id_type_1" to "Choose"
     And I press "id_submitbutton"
     And I should see "You have to select a type for Line 2"

@@ -47,15 +47,15 @@ Feature: Test duplicating a course containing a DrawLines question
       | id_labelmiddle_0                   | Mid 1        |
       | id_labelend_0                      |              |
       | id_zonestart_0                     | 10,10;12     |
-      | id_zoneend_0                       | 300,10;12    |
+      | id_zoneend_0                       | 10,200;12    |
     And I click on "Line 2" "link"
     And the following fields match these values:
       | id_type_1                          | linesegment  |
       | id_labelstart_1                    | Start 2      |
       | id_labelmiddle_1                   | Mid 2        |
       | id_labelend_1                      | End 2        |
-      | id_zonestart_1                     | 10,100;12    |
-      | id_zoneend_1                       | 300,100;12   |
+      | id_zonestart_1                     | 300,10;12    |
+      | id_zoneend_1                       | 300,200;12   |
     And I click on "Combined feedback" "link"
     And the following fields match these values:
       | For any correct response           | Well done!                                           |

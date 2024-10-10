@@ -224,11 +224,12 @@ class qtype_drawlines_edit_form extends question_edit_form {
     public function validation($data, $files) {
         $errors = parent::validation($data, $files);
         $bgimagesize = $this->get_image_size_in_draft_area($data['bgimage']);
-        if (!$bgimagesize === null) {
+        if ($bgimagesize === null) {
             $errors["bgimage"] = get_string('formerror_nobgimage', 'qtype_' . $this->qtype());
         }
+        $validlines = 0;
         // Validate whether the line type error needed to be displayed.
-        for ($i = 0; $i < $this->numberoflines; $i++) {
+        for ($i = 0; $i < count($data["type"]); $i++) {
             // Validate line type.
             if (!in_array($data["type"][$i], array_keys(line::get_line_types())) &&
                     trim($data["zonestart"][$i]) != '' && trim($data["zoneend"][$i]) != '') {
@@ -243,6 +244,17 @@ class qtype_drawlines_edit_form extends question_edit_form {
                     !line::is_zone_coordinates_valid($data['zoneend'][$i])) {
                 $errors["zoneend[$i]"] = get_string('formerror_zoneend', 'qtype_drawlines');
             }
+
+            // Verify that there should be atleast one valid line.
+            if (in_array($data["type"][$i], array_keys(line::get_line_types())) &&
+                    line::is_zone_coordinates_valid($data["zonestart"][$i]) &&
+                    line::is_zone_coordinates_valid($data['zoneend'][$i])) {
+                $validlines = 1;
+            }
+        }
+        // There should be atleast one valid line.
+        if (empty($errors) && $validlines == 0) {
+            $errors["type[0]"] = get_string('formerror_notype', 'qtype_' . $this->qtype(), 1);
         }
         return $errors;
     }

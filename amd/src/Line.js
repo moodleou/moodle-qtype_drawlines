@@ -106,14 +106,14 @@ define(function() {
     function Line(labelstart, x1, y1, startRadius, labelend, x2, y2, endRadius, lineType) {
         this.labelstart = labelstart;
         this.labelend = labelend;
-        this.x1 = x1 || 15;
-        this.y1 = y1 || 100;
+        this.x1 = x1;
+        this.y1 = y1;
 
-        this.x2 = x2 || 200;
-        this.y2 = y2 || 250;
+        this.x2 = x2;
+        this.y2 = y2;
 
-        this.centre1 = new Point(x1 || 0, y1 || 0);
-        this.centre2 = new Point(x2 || 0, y2 || 0);
+        this.centre1 = new Point(x1, y1);
+        this.centre2 = new Point(x2, y2);
 
         this.startRadius = startRadius;
         this.endRadius = endRadius;
@@ -285,13 +285,9 @@ define(function() {
      * @param {String} startcoordinates "x1,y1;radius".
      * @param {String} endcoordinates "x1,y1;radius".
      * @param {float} ratio .
-     * @return {boolean} True if the coordinates are parsed. False if the start and end coordinates are empty.
-*    *                  Throws an exception if input point is not valid.
+     * @return {boolean} True if the coordinates are valid and parsed. Throws an exception if input point is not valid.
      */
     Line.prototype.parse = function(startcoordinates, endcoordinates, ratio) {
-        if (startcoordinates === '' || endcoordinates === '') {
-            return false;
-        }
         var startcoordinatesbits = startcoordinates.split(';');
         var endcoordinatesbits = endcoordinates.split(';');
         this.centre1 = Point.parse(startcoordinatesbits[0]);
@@ -676,7 +672,7 @@ define(function() {
          */
         getSimilar: function(lineType, line) {
             return new Line(line.labelstart, parseInt(line.x1), parseInt(line.y1), parseInt(line.startRadius),
-                parseInt(line.labelend), parseInt(line.x2), parseInt(line.y2), parseInt(line.endRadius), lineType);
+                line.labelend, parseInt(line.x2), parseInt(line.y2), parseInt(line.endRadius), lineType);
         }
     };
 });

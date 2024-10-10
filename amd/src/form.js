@@ -31,15 +31,19 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
     function LineManager(lineNo) {
         this.lineNo = lineNo;
         this.svgEl = null;
-        this.line = Line.make(this.getCoordinates(), this.getLabel(), this.getLineType());
+        this.line = Line.make(this.getCoordinatesFromForm(this.lineNo), this.getLabel(), this.getLineType());
         this.updateCoordinatesFromForm();
     }
     /**
      * Update the coordinates from a particular string.
+     *
+     * @param {SVGElement} [svg] the SVG element that is the preview.
      */
-    LineManager.prototype.updateCoordinatesFromForm = function() {
-        var coordinates = this.getCoordinates();
-        if (this.line.getCoordinates() === coordinates) {
+    LineManager.prototype.updateCoordinatesFromForm = function(svg) {
+        var coordinates = this.getCoordinatesFromForm(this.lineNo);
+
+        // Check if the coordinates are in the required format of 'x,y;r'.
+        if (!this.validateFormCoordinates(this.lineNo)) {
             return;
         }
         // We don't need to scale the shape for editing form.
@@ -48,9 +52,34 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
             return;
         }
 
-        this.updateSvgEl();
+        if (this.line.getCoordinates() !== coordinates) {
+            // Polygon, and size has changed.
+            var currentyActive = this.isActive();
+            this.removeFromSvg();
+            if (svg) {
+                this.addToSvg(svg);
+                if (currentyActive) {
+                    this.setActive();
+                }
+            }
+        } else {
+            // Simple update.
+            this.updateSvgEl();
+        }
         // Update the rounded coordinates if needed.
         this.setCoordinatesInForm();
+    };
+
+    /**
+     * Validates if the given coordinates are in the correct format 'x,y;r'.
+     *
+     * @param {int} lineNo The lineNo of the form.
+     * @returns {boolean} True if the coordinates are valid, otherwise false.
+     */
+    LineManager.prototype.validateFormCoordinates = function(lineNo) {
+        var coords = this.getCoordinatesFromForm(lineNo);
+        var regexp = /^\d+,\d+;\d+$/;
+        return regexp.test(coords[0]) && regexp.test(coords[1]);
     };
 
     /**
@@ -76,11 +105,12 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
 
     /**
      * Returns the coordinates for the line from the text input in the form.
+     * @param {int} lineNo
      * @returns {Array} the coordinates.
      */
-    LineManager.prototype.getCoordinates = function() {
-        var zonestart = drawlinesForm.getFormValue('zonestart', [this.lineNo]);
-        var zoneend = drawlinesForm.getFormValue('zoneend', [this.lineNo]);
+    LineManager.prototype.getCoordinatesFromForm = function(lineNo) {
+        var zonestart = drawlinesForm.getFormValue('zonestart', [lineNo]);
+        var zoneend = drawlinesForm.getFormValue('zoneend', [lineNo]);
         return [zonestart, zoneend];
     };
 
@@ -108,6 +138,9 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
      */
     LineManager.prototype.updateSvgEl = function() {
         if (this.svgEl === null) {
+            return;
+        }
+        if (!this.validateFormCoordinates(this.lineNo)) {
             return;
         }
         this.line.updateSvg(this.svgEl);
@@ -148,11 +181,13 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
 
         // It has really changed.
         this.removeFromSvg();
-        this.line = Line.getSimilar(newLineType, this.line);
-        if (svg) {
-            this.addToSvg(svg);
-            if (currentyActive) {
-                this.setActive();
+        if (newLineType !== 'choose') {
+            this.line = Line.getSimilar(newLineType, this.line);
+            if (svg) {
+                this.addToSvg(svg);
+                if (currentyActive) {
+                    this.setActive();
+                }
             }
         }
     };
@@ -186,6 +221,9 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
     LineManager.prototype.addToSvg = function(svg) {
         if (this.svgEl !== null) {
             throw new Error('this.svgEl already set');
+        }
+        if (!this.validateFormCoordinates(this.lineNo)) {
+            return;
         }
         this.svgEl = this.line.makeSvg(svg);
         if (!this.svgEl) {
@@ -403,6 +441,9 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
          * Loads the preview background image.
          */
         loadPreviewImage: function() {
+            if (!document.getElementById('dlines-droparea')) {
+                drawlinesForm.setupPreviewArea();
+            }
             var img = document.querySelector('fieldset#id_previewareaheader .dropbackground');
             if (img) {
                 img.addEventListener('load', function() {
@@ -505,11 +546,13 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
                 dropzoneElement = event.target.closest('g');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
                 handleIndex = event.target.getAttribute('data-move-handle-no');
+                handleIndex = 'startcircle';
                 drawlinesForm.dropZones[dropzoneNo].handleMove(event, handleIndex);
             } else if (event.target.closest('.dropzone .handleend.move')) {
                 dropzoneElement = event.target.closest('g');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
                 handleIndex = event.target.getAttribute('data-move-handle-no');
+                handleIndex = 'endcircle';
                 drawlinesForm.dropZones[dropzoneNo].handleMove(event, handleIndex);
             }
         },

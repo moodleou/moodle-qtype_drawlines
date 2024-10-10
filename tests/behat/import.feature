@@ -26,4 +26,4 @@ Feature: Test importing DrawLines questions
     And I should see "Importing 1 questions from file"
     And I should see "1. Draw 2 lines on the map. A line segment from A (line starting point) to B (line Ending point), and another one from C to D."
     And I press "Continue"
-    And I should see "Drawline edited"
+    And I should see "Drawlines to edit"
