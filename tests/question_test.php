@@ -46,7 +46,6 @@ class question_test extends \basic_testcase {
         $expected = [
                 'c0' => PARAM_NOTAGS,
                 'c1' => PARAM_NOTAGS
-                //'c3' => PARAM_RAW, 'c4' => PARAM_RAW
         ];
         $this->assertEquals($expected, $question->get_expected_data());
     }
@@ -74,10 +73,8 @@ class question_test extends \basic_testcase {
                         'c1' => '10,100 200,100'
                 ]
         ));
-        $this->assertFalse($question->is_complete_response(['c0' => '10,10 300,10', 'c1' => '']));
-        if ($question->grademethod === 'allnone') {
-            $this->assertFalse($question->is_complete_response(['c1' => '10,100 300,100']));
-        }
+        $this->assertFalse($question->is_complete_response(['c0' => '10,10 300,10']));
+        $this->assertFalse($question->is_complete_response(['c1' => '10,100 300,100']));
         $this->assertTrue($question->is_complete_response(['c0' => '10,10 300,10', 'c1' => '10,100 300,100']));
     }
 
@@ -90,12 +87,12 @@ class question_test extends \basic_testcase {
         $this->assertTrue($question->is_gradable_response(['c0' => '10,10 300,10', 'c1' => '10,100 200,100']));
         if ($question->grademethod === 'partial') {
             $this->assertTrue($question->is_gradable_response(['c0' => '10,10 300,10']));
-            $this->asserttrue($question->is_gradable_response(['c1' => '10,100 300,100']));
+            $this->assertTrue($question->is_gradable_response(['c1' => '10,100 300,100']));
         }
         $question->grademethod = 'allnone';
         if ($question->grademethod === 'allnone') {
             $this->assertTrue($question->is_gradable_response(['c0' => '10,10 300,10']));
-            $this->asserttrue($question->is_gradable_response(['c1' => '10,100 300,100']));
+            $this->assertTrue($question->is_gradable_response(['c1' => '10,100 300,100']));
         }
     }
 
@@ -155,25 +152,54 @@ class question_test extends \basic_testcase {
         $this->assertEquals(null, $question->get_random_guess_score());
     }
 
-    public function test_get_num_parts_right(): void {
+    public function test_get_num_parts_right_grade_partialt(): void {
         $question = \test_question_maker::make_question('drawlines');
         $question->start_attempt(new question_attempt_step(), 1);
 
         $correctresponse = $question->get_correct_response();
-
-        [$numpartright, $total] = $question->get_num_parts_right($correctresponse);
+        [$numpartright, $total] = $question->get_num_parts_right_grade_partialt($correctresponse);
         $this->assertEquals(4, $numpartright);
         $this->assertEquals(4, $total);
 
+        $response = ['c0' => '10,10 300,123', 'c1' => '10,123 300,123'];
+        [$numpartright, $total] = $question->get_num_parts_right_grade_partialt($response);
+        $this->assertEquals(1, $numpartright);
+        $this->assertEquals(4, $total);
+
         $response = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123'];
-        [$numpartright, $total] = $question->get_num_parts_right($response);
+        [$numpartright, $total] = $question->get_num_parts_right_grade_partialt($response);
         $this->assertEquals(2, $numpartright);
         $this->assertEquals(4, $total);
 
         $response = ['c0' => '10,10 300,10', 'c1' => '10,200 300,123'];
-        [$numpartright, $total] = $question->get_num_parts_right($response);
+        [$numpartright, $total] = $question->get_num_parts_right_grade_partialt($response);
         $this->assertEquals(3, $numpartright);
         $this->assertEquals(4, $total);
+    }
+
+    public function test_get_num_parts_right_grade_allornone(): void {
+        $question = \test_question_maker::make_question('drawlines');
+        $question->start_attempt(new question_attempt_step(), 1);
+
+        $correctresponse = $question->get_correct_response();
+        [$numright, $total] = $question->get_num_parts_right_grade_allornone($correctresponse);
+        $this->assertEquals(2, $numright);
+        $this->assertEquals(2, $total);
+
+        $response = ['c0' => '10,10 300,123', 'c1' => '10,123 300,123'];
+        [$numright, $total] = $question->get_num_parts_right_grade_allornone($response);
+        $this->assertEquals(0, $numright);
+        $this->assertEquals(2, $total);
+
+        $response = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123'];
+        [$numright, $total] = $question->get_num_parts_right_grade_allornone($response);
+        $this->assertEquals(1, $numright);
+        $this->assertEquals(2, $total);
+
+        $response = ['c0' => '10,10 300,10', 'c1' => '10,200 300,123'];
+        [$numright, $total] = $question->get_num_parts_right_grade_allornone($response);
+        $this->assertEquals(1, $numright);
+        $this->assertEquals(2, $total);
     }
 
     public function test_compute_final_grade(): void {

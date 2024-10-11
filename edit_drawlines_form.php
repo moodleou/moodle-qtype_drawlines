@@ -91,7 +91,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
         ];
         $mform->addElement('select', 'grademethod',
                 get_string('grademethod', 'qtype_' . $this->qtype()), $grademethodmenu);
-        $mform->addHelpButton('grademethod', 'grademethod', 'qtype_drawlines');
+        $mform->addHelpButton('grademethod', 'grademethod', 'qtype_' . $this->qtype());
         $mform->setDefault('grademethod', $this->get_default_value('grademethod',
                 get_config('qtype_drawlines', 'grademethod')));
 
@@ -168,9 +168,9 @@ class qtype_drawlines_edit_form extends question_edit_form {
         if (empty($question->options)) {
             return $question;
         }
-        $question->options->grademethod = $question->options->grademethod ?? get_config('qtype_drawlines', 'grademethod');
-        $question->options->shownumcorrect = $question->options->shownumcorrect ?? 0;
-        $question->options->showmisplaced = $question->options->showmisplaced ?? 0;
+        $question->grademethod = $question->options->grademethod ?? get_config('qtype_drawlines', 'grademethod');
+        $question->shownumcorrect = $question->options->shownumcorrect ?? 0;
+        $question->showmisplaced = $question->options->showmisplaced ?? 0;
         return $question;
     }
 
@@ -238,11 +238,11 @@ class qtype_drawlines_edit_form extends question_edit_form {
 
             if (in_array($data["type"][$i], array_keys(line::get_line_types())) &&
                     !line::is_zone_coordinates_valid($data["zonestart"][$i])) {
-                $errors["zonestart[$i]"] = get_string('formerror_zonestart', 'qtype_drawlines');
+                $errors["zonestart[$i]"] = get_string('formerror_zonestart', 'qtype_' . $this->qtype());
             }
             if (in_array($data["type"][$i], array_keys(line::get_line_types())) &&
                     !line::is_zone_coordinates_valid($data['zoneend'][$i])) {
-                $errors["zoneend[$i]"] = get_string('formerror_zoneend', 'qtype_drawlines');
+                $errors["zoneend[$i]"] = get_string('formerror_zoneend', 'qtype_' . $this->qtype());
             }
 
             // Verify that there should be atleast one valid line.

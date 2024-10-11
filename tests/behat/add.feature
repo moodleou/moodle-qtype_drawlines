@@ -18,9 +18,11 @@ Feature: Test creating a drawlines question
   @javascript @_file_upload
   Scenario: Create a drawlines question with one line
     Given I am on the "Course 1" "core_question > course question bank" page logged in as teacher
+    And I pause
     And I press "Create a new question ..."
     And I set the field "DrawLines" to "1"
     And I click on "Add" "button" in the "Choose a question type to add" "dialogue"
+    And I pause
     And I should see "Adding a DrawLines question"
     And I expand all fieldsets
     And I set the following fields to these values:

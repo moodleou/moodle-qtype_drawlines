@@ -30,14 +30,6 @@ class qtype_drawlines extends question_type {
     /** @var lines[], an array of line objects. */
     public $lines;
 
-    //protected function make_choice(stdClass $dragdata) {
-    //    return new drag_item($dragdata->linenumber, $dragdata->label);
-    //}
-
-    //protected function make_place(stdclass $dropdata) {
-    //    return new drop_zone($dropdata->linenumber, $dropdata->label, $dropdata->xleft, $dropdata->ytop);
-    //}
-
     #[\Override]
     public function get_question_options($question): bool {
         global $DB, $OUTPUT;
@@ -76,7 +68,6 @@ class qtype_drawlines extends question_type {
             $options->questionid = $fromform->id;
         }
         $options->grademethod = $fromform->grademethod ?? get_config('qtype_drawlines', 'grademethod');
-        $options->grademethod = $fromform->grademethod;
         $options->shownumcorrect = !empty($formdata->shownumcorrect);
         $options->showmisplaced = !empty($formdata->showmisplaced);
         $options = $this->save_combined_feedback_helper($options, $fromform, $context, true);
@@ -199,6 +190,7 @@ class qtype_drawlines extends question_type {
     #[\Override]
     protected function initialise_question_instance(question_definition $question, $questiondata): void {
         parent::initialise_question_instance($question, $questiondata);
+        $question->grademethod = $questiondata->options->grademethod;
         $this->initialise_question_lines($question, $questiondata);
         $this->initialise_combined_feedback($question, $questiondata, true);
     }
