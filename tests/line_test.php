@@ -32,7 +32,7 @@ require_once($CFG->dirroot . '/question/type/drawlines/classes/line.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers \qtype_drawlines\line
  */
-class line_test extends \advanced_testcase {
+final class line_test extends \advanced_testcase {
 
     /**
      * Validate zone coordinates input format.

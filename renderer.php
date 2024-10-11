@@ -145,14 +145,6 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
             $attr['tabindex'] = 0;
         }
 
-        //if ($question->showmisplaced && $qa->get_state()->is_finished()) {
-        //    $visibledropzones = $question->get_drop_zones_without_hit($response);
-        //    $visibledropzones = $response;
-        //} else {
-        //    $visibledropzones = [];
-        //}
-        //$visibledropzones = $response;
-
         if ($qa->get_state() == question_state::$invalid) {
             $output .= html_writer::div($question->get_validation_error($qa->get_last_qt_data()), 'validationerror');
         }
