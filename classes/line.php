@@ -15,11 +15,11 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace qtype_drawlines;
-use qtype_drawlines\dragitem;
-use qtype_drawlines\dropzone;
+
+defined('MOODLE_INTERNAL') || die;
 
 /**
- * Represents a line objet of drawlines question.
+ * Represents a line object of drawlines question.
  *
  * @package   qtype_drawlines
  * @copyright 2024 The Open University
@@ -240,12 +240,11 @@ class line {
         return true;
     }
 
-
     public static function make_drop_zone(int $linenumber, string $label, string $zone): drop_zone {
+        // TODO: Need to chek if we need this.
         [$xleft, $ytop] = self::parse_into_cx_cy_with_or_without_radius($zone);
-        return  new drop_zone($linenumber, $label, $xleft, $ytop);
+        return new drop_zone($linenumber, $label, $xleft, $ytop);
     }
-
 }
 
 /**

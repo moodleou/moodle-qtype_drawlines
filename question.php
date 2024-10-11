@@ -24,8 +24,6 @@ use qtype_drawlines\line;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 #[AllowDynamicProperties]
-//class qtype_drawlines_question extends question_graded_automatically_with_countback
-//        implements question_automatically_gradable_with_countback {
 class qtype_drawlines_question extends question_graded_automatically {
 
     /** @var lines[], an array of line objects. */
@@ -53,6 +51,7 @@ class qtype_drawlines_question extends question_graded_automatically {
      */
     public $places;
 
+    /** @var array The order of the lines, key => choice number in the format c0, c1... */
     public $choicesorder;
 
     #[\Override]
@@ -86,12 +85,12 @@ class qtype_drawlines_question extends question_graded_automatically {
     public function compute_final_grade(array $responses, int $totaltries): float {
         // TODO: To incorporate the question penalty for interactive with multiple tries behaviour.
 
-        $grade_value = 0;
-        foreach($responses as $response) {
+        $grade = 0;
+        foreach ($responses as $response) {
             [$fraction, $state] = $this->grade_response($response);
-            $grade_value += $fraction;
+            $grade += $fraction;
         }
-        return $grade_value;
+        return $grade;
     }
 
     /**
@@ -121,7 +120,7 @@ class qtype_drawlines_question extends question_graded_automatically {
     }
     #[\Override]
     public function get_expected_data() {
-        $expecteddata =[];
+        $expecteddata = [];
         foreach ($this->lines as $line) {
             $expecteddata[$this->choice($line->number - 1)] = PARAM_NOTAGS;
         }
@@ -213,7 +212,7 @@ class qtype_drawlines_question extends question_graded_automatically {
      * @author dml at nm dot ru (taken from comments on php manual)
      */
     protected function array_intersect_fixed($array1, $array2) {
-        $result = array();
+        $result = [];
         foreach ($array1 as $val) {
             if (($key = array_search($val, $array2, true)) !== false) {
                 $result[] = $val;
@@ -235,10 +234,10 @@ class qtype_drawlines_question extends question_graded_automatically {
     public function get_num_parts_right(array $response): array {
         $numpartrightstart = 0;
         $numpartrightend = 0;
-        if(!$response) {
+        if (!$response) {
             return [0, 0];
         }
-        foreach($this->lines as $key => $line) {
+        foreach ($this->lines as $key => $line) {
             if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
                 $coords = explode(' ', $response[$this->choice($key)]);
                 if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart)) {
@@ -275,14 +274,14 @@ class qtype_drawlines_question extends question_graded_automatically {
     public function compute_distance_to_line(float $x1, float $y1, float $x2, float $y2, float $x, float $y): float {
         //print_object("float $x1, float $y1, float $x2, float $y2, float $x, float $y");
         //print_object(($x2 - $x1)**2);
-        return sqrt(($x - $x1)**2 + ($y - $y1)**2 -
-                (($x2 - $x1) * ($x - $x1) + ($y2 - $y1)*($y - $y1))**2/(($x2 - $x1)**2 + ($y2 - $y1)**2));
+        return sqrt(($x - $x1) ** 2 + ($y - $y1) ** 2 -
+                (($x2 - $x1) * ($x - $x1) + ($y2 - $y1)*($y - $y1)) ** 2/(($x2 - $x1) ** 2 + ($y2 - $y1) ** 2));
     }
 
     #[\Override]
     public function classify_response(array $response) {
+        // TODO: Need to check with function.
         $parts = [];
-        //$hits = $this->choose_hits($response);
         foreach ($this->places as $placeno => $place) {
             if (isset($hits[$placeno])) {
                 $shuffledchoiceno = $this->get_right_choice_for($placeno);

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-namespace drawlines;
+namespace qtype_drawlines;
 
 use question_attempt_step;
 use question_classified_response;
@@ -36,17 +36,17 @@ require_once($CFG->dirroot . '/question/type/drawlines/question.php');
  * @package   qtype_drawlines
  * @copyright 2014 The Open University
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers \qtype_drawlines_question
  */
-class question_test extends \basic_testcase {
+final class question_test extends \basic_testcase {
 
     public function test_get_expected_data(): void {
         $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
         $question->start_attempt(new question_attempt_step(), 1);
 
         $expected = [
-                'c0' => PARAM_NOTAGS,
-                'c1' => PARAM_NOTAGS
-                //'c3' => PARAM_RAW, 'c4' => PARAM_RAW
+            'c0' => PARAM_NOTAGS,
+            'c1' => PARAM_NOTAGS,
         ];
         $this->assertEquals($expected, $question->get_expected_data());
     }
@@ -54,11 +54,10 @@ class question_test extends \basic_testcase {
     public function test_get_correct_response(): void {
         $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
         $question->start_attempt(new question_attempt_step(), 1);
-        $correctresponse =
-                [
-                        'c0' => '10,10 300,10',
-                        'c1' => '10,200 300,200',
-                ];
+        $correctresponse = [
+            'c0' => '10,10 300,10',
+            'c1' => '10,200 300,200',
+        ];
         $this->assertEquals($correctresponse, $question->get_correct_response());
     }
 
@@ -70,8 +69,8 @@ class question_test extends \basic_testcase {
         $this->assertFalse($question->is_complete_response([]));
         $this->assertTrue($question->is_complete_response(
                 [
-                        'c0' => '10,10 200,10',
-                        'c1' => '10,100 200,100'
+                    'c0' => '10,10 200,10',
+                    'c1' => '10,100 200,100',
                 ]
         ));
         $this->assertFalse($question->is_complete_response(['c0' => '10,10 300,10', 'c1' => '']));
@@ -116,7 +115,7 @@ class question_test extends \basic_testcase {
                 ['c0' => '100,100 100,200', 'c1' => '200,100 200,200'],
                 ['c0' => '10,100 100,200', 'c1' => '200,100 200,200']
         ));
-     }
+    }
 
     public function test_get_question_summary(): void {
         $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
@@ -209,23 +208,6 @@ class question_test extends \basic_testcase {
         $this->assertEquals($fraction, 1 / $totaltries, 'All correct responses should return fraction of 1');
     }
 
-    public static function compute_distance_to_line_testcases(): array {
-        return [
-                '(x, y) is p1' => [0, [0, 0], [1, 1], [0, 0]],
-                '(x, y) is p2' => [0, [0, 0], [1, 1], [1, 1]],
-                '(x, y) is on the line beyond p1' => [0, [0, 0], [1, 1], [-2, -2]],
-                '(x, y) is on the line in the middle' => [0, [0, 0], [2, 2], [1, 1]],
-                '(x, y) is on the line beyond p2' => [0, [0, 0], [1, 1], [5, 5]],
-                '(x, y) is orthogonal to p1' => [5, [0, 0], [1, 0], [0, 5]],
-                '(x, y) is orthogonal to p2' => [2, [0, -10], [0, 0], [-2, 0]],
-                '(x, y) is orthogonal to the midpoint' => [2, [0, -10], [0, 10], [-2, 0]],
-                '45deg diagonal case' => [sqrt(2), [0, -2], [2, 0], [0, 0]],
-                'diagonal case' => [12, [0, 15], [20, 0], [0, 0]],
-                'diagonal case flipped' => [12, [20, 0], [0, 15], [0, 0]],
-                'diagonal case flipped other way' => [12, [0, 15], [20, 0], [20, 15]],
-        ];
-    }
-
     /**
      * Test compute_distance_to_line.
      *
@@ -246,5 +228,27 @@ class question_test extends \basic_testcase {
                 $question->compute_distance_to_line($x1, $y1, $x2, $y2, $x, $y),
                 1e-10,
         );
+    }
+
+    /**
+     * Data provider for {@see test_compute_distance_to_line}.
+     *
+     * @return array[]
+     */
+    public static function compute_distance_to_line_testcases(): array {
+        return [
+                '(x, y) is p1' => [0, [0, 0], [1, 1], [0, 0]],
+                '(x, y) is p2' => [0, [0, 0], [1, 1], [1, 1]],
+                '(x, y) is on the line beyond p1' => [0, [0, 0], [1, 1], [-2, -2]],
+                '(x, y) is on the line in the middle' => [0, [0, 0], [2, 2], [1, 1]],
+                '(x, y) is on the line beyond p2' => [0, [0, 0], [1, 1], [5, 5]],
+                '(x, y) is orthogonal to p1' => [5, [0, 0], [1, 0], [0, 5]],
+                '(x, y) is orthogonal to p2' => [2, [0, -10], [0, 0], [-2, 0]],
+                '(x, y) is orthogonal to the midpoint' => [2, [0, -10], [0, 10], [-2, 0]],
+                '45deg diagonal case' => [sqrt(2), [0, -2], [2, 0], [0, 0]],
+                'diagonal case' => [12, [0, 15], [20, 0], [0, 0]],
+                'diagonal case flipped' => [12, [20, 0], [0, 15], [0, 0]],
+                'diagonal case flipped other way' => [12, [0, 15], [20, 0], [20, 15]],
+        ];
     }
 }

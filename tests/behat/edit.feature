@@ -35,7 +35,7 @@ Feature: Test editing an DrawLines question
     # Correct the input for end zone coordinates.
     And I set the field "id_zonestart_0" to "10,10;12"
 
-    And I click on "Line 2" "button"
+    And I click on "Line 2" "link"
     And I set the field "id_type_1" to "Choose"
     And I press "id_submitbutton"
     And I should see "You have to select a type for Line 2"

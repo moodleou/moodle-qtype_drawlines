@@ -33,7 +33,7 @@ require_once($CFG->libdir . "/phpunit/classes/restore_date_testcase.php");
  * @copyright 2024 The Open University
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later.
  */
-class backup_and_restore_test extends \restore_date_testcase {
+final class backup_and_restore_test extends \restore_date_testcase {
 
     /**
      * Backup and restore the course containing an drawlines question for testing drawlines backup and restore.

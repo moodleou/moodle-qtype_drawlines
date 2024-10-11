@@ -18,6 +18,7 @@ namespace qtype_drawlines;
 
 use qtype_drawlines\line;
 
+defined('MOODLE_INTERNAL') || die();
 global $CFG;
 
 require_once($CFG->dirroot . '/question/type/drawlines/classes/line.php');
@@ -34,7 +35,7 @@ require_once($CFG->dirroot . '/question/type/drawlines/classes/line.php');
 class line_test extends \advanced_testcase {
 
     /**
-     * Validate zone coordinates input format
+     * Validate zone coordinates input format.
      *
      * @dataProvider zone_coordinates_provider
      * @param string $zonecooredinate
@@ -45,7 +46,12 @@ class line_test extends \advanced_testcase {
         $this->assertEquals($trueorfalse, line::is_zone_coordinates_valid($zonecooredinate));
     }
 
-    public function zone_coordinates_provider(): array {
+    /**
+     * Data provider for {@see test_is_zone_coordinates_valid}.
+     *
+     * @return array[]
+     */
+    public static function zone_coordinates_provider(): array {
         return [
                 '10,100;15 is in correct format' => ['10,100;15', true],
                 '10,100=14 is not in correct format' => ['150,100=14', false],
@@ -59,7 +65,7 @@ class line_test extends \advanced_testcase {
     }
 
     /**
-     * Validate zone coordinates input format
+     * Validate zone coordinates input format.
      *
      * @dataProvider parse_into_cx_cy_radius_provider
      * @param string $zonecooredinates
@@ -71,7 +77,13 @@ class line_test extends \advanced_testcase {
         $this->resetAfterTest();
         $this->assertEquals($coordslist, line::parse_into_cx_cy_with_or_without_radius($zonecooredinates, $radius));
     }
-    public function parse_into_cx_cy_radius_provider(): array {
+
+    /**
+     * Data provider for {@see test_parse_into_cx_cy_with_or_without_radius}.
+     *
+     * @return array[]
+     */
+    public static function parse_into_cx_cy_radius_provider(): array {
         return [
                 'Coords with radius' => ['10,100;15', [10, 100, 15], true],
                 'Coords without radiust' => ['10,100', [10, 100], false],
@@ -83,20 +95,25 @@ class line_test extends \advanced_testcase {
      *
      * @dataProvider is_dragitem_in_the_right_place_provider
      * @param string $dragcoord
-     * @param array $dropcoord
+     * @param string $dropcoord
      * @param bool $radius
      * @return void
      */
-    public function test_is_dragitem_in_the_right_place($dragcoord, $dropcoord, $radius) {
+    public function test_is_dragitem_in_the_right_place($dragcoord, $dropcoord, $radius): void {
         $this->assertEquals($radius, Line::is_dragitem_in_the_right_place($dragcoord, $dropcoord));
-
     }
-    public function is_dragitem_in_the_right_place_provider(): array {
+
+    /**
+     * Data provider for {@see test_is_dragitem_in_the_right_place}.
+     *
+     * @return array[]
+     */
+    public static function is_dragitem_in_the_right_place_provider(): array {
         $dropcoord = '10,100;5'; // The correct coords and the given radius.
         return [
                 'Exac match' => ['10,100', $dropcoord, true],
-                'incorrect match x-6' => ['5,100', $dropcoord, false],
-                'incorrect match x-6' => ['16,100', $dropcoord, false],
+                'incorrect match x-6' => ['4,100', $dropcoord, false],
+                'incorrect match x+6' => ['16,100', $dropcoord, false],
                 'correct match x-5' => ['5,100', $dropcoord, true],
                 'correct match x+5' => ['15,100', $dropcoord, true],
 

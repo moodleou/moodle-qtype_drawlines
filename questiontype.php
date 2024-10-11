@@ -30,14 +30,6 @@ class qtype_drawlines extends question_type {
     /** @var lines[], an array of line objects. */
     public $lines;
 
-    //protected function make_choice(stdClass $dragdata) {
-    //    return new drag_item($dragdata->linenumber, $dragdata->label);
-    //}
-
-    //protected function make_place(stdclass $dropdata) {
-    //    return new drop_zone($dropdata->linenumber, $dropdata->label, $dropdata->xleft, $dropdata->ytop);
-    //}
-
     #[\Override]
     public function get_question_options($question): bool {
         global $DB, $OUTPUT;
@@ -95,15 +87,10 @@ class qtype_drawlines extends question_type {
     public function save_lines(stdClass $fromform): void {
         global $DB;
         $numberoflines = $fromform->numberoflines;
-        $coordsregexp = "/^\d+,\d+;\d+$/";
         $index = 1;
         for ($i = 0; $i < $numberoflines; $i++) {
             // If line type is not set do not save the line object.
             if (!in_array($fromform->type[$i], array_keys(line::get_line_types()))) {
-                continue;
-            }
-            // If line coordinates are not set or not in the right format, then do not save the line object.
-            if (!preg_match($coordsregexp, $fromform->zonestart[$i]) || !preg_match($coordsregexp, $fromform->zoneend[$i])) {
                 continue;
             }
             $line = new stdClass;
@@ -228,7 +215,8 @@ class qtype_drawlines extends question_type {
         $placeinex = 1;
         foreach ($questiondata->lines as $line) {
             $question->lines[$line->number - 1] = $this->make_line($line);
-            $question->choices['c' . $index] = Line::get_coordinates($line->zonestart) . ' ' . Line::get_coordinates($line->zoneend);
+            $question->choices['c' . $index] = Line::get_coordinates($line->zonestart) .
+                    ' ' . Line::get_coordinates($line->zoneend);
             $index++;
             $question->places[$placeinex++] = line::make_drop_zone(
                     $line->number,  $line->labelstart ?? 's' . $line->number, $line->zonestart);

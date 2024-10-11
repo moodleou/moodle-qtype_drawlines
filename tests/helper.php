@@ -42,7 +42,6 @@ class qtype_drawlines_test_helper extends question_test_helper {
 
         $qdata = new stdClass();
         question_bank::load_question_definition_classes('drawlines');
-        $qdata = new qtype_drawlines_question();
         $bgdraftitemid = 0;
         file_prepare_draft_area($bgdraftitemid, null, null, null, null);
         $fs = get_file_storage();
@@ -200,7 +199,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
      * @return qtype_drawlines_question
      */
     public function make_drawlines_question_mkmap_twolines(): qtype_drawlines_question {
-        global $CFG, $USER;
+        global $USER;
 
         question_bank::load_question_definition_classes('drawlines');
         $question = new qtype_drawlines_question();
@@ -246,12 +245,11 @@ class qtype_drawlines_test_helper extends question_test_helper {
         ];
 
         $question->places = [
-                '1' => new drop_zone(1, 'Start1', 10,10),
-                '2' => new drop_zone(1, 'End1', 300, 10),
-                '3' => new drop_zone(2, 'Start2', 10,200),
-                '4' => new drop_zone(2, 'End2', 300,200),
+            '1' => new drop_zone(1, 'Start1', 10, 10),
+            '2' => new drop_zone(1, 'End1', 300, 10),
+            '3' => new drop_zone(2, 'Start2', 10, 200),
+            '4' => new drop_zone(2, 'End2', 300, 200),
         ];
-        //$question->rightchoices = array(1 => 1, 2 => 2, 3 => 3);
 
         $question->hints = [
                 1 => new question_hint_with_parts(1, 'Hint 1.', FORMAT_HTML, 1, 0),
