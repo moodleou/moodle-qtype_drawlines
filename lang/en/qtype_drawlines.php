@@ -28,34 +28,31 @@ $string['answer'] = 'Answer';
 $string['bgimage'] = 'Background image';
 
 $string['correctansweris'] = 'The correct answer is: {$a}';
-
-$string['dropbackground'] = 'Background image for DrawLines';
-
-$string['correctansweris'] = 'The correct answer is: {$a}';
 $string['correctanswersare'] = 'The correct answers are: {$a}';
+$string['dropbackground'] = 'Background image for DrawLines';
 
 $string['formerror_nobgimage'] = 'You need to select an image to use as the background for the drag and drop area.';
 $string['formerror_nolines'] = 'You need to expand \'Line 1\' and fill the form for it';
 $string['formerror_notype'] = 'You have to select a type for Line {$a}';
-$string['formerror_zonestart'] = 'Start zone coordinates should be in x,y;r format, where x,y are the coordinates of the centre of a circle and r is the radius.';
 $string['formerror_zoneend'] = 'End zone coordinates should be in x,y;r format, where x,y are the coordinates of the centre of a circle and r is the radius.';
+$string['formerror_zonestart'] = 'Start zone coordinates should be in x,y;r format, where x,y are the coordinates of the centre of a circle and r is the radius.';
 
+$string['gradeallornothing'] = 'All-or-nothing';
 $string['grademethod'] = 'Grading type';
+$string['gradepartialcredit'] = 'Give partial credit';
 $string['grademethod_desc'] = 'Give partial credit (default): each correct response in the body cells are worth one point, so students score a percentage of the total correct responses.
 All or nothing: students must get every response correct, otherwise they score zero.';
 $string['grademethod_help'] = 'Give partial credit (default): each correct response worth one point, so students score a percentage of the total correct responses.
 
 All or nothing: students must get every response correct, otherwise they score zero.';
-$string['gradepartialcredit'] = 'Give partial credit';
-$string['gradeallornothing'] = 'All-or-nothing';
 
-$string['labelstart'] = 'Start label';
-$string['labelmiddle'] = 'Mid label';
 $string['labelend'] = 'End label';
-$string['linesegment'] = 'Line segment ---';
-$string['linesinglearrow'] = 'Single arrow -→';
+$string['labelmiddle'] = 'Mid label';
+$string['labelstart'] = 'Start label';
 $string['linedoublearrows'] = 'Double arrows ←--→';
 $string['lineinfinite'] = 'Infinite line --o--o--';
+$string['linesegment'] = 'Line segment ---';
+$string['linesinglearrow'] = 'Single arrow -→';
 $string['linexheader'] = 'Line {no}';
 
 $string['pleasedragalllines'] = 'Your answer is not complete; you must place all lines on the image.';
@@ -77,8 +74,8 @@ $string['refresh'] = 'Refresh preview';
 
 $string['showmisplaced'] = 'State which zones are incorrectly placed';
 $string['summarisechoice'] = '{$a->no}. {$a->text}';
-$string['summariseplace'] = '{$a->no}. {$a->text}';
 $string['summarisechoiceno'] = 'Item {$a}';
+$string['summariseplace'] = '{$a->no}. {$a->text}';
 $string['summariseplaceno'] = 'Drop zone {$a}';
 
 $string['type'] = 'Type';
@@ -87,11 +84,11 @@ $string['type_help'] = 'You can choose whether the line doesn’t have a beginni
 $string['xleft'] = 'Left';
 
 $string['yougot1right'] = 'You have correctly selected one point.';
-$string['yougotnright'] = 'You have correctly selected {$a->num} points.';
 $string['yougot1rightline'] = 'You have correctly selected one line.';
+$string['yougotnright'] = 'You have correctly selected {$a->num} points.';
 $string['yougotnrightline'] = 'You have correctly selected {$a->num} lines.';
 $string['ytop'] = 'Top';
 
 $string['zonecoordinates'] = 'x,y;r (where x,y are the coordinates of the centre of the circle and r is the radius)';
-$string['zonestart'] = 'Start zone coordinates';
 $string['zoneend'] = 'End zone coordinates';
+$string['zonestart'] = 'Start zone coordinates';

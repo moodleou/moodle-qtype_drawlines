@@ -24,8 +24,6 @@ use qtype_drawlines\line;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 #[AllowDynamicProperties]
-//class qtype_drawlines_question extends question_graded_automatically_with_countback
-//        implements question_automatically_gradable_with_countback {
 class qtype_drawlines_question extends question_graded_automatically {
 
     /** @var string 'allnone' (All-or-nothing) or 'partial' (Give partial credit) grading method. */
@@ -56,6 +54,7 @@ class qtype_drawlines_question extends question_graded_automatically {
      */
     public $places;
 
+    /** @var array The order of the lines, key => choice number in the format c0, c1... */
     public $choicesorder;
 
     #[\Override]
@@ -89,12 +88,12 @@ class qtype_drawlines_question extends question_graded_automatically {
     public function compute_final_grade(array $responses, int $totaltries): float {
         // TODO: To incorporate the question penalty for interactive with multiple tries behaviour.
 
-        $grade_value = 0;
-        foreach($responses as $response) {
+        $grade = 0;
+        foreach ($responses as $response) {
             [$fraction, $state] = $this->grade_response($response);
-            $grade_value += $fraction;
+            $grade += $fraction;
         }
-        return $grade_value;
+        return $grade;
     }
 
     /**
@@ -124,7 +123,7 @@ class qtype_drawlines_question extends question_graded_automatically {
     }
     #[\Override]
     public function get_expected_data() {
-        $expecteddata =[];
+        $expecteddata = [];
         foreach ($this->lines as $line) {
             $expecteddata[$this->choice($line->number - 1)] = PARAM_NOTAGS;
         }
@@ -216,7 +215,7 @@ class qtype_drawlines_question extends question_graded_automatically {
      * @author dml at nm dot ru (taken from comments on php manual)
      */
     protected function array_intersect_fixed($array1, $array2) {
-        $result = array();
+        $result = [];
         foreach ($array1 as $val) {
             if (($key = array_search($val, $array2, true)) !== false) {
                 $result[] = $val;
@@ -290,22 +289,13 @@ class qtype_drawlines_question extends question_graded_automatically {
     public function grade_response(array $response): array {
         // Retrieve the number of right responses and the total number of responses.
         if ($this->grademethod == 'partial') {
-            [$right, $total] = $this->get_num_parts_right_grade_partialt($response);
+            [$numright, $total] = $this->get_num_parts_right_grade_partialt($response);
         } else {
-            [$right, $total] = $this->get_num_parts_right_grade_allornone($response);
-            //$numwrong = $this->get_num_selected_choices($response) - $total;
-            //$fraction = max(min($numrightparts, $total - $numwrong), 0) / $total;
+            [$numright, $total] = $this->get_num_parts_right_grade_allornone($response);
         }
-        $fraction = $right / $total;
+        $fraction = $numright / $total;
         return [$fraction, question_state::graded_state_for_fraction($fraction)];
     }
-
-    #[\Override]
-    //public function grade_response(array $response): array {
-    //    [$right, $total] = $this->get_num_parts_right($response);
-    //    $fraction = $right / $total;
-    //    return [$fraction, question_state::graded_state_for_fraction($fraction)];
-    //}
 
     /**
      * Compute the distance from the point ($x, $y) to the line through the two points ($x1, $y1) and ($x2, $y2).
@@ -321,61 +311,29 @@ class qtype_drawlines_question extends question_graded_automatically {
     public function compute_distance_to_line(float $x1, float $y1, float $x2, float $y2, float $x, float $y): float {
         //print_object("float $x1, float $y1, float $x2, float $y2, float $x, float $y");
         //print_object(($x2 - $x1)**2);
-        return sqrt(($x - $x1)**2 + ($y - $y1)**2 -
-                (($x2 - $x1) * ($x - $x1) + ($y2 - $y1)*($y - $y1))**2/(($x2 - $x1)**2 + ($y2 - $y1)**2));
+        return sqrt(($x - $x1) ** 2 + ($y - $y1) ** 2 -
+                (($x2 - $x1) * ($x - $x1) + ($y2 - $y1)*($y - $y1)) ** 2/(($x2 - $x1) ** 2 + ($y2 - $y1) ** 2));
     }
 
     #[\Override]
-    public function classify_response(array $response): array {
+    public function classify_response(array $response) {
         $classifiedresponse = [];
-        foreach ($this->roworder as $key => $rownumber) {
-            $row = $this->rows[$rownumber];
-            $partname = format_string($row->name);
-            if (!array_key_exists($this->field($key), $response)) {
-                $classifiedresponse[$partname] = question_classified_response::no_response();
-                continue;
+        foreach ($this->lines as $key => $line) {
+            if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
+                if ($this->grademethod == 'partial') {
+                    $fraction = 0.5;
+                } else {
+                    $fraction = 1;
+                }
+                $classifiedresponse[$key] = new question_classified_response(
+                        $line->number,
+                        'Line ' . $line->number . ': ' . $response[$this->choice($key)],
+                        $fraction);
+            } else {
+                $classifiedresponse[$key] = question_classified_response::no_response();
             }
-
-            $selectedcolumn = $this->columns[$response[$this->field($key)]];
-            $classifiedresponse[$partname] = new question_classified_response(
-                    $selectedcolumn->number,
-                    format_string($selectedcolumn->name),
-                    (int) array_key_exists($response[$this->field($key)], $row->correctanswers),
-            );
         }
-
         return $classifiedresponse;
-    }
-    //public function classify_response(array $response) {
-    //    $parts = [];
-    //    //$hits = $this->choose_hits($response);
-    //    foreach ($this->places as $placeno => $place) {
-    //        if (isset($hits[$placeno])) {
-    //            $shuffledchoiceno = $this->get_right_choice_for($placeno);
-    //            $choice = $this->get_selected_choice(1, $shuffledchoiceno);
-    //            $parts[$placeno] = new question_classified_response(
-    //                    $choice->no,
-    //                    $choice->summarise(),
-    //                    1 / count($this->places));
-    //        } else {
-    //            $parts[$placeno] = question_classified_response::no_response();
-    //        }
-    //    }
-    //    return $parts;
-    //}
-
-    /**
-     * @param $place
-     * @return int|string|null
-     */
-    public function get_right_choice_for($place) {
-        foreach ($this->lines as $choicekey => $choiceid) {
-            // Compare the numbers only  by extracting the numbet from choicekey.
-            if ($place == (int)filter_var($choicekey, FILTER_SANITIZE_NUMBER_INT)) {
-                return $choicekey;
-            }
-        }
-        return null;
     }
 
     #[\Override]

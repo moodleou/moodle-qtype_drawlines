@@ -215,6 +215,9 @@ class qtype_drawlines_edit_form extends question_edit_form {
         return $question;
     }
 
+    /**
+     * The needed JS setup for this question type.
+     */
     public function js_call() {
         global $PAGE;
         $PAGE->requires->js_call_amd('qtype_drawlines/form', 'init');

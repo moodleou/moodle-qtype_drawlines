@@ -85,23 +85,32 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
             $value = $qa->get_last_qt_var($varname);
         }
         $fieldname = $qa->get_qt_field_name($varname);
-        $attributes = array('type' => 'hidden',
+        $attributes = ['type' => 'hidden',
                 'id' => str_replace(':', '_', $fieldname),
                 'name' => $fieldname,
-                'value' => $value);
+                'value' => $value];
         if ($classes !== null) {
             $attributes['class'] = join(' ', $classes);
         }
         return [$fieldname, html_writer::empty_tag('input', $attributes)."\n"];
     }
 
-   protected function hidden_field_choice(question_attempt $qa, $choicenumber, $value = null, $class = null) {
-       $varname = 'c'. $choicenumber;
-       $classes = ['choices', 'choice'. $choicenumber];
-       [, $html] = $this->hidden_field_for_qt_var($qa, $varname, $value, $classes);
-       return $html;
-   }
+    /**
+     * Generate the hidden fields on the preview page to capture the responses.
+     * @param question_attempt $qa
+     * @param $choicenumber
+     * @param $value
+     * @param $class
+     * @return mixed
+     */
+    protected function hidden_field_choice(question_attempt $qa, $choicenumber, $value = null, $class = null) {
+        $varname = 'c'. $choicenumber;
+        $classes = ['choices', 'choice'. $choicenumber];
+        [, $html] = $this->hidden_field_for_qt_var($qa, $varname, $value, $classes);
+        return $html;
+    }
 
+    #[\Override]
     public function formulation_and_controls(question_attempt $qa, question_display_options $options) {
         $question = $qa->get_question();
         $response = $qa->get_last_qt_data();
@@ -136,26 +145,18 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
             $attr['tabindex'] = 0;
         }
 
-        //if ($question->showmisplaced && $qa->get_state()->is_finished()) {
-        //    $visibledropzones = $question->get_drop_zones_without_hit($response);
-        //    $visibledropzones = $response;
-        //} else {
-        //    $visibledropzones = [];
-        //}
-        //$visibledropzones = $response;
-
         if ($qa->get_state() == question_state::$invalid) {
             $output .= html_writer::div($question->get_validation_error($qa->get_last_qt_data()), 'validationerror');
         }
         $output .= html_writer::end_div();
 
         $hiddenfields = '';
-        foreach($question->lines as $line) {
+        foreach ($question->lines as $line) {
             $hiddenfields .= $this->hidden_field_choice($qa, $line->number - 1);
         }
         $output .= html_writer::div($hiddenfields, 'dragchoices');
 
-        // Call to js
+        // Call to js.
         $this->page->requires->js_call_amd('qtype_drawlines/question', 'init',
                 [$qa->get_outer_question_div_unique_id(), $options->readonly, $visibilityzones, $question->lines]);
 
@@ -164,6 +165,7 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
         return $output;
     }
 
+    #[\Override]
     public function specific_feedback(question_attempt $qa) {
         return $this->combined_feedback($qa);
     }

@@ -34,7 +34,7 @@ require_once($CFG->dirroot . '/question/type/drawlines/tests/helper.php');
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers     \qtype_drawlines
  */
-class questiontype_test extends \advanced_testcase {
+final class questiontype_test extends \advanced_testcase {
     /** @var qtype_drawlines instance of the question type class to test. */
     protected $qtype;
 

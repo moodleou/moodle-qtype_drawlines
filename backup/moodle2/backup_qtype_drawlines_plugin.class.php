@@ -42,11 +42,12 @@ class backup_qtype_drawlines_plugin extends backup_qtype_plugin {
 
         $plugin->add_child($pluginwrapper);
 
-        $options = new backup_nested_element('drawlines', ['id'], ['grademethod',
-                        'correctfeedback', 'correctfeedbackformat',
-                        'partiallycorrectfeedback', 'partiallycorrectfeedbackformat',
-                        'incorrectfeedback', 'incorrectfeedbackformat',
-                        'shownumcorrect', 'showmisplaced',
+        $options = new backup_nested_element('drawlines', ['id'], [
+                'grademethod',
+                'correctfeedback', 'correctfeedbackformat',
+                'partiallycorrectfeedback', 'partiallycorrectfeedbackformat',
+                'incorrectfeedback', 'incorrectfeedbackformat',
+                'shownumcorrect', 'showmisplaced',
         ]);
         $pluginwrapper->add_child($options);
 
@@ -69,12 +70,11 @@ class backup_qtype_drawlines_plugin extends backup_qtype_plugin {
      * files to be processed both in backup and restore.
      */
     public static function get_qtype_fileareas() {
-        return
-        [
-                'bgimage' => 'question_created',
-                'correctfeedback' => 'question_created',
-                'partiallycorrectfeedback' => 'question_created',
-                'incorrectfeedback' => 'question_created',
+        return [
+            'bgimage' => 'question_created',
+            'correctfeedback' => 'question_created',
+            'partiallycorrectfeedback' => 'question_created',
+            'incorrectfeedback' => 'question_created',
         ];
     }
 }
