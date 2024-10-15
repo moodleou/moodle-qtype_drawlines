@@ -10,29 +10,6 @@ form.mform fieldset#id_previewareaheader .dropbackground {
     border: 1px solid black;
 }
 
-.que.drawlines line.color1 {
-    fill: #1d1e1d;
-}
-.que.drawlines line.color2 {
-    fill: #1c5fa1;
-}
-.que.drawlines line.color3 {
-    fill: #39da20;
-}
-.que.drawlines line.color4 {
-    fill: rgba(255, 165, 0, 0.98);
-}
-.que.drawlines line.color5 {
-    fill: #a11c1c;
-}
-.que.drawlines line.color6 {
-    fill: #e50de5;
-}
-
-.que.drawlines .dropzone.color7 .shape {
-    fill: #f0e68c;
-}
-
 .que.drawlines .dropzone .shapeLabel {
     text-anchor: middle;
     font-size: large;
@@ -76,47 +53,8 @@ form.mform fieldset#id_previewareaheader .dropbackground {
     display: inherit;
 }
 
-.que.drawlines .draghomes .marker,
-.que.drawlines .droparea .marker {
-    vertical-align: top;
-    cursor: move;
-}
-
-.que.drawlines .draghomes.readonly .marker,
-.que.drawlines .droparea.readonly .marker {
-    cursor: auto;
-}
-
-.que.drawlines .droparea .marker {
-    position: absolute;
-}
-
-.que.drawlines .draghomes .marker {
-    position: relative;
-    display: inline-block;
-    margin: 10px;
-}
-
-.que.drawlines .draghomes .marker.dragplaceholder {
-    display: none;
-}
-
-.que.drawlines .draghomes .marker.dragplaceholder.active {
-    visibility: hidden;
-    display: inline-block;
-}
-
-.que.drawlines .droparea .marker img.target,
-.que.drawlines .draghomes .marker img.target {
-    left: -7px; /* This must be half the size of the target image, minus 0.5. */
-    top: -7px;  /* In other words, this works for a 15x15 cross-hair. */
-}
-
-.que.drawlines .draghomes .marker .icon {
-    margin-right: 0;
-}
-
-.que.drawlines div.dragitems div.draghome img.target {
+.que.drawlines .droparea.readonly .startcircle,
+.que.drawlines .droparea.readonly .endcircle {
     display: none;
 }
 
