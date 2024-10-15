@@ -240,12 +240,12 @@ class qtype_drawlines_question extends question_graded_automatically {
      * @return array The array of number of correct lines (start, end or both points of lines).
      */
     public function get_num_parts_right_grade_partialt(array $response): array {
-        if(!$response) {
+        if (!$response) {
             return [0, 0];
         }
         $numpartrightstart = 0;
         $numpartrightend = 0;
-        foreach($this->lines as $key => $line) {
+        foreach ($this->lines as $key => $line) {
             if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
                 $coords = explode(' ', $response[$this->choice($key)]);
                 if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart)) {
@@ -268,11 +268,11 @@ class qtype_drawlines_question extends question_graded_automatically {
      * @return array The array of number of correct lines (both start and end points).
      */
     public function get_num_parts_right_grade_allornone(array $response): array {
-        if(!$response) {
+        if (!$response) {
             return [0, 0];
         }
         $numright = 0;
-        foreach($this->lines as $key => $line) {
+        foreach ($this->lines as $key => $line) {
             if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
                 $coords = explode(' ', $response[$this->choice($key)]);
                 if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart) &&
@@ -309,10 +309,8 @@ class qtype_drawlines_question extends question_graded_automatically {
      * @return float distance from the point ($x, $y) to the line through points ($x1, $y1), ($x2, $y2).
      */
     public function compute_distance_to_line(float $x1, float $y1, float $x2, float $y2, float $x, float $y): float {
-        //print_object("float $x1, float $y1, float $x2, float $y2, float $x, float $y");
-        //print_object(($x2 - $x1)**2);
         return sqrt(($x - $x1) ** 2 + ($y - $y1) ** 2 -
-                (($x2 - $x1) * ($x - $x1) + ($y2 - $y1)*($y - $y1)) ** 2/(($x2 - $x1) ** 2 + ($y2 - $y1) ** 2));
+                (($x2 - $x1) * ($x - $x1) + ($y2 - $y1) * ($y - $y1)) ** 2 / (($x2 - $x1) ** 2 + ($y2 - $y1) ** 2));
     }
 
     #[\Override]

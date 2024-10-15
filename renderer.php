@@ -132,7 +132,7 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
         $output .= html_writer::start_div('ddarea');
         $output .= html_writer::start_div($dropareaclass, ['id' => 'que-dlines-droparea']);
         $output .= html_writer::img(self::get_url_for_image($qa, 'bgimage'), get_string('dropbackground', 'qtype_drawlines'),
-                ['class' => 'dropbackground img-fluid']);
+                ['class' => 'dropbackground']);
         $output .= html_writer::start_div('', ['id' => 'que-dlines-dropzone']);
         $output .= html_writer::end_div();
         $output .= html_writer::end_div();
