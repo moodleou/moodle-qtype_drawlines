@@ -20,7 +20,7 @@ in the normal way.
 
 Or you can install using git. Type this commands in the root of your Moodle install
 
-    git clone https://github.com/moodleou/moodle-qtype_drawline.git question/type/drawlines
+    git clone https://github.com/moodleou/moodle-qtype_drawlines.git question/type/drawlines
     echo /question/type/drawlines/ >> .git/info/exclude
 
 Then run the Moodle update process

@@ -25,6 +25,6 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->version   = 2024043001;
-$plugin->requires  = 2023100904.06;
+$plugin->requires  = 2023100900;
 $plugin->component = 'qtype_drawlines';
 $plugin->maturity  = MATURITY_STABLE;
