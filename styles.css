@@ -1,9 +1,4 @@
 /* Styles for DrawLines. */
-.que.drawlines .qtext {
-    display: block;
-    margin-bottom: 0.5em;
-}
-
 .que.drawlines .dropbackground,
 form.mform fieldset#id_previewareaheader .dropbackground {
     margin: 0 auto;
@@ -12,7 +7,7 @@ form.mform fieldset#id_previewareaheader .dropbackground {
 
 .que.drawlines .dropzone .shapeLabel {
     text-anchor: middle;
-    font-size: large;
+    font-size: .875em;
 }
 
 .que.drawlines .dropzone .handlestart,
@@ -32,12 +27,13 @@ form.mform fieldset#id_previewareaheader .dropbackground {
     stroke-width: 1;
     cursor: move;
 }
-.que.drawlines .dropzone .startcircle:focus,
-.que.drawlines .dropzone .endcircle:focus {
-    outline: 3px solid orange;
+.que.drawlines polyline.shape {
+    cursor: move;
 }
+.que.drawlines .dropzone .startcircle:focus,
+.que.drawlines .dropzone .endcircle:focus,
 .que.drawlines .dropzone polyline:focus {
-    outline: 3px solid orange;
+    outline: 2px solid #facb4e;
 }
 
 .que.drawlines .dropzone .handlestart.move,
@@ -65,8 +61,4 @@ form.mform fieldset#id_previewareaheader .dropbackground {
 .que.drawlines div.ddarea,
 form.mform fieldset#id_previewareaheader div.ddarea {
     text-align: center;
-}
-
-.que.drawlines polyline.shape {
-    cursor: move;
 }

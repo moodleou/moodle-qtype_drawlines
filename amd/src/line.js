@@ -16,13 +16,13 @@
 /* eslint max-depth: ["error", 8] */
 
 /**
- * Library of classes for handling simple shapes.
+ * Library of classes for handling lines and points.
  *
- * These classes can represent shapes, let you alter them, can go to and from a string
- * representation, and can give you an SVG representation.
+ * These classes can represent Points and line, let you alter them
+ * and can give you an SVG representation.
  *
- * @module qtype_drawlines/drawLine
- * @copyright  2018 The Open University
+ * @module     qtype_drawlines/line
+ * @copyright  2024 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -44,6 +44,7 @@ define(function() {
 
     /**
      * Standard toString method.
+     *
      * @returns {string} "x;y";
      */
     Point.prototype.toString = function() {
@@ -52,6 +53,7 @@ define(function() {
 
     /**
      * Move a point
+     *
      * @param {int} dx x offset
      * @param {int} dy y offset
      */
@@ -63,7 +65,7 @@ define(function() {
     /**
      * Return a new point that is a certain position relative to this one.
      *
-     * @param {(int|Point)} offsetX if a point, offset by this points coordinates, else and int x offset.
+     * @param {(int|Point)} offsetX if a point, offset by these points coordinates, else and int x offset.
      * @param {int} [offsetY] used if offsetX is an int, the corresponding y offset.
      * @return {Point} the new point.
      */
@@ -122,7 +124,6 @@ define(function() {
     }
     Line.prototype = new Line();
 
-
     /**
      * Get the type of shape.
      *
@@ -163,7 +164,6 @@ define(function() {
      * @param {SVGElement} svgEl the SVG representation of this shape.
      */
     Line.prototype.updateSvg = function(svgEl) {
-
         // Set line attributes.
         this.drawLine(svgEl);
 
@@ -184,6 +184,13 @@ define(function() {
         svgEl.childNodes[4].textContent = this.labelend;
         svgEl.childNodes[4].setAttribute('x', this.centre2.x);
         svgEl.childNodes[4].setAttribute('y', parseInt(this.centre2.y) + 20);
+
+        // If the svg g element is already placed in dropzone, then add the keyboard support.
+        var svgClass = svgEl.getAttribute('class');
+        if (svgClass && svgClass.includes('placed')) {
+            svgEl.childNodes[1].setAttribute('tabindex', '0');
+            svgEl.childNodes[2].setAttribute('tabindex', '0');
+        }
     };
 
     /**
@@ -276,7 +283,6 @@ define(function() {
             }
         }
         return [Math.round(xMin), Math.round(yMin), Math.round(xMax), Math.round(yMax)];
-
     };
 
     /**
@@ -414,19 +420,20 @@ define(function() {
 
     /**
      * Move the g element between the dropzones and dragHomes.
+     *
      * @param {String} eventType Whether it's a mouse event or a keyboard event.
      * @param {SVGElement} selectedElement The element selected for dragging.
+     * @param {SVG} svgDropZones
+     * @param {SVG} svgDragsHome
      * @param {int|null} dropX Used by mouse events to calculate the svg to which it belongs.
      * @param {int|null} dropY
      * @param {String|null} whichSVG
      */
-    Line.prototype.addToDropZone = function(eventType, selectedElement, dropX, dropY, whichSVG) {
+    Line.prototype.addToDropZone = function(eventType, selectedElement, svgDropZones, svgDragsHome, dropX, dropY, whichSVG) {
         var maxY = 0,
             dropzoneNo = selectedElement.getAttribute('data-dropzone-no'),
             classattributes = '',
             dropZone = false;
-        var svgDragsHome = document.querySelector('svg.dragshome');
-        var svgDropZones = document.querySelector('svg.dropzones');
         if (eventType === 'mouse') {
             dropZone = this.isInsideSVG(svgDragsHome, dropX, dropY);
         } else {
@@ -453,9 +460,8 @@ define(function() {
             classattributes = selectedElement.getAttribute('class');
             classattributes = classattributes.replace('inactive', 'placed');
             selectedElement.setAttribute('class', classattributes);
-
         } else {
-            // Append the element to the draghmes SVG.
+            // Append the element to the draghomes SVG.
             svgDragsHome.appendChild(selectedElement);
 
             // We want to drop the lines from the top, depending on the line number.
@@ -480,6 +486,7 @@ define(function() {
 
     /**
      * Check if the current selected element is in the svg .
+     *
      * @param {SVGElement} svg Svg element containing the drags.
      * @param {int} dropX
      * @param {int} dropY
@@ -548,7 +555,6 @@ define(function() {
      * Add a new arrow SVG DOM element as a child of svg.
      *
      * @param {SVGElement} svg the parent node.
-     * @return {SVGElement} the newly created node.
      */
      function addLineArrow(svg) {
         if (svg.getElementsByTagName('defs')[0]) {

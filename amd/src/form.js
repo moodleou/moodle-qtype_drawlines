@@ -14,14 +14,15 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * JavaScript to allow dragging options to slots (using mouse down or touch) or tab through slots using keyboard.
+ * This class provides the enhancements to the drawlines editing form.
  *
  * @module     qtype_drawlines/form
  * @copyright  2024 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop, Line,) {
+define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop, Line,) {
+
     /**
      * Create the manager object that deals with keeping everything synchronised for one line.
      *
@@ -34,6 +35,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
         this.line = Line.make(this.getCoordinatesFromForm(this.lineNo), this.getLabel(), this.getLineType());
         this.updateCoordinatesFromForm();
     }
+
     /**
      * Update the coordinates from a particular string.
      *
@@ -53,7 +55,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
         }
 
         if (this.line.getCoordinates() !== coordinates) {
-            // Polygon, and size has changed.
+            // Line coordinates have changed.
             var currentyActive = this.isActive();
             this.removeFromSvg();
             if (svg) {
@@ -83,6 +85,27 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
     };
 
     /**
+     * Set the coordinates in the form to match the current shape.
+     */
+    LineManager.prototype.setCoordinatesInForm = function() {
+        var linecoords = this.line.getCoordinates();
+        drawlinesForm.setFormValue('zonestart', [this.lineNo], linecoords[0]);
+        drawlinesForm.setFormValue('zoneend', [this.lineNo], linecoords[1]);
+    };
+
+    /**
+     * Returns the coordinates for the line from the text input in the form.
+     *
+     * @param {int} lineNo
+     * @returns {Array} the coordinates.
+     */
+    LineManager.prototype.getCoordinatesFromForm = function(lineNo) {
+        var zonestart = drawlinesForm.getFormValue('zonestart', [lineNo]);
+        var zoneend = drawlinesForm.getFormValue('zoneend', [lineNo]);
+        return [zonestart, zoneend];
+    };
+
+    /**
      * Update the labels.
      */
     LineManager.prototype.updateLabel = function() {
@@ -95,27 +118,8 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
     };
 
     /**
-     * Set the coordinates in the form to match the current shape.
-     */
-    LineManager.prototype.setCoordinatesInForm = function() {
-        var linecoords = this.line.getCoordinates();
-        drawlinesForm.setFormValue('zonestart', [this.lineNo], linecoords[0]);
-        drawlinesForm.setFormValue('zoneend', [this.lineNo], linecoords[1]);
-    };
-
-    /**
-     * Returns the coordinates for the line from the text input in the form.
-     * @param {int} lineNo
-     * @returns {Array} the coordinates.
-     */
-    LineManager.prototype.getCoordinatesFromForm = function(lineNo) {
-        var zonestart = drawlinesForm.getFormValue('zonestart', [lineNo]);
-        var zoneend = drawlinesForm.getFormValue('zoneend', [lineNo]);
-        return [zonestart, zoneend];
-    };
-
-    /**
      * Returns the selected type of line in the form.
+     *
      * @returns {String} 'linesegment','linesinglearrow', 'linedoublearrows', 'lineinfinite'.
      */
     LineManager.prototype.getLineType = function() {
@@ -124,6 +128,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
 
     /**
      * Returns the line labels in the form.
+     *
      * @returns {Array} line labels text.
      */
     LineManager.prototype.getLabel = function() {
@@ -153,7 +158,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
 
         // Move handle.
         // The shape + its labels are the first few children of svgEl.
-        // Then come the move handle followed by the edit handles.
+        // Then comes the move handle followed by the edit handles.
         var i = 0;
         for (i = 0; i < handles.moveHandles.length; ++i) {
             this.svgEl.childNodes[5 + i].setAttribute('cx', handles.moveHandles[i].x);
@@ -282,6 +287,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
 
     /**
      * Start responding to dragging the move handle.
+     *
      * @param {Event} e Event object
      * @param {String} handleIndex
      */
@@ -330,6 +336,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
 
     /**
      * Start responding to dragging the move handle.
+     *
      * @param {Event} e Event object
      * @param {String} handleIndex
      */
@@ -404,6 +411,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
 
         /**
          * Utility to get the file name and url from the filepicker.
+         *
          * @returns {Object} object containing functions {file, name}
          */
         filePickers: function() {
@@ -540,6 +548,11 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
             previewArea.addEventListener('touchstart', drawlinesForm.handleEventEdit);
         },
 
+        /**
+         * Handle events linked to moving the line.
+         *
+         * @param {Event} event
+         */
         handleEventMove: function(event) {
             var dropzoneElement, dropzoneNo, handleIndex;
             if (event.target.closest('.dropzone .handlestart.move')) {
@@ -557,6 +570,11 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/Line'], function($, dragDrop
             }
         },
 
+        /**
+         * Handle events linked to moving the rectangle to change the radius which is used for grading.
+         *
+         * @param {Event} event
+         */
         handleEventEdit: function(event) {
             var dropzoneElement, dropzoneNo, handleIndex;
             if (event.target.closest('.dropzone .handlestart.edit')) {

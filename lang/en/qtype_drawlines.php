@@ -39,20 +39,20 @@ $string['formerror_zonestart'] = 'Start zone coordinates should be in x,y;r form
 
 $string['gradeallornothing'] = 'All-or-nothing';
 $string['grademethod'] = 'Grading type';
-$string['gradepartialcredit'] = 'Give partial credit';
 $string['grademethod_desc'] = 'Give partial credit (default): each correct response in the body cells are worth one point, so students score a percentage of the total correct responses.
 All or nothing: students must get every response correct, otherwise they score zero.';
 $string['grademethod_help'] = 'Give partial credit (default): each correct response worth one point, so students score a percentage of the total correct responses.
 
 All or nothing: students must get every response correct, otherwise they score zero.';
+$string['gradepartialcredit'] = 'Give partial credit';
 
 $string['labelend'] = 'End label';
 $string['labelmiddle'] = 'Mid label';
 $string['labelstart'] = 'Start label';
-$string['linedoublearrows'] = 'Double arrows ←--→';
+$string['linedoublearrows'] = 'Double arrows &xharr;';
 $string['lineinfinite'] = 'Infinite line --o--o--';
 $string['linesegment'] = 'Line segment ---';
-$string['linesinglearrow'] = 'Single arrow -→';
+$string['linesinglearrow'] = 'Single arrow &xrarr;';
 $string['linexheader'] = 'Line {no}';
 
 $string['pleasedragalllines'] = 'Your answer is not complete; you must place all lines on the image.';

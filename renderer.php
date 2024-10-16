@@ -114,7 +114,6 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
     public function formulation_and_controls(question_attempt $qa, question_display_options $options) {
         $question = $qa->get_question();
         $response = $qa->get_last_qt_data();
-        $choicesorder = $qa->get_qt_field_name('choicesorder');
         $visibilityzones = $response;
         $componentname = $question->qtype->plugin_name();
 
@@ -130,14 +129,12 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
         $output = html_writer::div($questiontext, 'qtext');
 
         $output .= html_writer::start_div('ddarea');
-        $output .= html_writer::start_div($dropareaclass, ['id' => 'que-dlines-droparea']);
+        $output .= html_writer::start_div($dropareaclass);
         $output .= html_writer::img(self::get_url_for_image($qa, 'bgimage'), get_string('dropbackground', 'qtype_drawlines'),
                 ['class' => 'dropbackground']);
-        $output .= html_writer::start_div('', ['id' => 'que-dlines-dropzone']);
+        $output .= html_writer::start_div('que-dlines-dropzone');
         $output .= html_writer::end_div();
         $output .= html_writer::end_div();
-
-        $output .= html_writer::div('', 'markertexts');
 
         $output .= html_writer::start_div($draghomesclass);
 

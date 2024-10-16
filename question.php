@@ -350,6 +350,12 @@ class qtype_drawlines_question extends question_graded_automatically {
         $answers = [];
         foreach ($this->lines as $key => $line) {
             if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] != '') {
+                $coordinates = explode(' ', $response[$this->choice($key)]);
+                if ($line->type == 'lineinfinite' && count($coordinates) == 4) {
+                    $coordinates = explode(' ', $response[$this->choice($key)]);
+                    $answers[] = 'Line ' . $line->number . ': ' . $coordinates[1] . ' ' . $coordinates[2];
+                    continue;
+                }
                 $answers[] = 'Line ' . $line->number . ': ' . $response[$this->choice($key)];
             }
         }

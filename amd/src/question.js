@@ -14,7 +14,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * JavaScript to allow dragging options to slots (using mouse down or touch) or tab through slots using keyboard.
+ * JavaScript to allow dragging options for lines (using mouse down or touch) or tab through lines using keyboard.
  *
  * @module     qtype_drawlines/question
  * @copyright  2024 The Open University
@@ -24,13 +24,13 @@
 define([
     'jquery',
     'core/dragdrop',
-    'qtype_drawlines/Line',
+    'qtype_drawlines/line',
     'core/key_codes',
     'core_form/changechecker',
 ], function(
     $,
     dragDrop,
-    Lines,
+    Line,
 ) {
 
     "use strict";
@@ -52,16 +52,22 @@ define([
         this.questionLines = questionLines;
         this.lineSVGs = [];
         this.lines = [];
-        this.isPrinting = false;
-        this.questionAnswer = {};
         this.svgEl = null;
         if (readOnly) {
-            this.getRoot().addClass('qtype_drawlines-readonly');
+            this.getRoot().classList.add('qtype_drawlines-readonly');
         }
         thisQ.allImagesLoaded = false;
-        thisQ.getNotYetLoadedImages().one('load', function() {
-            thisQ.waitForAllImagesToBeLoaded();
-        });
+        // Get all images that are not yet loaded
+        const images = thisQ.getNotYetLoadedImages();
+
+        // Loop over each image and add an event listener for the 'load' event
+        if (images) {
+            images.forEach((imgNode) => {
+                imgNode.addEventListener('load', function() {
+                    thisQ.waitForAllImagesToBeLoaded();
+                }, {once: true}); // The { once: true } option ensures the listener is called only once
+            });
+        }
         thisQ.waitForAllImagesToBeLoaded();
     }
 
@@ -71,7 +77,7 @@ define([
     DrawlinesQuestion.prototype.updateCoordinates = function() {
         // We don't need to scale the shape for editing form.
         for (var line = 0; line < this.lineSVGs.length; line++) {
-            var coordinates = this.getCoordinates(this.lineSVGs[line]);
+            var coordinates = this.getSVGLineCoordinates(this.lineSVGs[line]);
             if (!this.lines[line].parse(coordinates[0], coordinates[1], 1)) {
                 // Invalid coordinates. Don't update the preview.
                 return;
@@ -82,6 +88,7 @@ define([
 
     /**
      * Parse the coordinates from a particular string.
+     *
      * @param {String} coordinates The coordinates to be parsed. The values are in the format: x1,y1 x2,y2.
      *                             Except for infinite line type where it's in the format x1,y1 x2,y2, x3,y3, x4,y4.
      *                             Here, x1,y1 and x4,y4 are the two very end points of the infinite line and
@@ -101,29 +108,51 @@ define([
     };
 
     /**
+     * Draws the svg lines of any drop zones that should be visible for feedback purposes.
+     */
+    DrawlinesQuestion.prototype.drawDropzone = function() {
+        var bgImage = this.bgImage();
+        var svg = this.getRoot().querySelector('svg.dropzones');
+        var rootElement = this.getRoot();
+        rootElement.querySelector('.que-dlines-dropzone').style.position = 'relative';
+        rootElement.querySelector('.que-dlines-dropzone').style.top = (bgImage.height + 1) * -1 + "px";
+        rootElement.querySelector('.que-dlines-dropzone').style.height = bgImage.height + "px";
+        rootElement.querySelector('.droparea').style.height = bgImage.height + "px";
+        if (!svg) {
+            var dropZone = this.getRoot().querySelector('.que-dlines-dropzone');
+            dropZone.innerHTML =
+                '<svg xmlns="http://www.w3.org/2000/svg" ' +
+                    'class= "dropzones" ' +
+                    'width="' + bgImage.width + '" ' +
+                    'height="' + bgImage.height + '" ' +
+                '></svg>';
+        }
+        this.drawSVGLines(this.questionLines);
+    };
+
+    /**
      * Draws the svg lines of any drop zones.
+     *
      * @param {Object[]} questionLines
      */
     DrawlinesQuestion.prototype.drawSVGLines = function(questionLines) {
-        var bgImage = document.querySelector('img.dropbackground'),
+        var bgImage = this.bgImage(),
             height, startcoordinates, endcoordinates, draginitialcoords;
 
-        var drags = document.querySelector('.draghomes');
+        var drags = this.getRoot().querySelector('.draghomes');
         drags.innerHTML =
             '<svg xmlns="http://www.w3.org/2000/svg" class="dragshome" ' +
-                'id= "que-dlines-svg-dragshome" ' +
-                'width="' + bgImage.width + '" ' +
-                'height="' + questionLines.length * 50 + '"' +
+            'width="' + bgImage.width + '" ' +
+            'height="' + questionLines.length * 50 + '"' +
             '></svg>';
 
-        var draghomeSvg = document.getElementById('que-dlines-svg-dragshome');
-        var dropzoneSvg = document.getElementById('que-dlines-svg');
+        var draghomeSvg = this.getRoot().querySelector('.dragshome');
+        var dropzoneSvg = this.getRoot().querySelector('.dropzones');
         var initialHeight = 25;
         for (let line = 0; line < questionLines.length; line++) {
             height = initialHeight + line * 50;
             startcoordinates = '50,' + height + ';10';
             endcoordinates = '200,' + height + ';10';
-
 
             // Check if the lines are to be set with initial coordinates.
             draginitialcoords = this.visibleDropZones['c' + line];
@@ -132,39 +161,22 @@ define([
                 var coords = this.parseCoordinates(draginitialcoords, questionLines[line].type);
                 startcoordinates = coords[0] + ';10';
                 endcoordinates = coords[1] + ';10';
-                this.lines[line] = Lines.make([startcoordinates, endcoordinates],
-                    [questionLines[line].labelstart, questionLines[line].labelend], questionLines[line].type);
+                this.lines[line] = Line.make(
+                    [startcoordinates, endcoordinates],
+                    [questionLines[line].labelstart, questionLines[line].labelend],
+                    questionLines[line].type
+                );
                 this.addToSvg(line, dropzoneSvg);
             } else {
                 // Need to be added to draghomeSvg.
-                this.lines[line] = Lines.make([startcoordinates, endcoordinates],
-                    [questionLines[line].labelstart, questionLines[line].labelend], questionLines[line].type);
+                this.lines[line] = Line.make(
+                    [startcoordinates, endcoordinates],
+                    [questionLines[line].labelstart, questionLines[line].labelend],
+                    questionLines[line].type
+                );
                 this.addToSvg(line, draghomeSvg);
             }
         }
-    };
-
-    /**
-     * Draws the svg lines of any drop zones that should be visible for feedback purposes.
-     */
-    DrawlinesQuestion.prototype.drawDropzone = function() {
-        var bgImage = document.querySelector('img.dropbackground');
-        var svg = document.querySelector('svg.dropzones');
-        document.getElementById('que-dlines-dropzone').style.position = 'relative';
-        document.getElementById('que-dlines-dropzone').style.top = (bgImage.height + 1) * -1 + "px";
-        document.getElementById('que-dlines-dropzone').style.height = bgImage.height + "px";
-        document.getElementById('que-dlines-droparea').style.height = bgImage.height + "px";
-        if (!svg) {
-            var dropZone = document.querySelector('#que-dlines-dropzone');
-            dropZone.innerHTML =
-                '<svg xmlns="http://www.w3.org/2000/svg" ' +
-                    'id= "que-dlines-svg" ' +
-                    'class= "dropzones" ' +
-                    'width="' + bgImage.width + '" ' +
-                    'height="' + bgImage.height + '" ' +
-                '></svg>';
-        }
-        this.drawSVGLines(this.questionLines);
     };
 
     // TODO: The below methods can be refractored for window resizing.
@@ -178,7 +190,7 @@ define([
     //  */
     // DrawlinesQuestion.prototype.addDropzone = function(svg, dropZoneNo, colourClass) {
     //     var dropZone = this.visibleDropZones[dropZoneNo],
-    //         line = Lines.make(dropZone.line, ''),
+    //         line = Line.make(dropZone.line, ''),
     //         existingmarkertext,
     //         bgRatio = this.bgRatio();
     //     if (!line.parse(dropZone.coords, bgRatio)) {
@@ -214,7 +226,7 @@ define([
     //     var lineSVG = line.makeSvg(svg[0]);
     //     lineSVG.setAttribute('class', 'dropzone ' + colourClass);
     //
-    //     this.lines[this.Lines.length] = line;
+    //     this.lines[this.Line.length] = line;
     //     this.lineSVGs[this.lineSVGs.length] = lineSVG;
     // };
 
@@ -274,7 +286,7 @@ define([
     //     if (val !== '') {
     //         var coordsStrings = val.split(' ');
     //         for (var i = 0; i < coordsStrings.length; i++) {
-    //             imageCoords[i] = Lines.Point.parse(coordsStrings[i]);
+    //             imageCoords[i] = Line.Point.parse(coordsStrings[i]);
     //         }
     //     }
     //     return imageCoords;
@@ -319,7 +331,7 @@ define([
     //         dragXY;
     //
     //     dragged.data('pagex', dragged.offset().left).data('pagey', dragged.offset().top);
-    //     dragXY = new Lines.Point(dragged.data('pagex'), dragged.data('pagey'));
+    //     dragXY = new Line.Point(dragged.data('pagex'), dragged.data('pagey'));
     //     if (this.coordsInBgImg(dragXY)) {
     //         this.sendDragToDrop(dragged, true);
     //         placed = true;
@@ -332,7 +344,7 @@ define([
     //         // It seems that the dragdrop sometimes leaves the drag
     //         // one pixel out of position. Put it in exactly the right place.
     //         var bgImgXY = this.convertToBgImgXY(dragXY);
-    //         bgImgXY = new Lines.Point(bgImgXY.x / bgRatio, bgImgXY.y / bgRatio);
+    //         bgImgXY = new Line.Point(bgImgXY.x / bgRatio, bgImgXY.y / bgRatio);
     //         dragged.data('originX', bgImgXY.x).data('originY', bgImgXY.y);
     //     }
     //
@@ -412,7 +424,7 @@ define([
     //     var dropArea = this.dropArea(),
     //         bgRatio = this.bgRatio();
     //     drag.removeClass('beingdragged').removeClass('unneeded');
-    //     var dragXY = this.convertToBgImgXY(new Lines.Point(drag.data('pagex'), drag.data('pagey')));
+    //     var dragXY = this.convertToBgImgXY(new Line.Point(drag.data('pagex'), drag.data('pagey')));
     //     if (isScaling) {
     //         drag.data('originX', dragXY.x / bgRatio).data('originY', dragXY.y / bgRatio);
     //         drag.css('left', dragXY.x).css('top', dragXY.y);
@@ -467,29 +479,30 @@ define([
     //     }, 100);
     // },
 
-
     /**
      * Get the outer div for this question.
-     * @returns {jQuery} containing that div.
+     *
+     * @return {*}
      */
     DrawlinesQuestion.prototype.getRoot = function() {
-        return $(document.getElementById(this.containerId));
+        return document.getElementById(this.containerId);
     };
 
     /**
      * Get the img that is the background image.
-     * @returns {jQuery} containing that img.
+     *
+     * @returns {element|undefined} the DOM element (if any)
      */
     DrawlinesQuestion.prototype.bgImage = function() {
-        return this.getRoot().find('img.dropbackground');
+        return this.getRoot().querySelector('img.dropbackground');
     };
 
     /**
-     * Returns the coordinates for the line from the text input in the form.
+     * Returns the coordinates for the line from the SVG.
      * @param {SVGElement} svgEl
      * @returns {Array} the coordinates.
      */
-    DrawlinesQuestion.prototype.getCoordinates = function(svgEl) {
+    DrawlinesQuestion.prototype.getSVGLineCoordinates = function(svgEl) {
 
         var circleStartXCoords = svgEl.childNodes[1].getAttribute('cx');
         var circleStartYCoords = svgEl.childNodes[1].getAttribute('cy');
@@ -514,7 +527,6 @@ define([
         return bgImgClientWidth / bgImgNaturalWidth;
     };
 
-
     /**
      * Add this line to an SVG graphic.
      *
@@ -535,7 +547,8 @@ define([
     };
 
     /**
-     * Update the shape of this drop zone (but not type) in an SVG image.
+     * Update the line of this drop zone in an SVG image.
+     *
      * @param {int} dropzoneNo
      */
     DrawlinesQuestion.prototype.updateSvgEl = function(dropzoneNo) {
@@ -544,6 +557,7 @@ define([
 
     /**
      * Start responding to dragging the move handle attached to the line ends (circles).
+     *
      * @param {Event} e Event object
      * @param {String} whichHandle which circle handle was moved, i.e., startcircle or endcircle.
      * @param {int} dropzoneNo
@@ -557,7 +571,7 @@ define([
             lastX = info.x,
             lastY = info.y,
             dragProxy = this.makeDragProxy(info.x, info.y),
-            svg = document.querySelector('svg.dropzones'),
+            svg = this.getRoot().querySelector('svg.dropzones'),
             maxX = svg.width.baseVal.value,
             maxY = svg.height.baseVal.value;
 
@@ -573,9 +587,9 @@ define([
         });
     };
 
-
     /**
      * Start responding to dragging the move handle attached to the line.
+     *
      * @param {Event} e Event object
      * @param {int} dropzoneNo
      */
@@ -591,7 +605,7 @@ define([
             maxX,
             maxY,
             whichSVG = "",
-            bgImage = document.querySelector('img.dropbackground'),
+            bgImage = this.bgImage(),
             isMoveFromDragsToDropzones,
             isMoveFromDropzonesToDrags,
             svgClass = '';
@@ -601,6 +615,9 @@ define([
         const dropY = e.clientY;
 
         dragDrop.start(e, $(dragProxy), function(pageX, pageY) {
+
+            // The svg's which are associated with this question.
+            var closestSVGs = movingDrag.getSvgsClosestToElement(selectedElement);
 
             // Check if the drags need to be moved from one svg to another.
             var closeTo = selectedElement.closest('svg');
@@ -613,9 +630,10 @@ define([
             // If true, the drag is moved from dropZone SVG to draghomes SVG.
             isMoveFromDropzonesToDrags = (svgClass === 'dropzones') &&
                 (movingDrag.lines[dropzoneNo].centre1.y > (bgImage.height - 20));
+
             if (isMoveFromDragsToDropzones || isMoveFromDropzonesToDrags) {
                 movingDrag.lines[dropzoneNo].addToDropZone('mouse', selectedElement,
-                    dropX, dropY);
+                    closestSVGs.svgDropZone, closestSVGs.svgDragsHome, dropX, dropY);
             }
 
             // Drag the lines within the SVG
@@ -659,32 +677,31 @@ define([
 
     /**
      * Save the coordinates for a dropped item in the form field.
+     *
      * @param {Number} choiceNo which copy of the choice this was.
      **/
     DrawlinesQuestion.prototype.saveCoordsForChoice = function(choiceNo) {
         let imageCoords = [];
-        var items = this.getRoot().find('svg g.choice' + choiceNo),
+        var items = this.getRoot().querySelector('svg g.choice' + choiceNo),
             gEleClassAttributes = '';
             // thiQ = this,
             // bgRatio = this.bgRatio();
-        if (items.length) {
-            items.each(function() {
-                var drag = $(this);
-                imageCoords = drag.children('polyline').attr('points');
-                gEleClassAttributes = drag.attr('class');
+        if (items) {
+                imageCoords = items.querySelector('polyline').getAttribute('points');
+                gEleClassAttributes = items.getAttribute('class');
                 // TODO: Kept the below comment as this could be needed for window resizing.
 
                 //     if (drag.data('scaleRatio') !== bgRatio) {
                 //         // The scale ratio for the draggable item was changed. We need to update that.
                 //         drag.data('pagex', drag.offset().left).data('pagey', drag.offset().top);
                 //     }
-                //     var dragXY = new Lines.Point(drag.data('pagex'), drag.data('pagey'));
+                //     var dragXY = new Line.Point(drag.data('pagex'), drag.data('pagey'));
                 //     window.console.log("dragXY:" + dragXY);
                 //
                 //     window.console.log("thiQ:" + thiQ);
                 //     if (thiQ.coordsInBgImg(dragXY)) {
                 //         var bgImgXY = thiQ.convertToBgImgXY(dragXY);
-                //         bgImgXY = new Lines.Point(bgImgXY.x / bgRatio, bgImgXY.y / bgRatio);
+                //         bgImgXY = new Line.Point(bgImgXY.x / bgRatio, bgImgXY.y / bgRatio);
                 //         imageCoords[imageCoords.length] = bgImgXY;
                 //         window.console.log("bgImgXY:" + bgImgXY);
                 //     }
@@ -692,21 +709,20 @@ define([
                 //     imageCoords[imageCoords.length] = drag.data('imageCoords');
                 // }
 
-            });
         }
         if (gEleClassAttributes !== '' && gEleClassAttributes.includes('placed')) {
-            this.getRoot().find('input.choice' + choiceNo).val(imageCoords);
+            this.getRoot().querySelector('input.choice' + choiceNo).value = imageCoords;
         } else if (gEleClassAttributes !== '' && gEleClassAttributes.includes('inactive')) {
-            this.getRoot().find('input.choice' + choiceNo).val('');
+            this.getRoot().querySelector('input.choice' + choiceNo).value = '';
         }
     };
 
     /**
-     * Handle key down / press events on markers.
+     * Handle key down / press events on svg lines.
      * @param {KeyboardEvent} e
      * @param {SVGElement} drag SVG element being dragged.
      * @param {int} dropzoneNo
-     * @param {String} activeElement The string indicating the element being dragged.
+     * @param {String} activeElement The element being dragged, whether it is the line or the line endpoints.
      */
     DrawlinesQuestion.prototype.handleKeyPress = function(e, drag, dropzoneNo, activeElement) {
 
@@ -748,17 +764,18 @@ define([
         var maxX,
             maxY,
             whichSVG;
-        var bgImage = document.querySelector('img.dropbackground');
+        var bgImage = this.bgImage();
+        var closestSVGs = this.getSvgsClosestToElement(drag);
         var isMoveFromDragsToDropzones = (svgClass === "dragshome");
         var isMoveFromDropzonesToDrags = (svgClass === 'dropzones') &&
             (question.lines[dropzoneNo].centre1.y > (bgImage.height - 20));
 
         if (isMoveFromDragsToDropzones) {
             question.lines[dropzoneNo].addToDropZone('keyboard', dropzoneElement,
-                null, null, 'DragsSVG');
+                closestSVGs.svgDropZone, closestSVGs.svgDragsHome, null, null, 'DragsSVG');
         } else if (isMoveFromDropzonesToDrags) {
             question.lines[dropzoneNo].addToDropZone('keyboard', dropzoneElement,
-                null, null, 'DropZonesSVG');
+                closestSVGs.svgDropZone, closestSVGs.svgDragsHome, null, null, 'DropZonesSVG');
         }
 
         // Get the dimensions of the selected element's svg.
@@ -781,46 +798,47 @@ define([
     };
 
     /**
-     * Handle key down / press events on markers.
-     * @param {SVGElement} dragElement SVG element being dragged.
-     * @param {String}  className
-     * @returns {Object|null} An object containing maxX, maxY, and whichSVG if an SVG is found; otherwise, null.
-     // * @param {SVGElement} svgelement The SVG to which the dragElement belongs.
+     * Returns the dimensions of the SVG image to which the drag element belongs.
+     *
+     * @param {SVG} dragSVG The SVG to which the drag element belongs.
+     * @param {String} className Class asscociated with the SVG
+     * @return {{whichSVG: (string), maxY: number, maxX: number}}
      */
-    DrawlinesQuestion.prototype.getSvgDimensionsByClass = function(dragElement, className) {
-        const closeTo = dragElement.closest('svg');
-        if (closeTo && closeTo.classList.contains(className)) {
-            return {
-                maxX: closeTo.width.baseVal.value,
-                maxY: closeTo.height.baseVal.value,
-                whichSVG: className === 'dragshome' ? 'DragsSVG' : 'DropZonesSVG'
-            };
+    DrawlinesQuestion.prototype.getSvgDimensionsByClass = function(dragSVG, className) {
+        return {
+            maxX: dragSVG.width.baseVal.value,
+            maxY: dragSVG.height.baseVal.value,
+            whichSVG: className === 'dragshome' ? 'DragsSVG' : 'DropZonesSVG'
+        };
+    };
+
+    /**
+     * Returns the SVG's to which the drag element belongs.
+     *
+     * @param {SVGElement} dragElement The element which is being moved.
+     * @return {{svgDragsHome, svgDropZone}}
+     */
+    DrawlinesQuestion.prototype.getSvgsClosestToElement = function(dragElement) {
+        var svgElement = dragElement.closest('svg');
+        var svgElementClass = svgElement.getAttribute('class');
+        var svgDragsHome, svgDropZone, parent;
+        if (svgElementClass === "dragshome") {
+            svgDragsHome = svgElement;
+            parent = svgElement.closest('.ddarea');
+            svgDropZone = parent.querySelector('.dropzones');
+        } else {
+            svgDropZone = svgElement;
+            parent = svgElement.closest('.ddarea');
+            svgDragsHome = parent.querySelector('.dragshome');
         }
-        return null;
+        return {
+            svgDropZone: svgDropZone,
+            svgDragsHome: svgDragsHome
+        };
     };
 
     /**
-     * Get the input belong to drag.
-     *
-     * @param {jQuery} drag the item to place.
-     * @returns {jQuery} input element.
-     */
-    DrawlinesQuestion.prototype.getInput = function(drag) {
-        var choiceNo = this.getChoiceNoFromElement(drag);
-        return this.getRoot().find('input.choices.choice' + choiceNo);
-    };
-
-    /**
-     * Check if the given drag is in infinite mode or not.
-     *
-     * @param {jQuery} drag The drag item need to check.
-     */
-    DrawlinesQuestion.prototype.isInfiniteDrag = function(drag) {
-        return drag.hasClass('infinite');
-    };
-
-    /**
-     * Waits until all images are loaded before calling setupQuestion().
+     * Waits until all images are loaded before setting up question.
      *
      * This function is called from the onLoad of each image, and also polls with
      * a time-out, because image on-loads are allegedly unreliable.
@@ -841,7 +859,8 @@ define([
         // If we have not yet loaded all images, set a timeout to
         // call ourselves again, since apparently images on-load
         // events are flakey.
-        if (this.getNotYetLoadedImages().length > 0) {
+        const images = this.getNotYetLoadedImages();
+        if (images && images.length > 0) {
             this.imageLoadingTimeoutId = setTimeout(function() {
                 this.waitForAllImagesToBeLoaded();
             }, 100);
@@ -857,11 +876,15 @@ define([
     /**
      * Get any of the images in the drag-drop area that are not yet fully loaded.
      *
-     * @returns {jQuery} those images.
+     * @returns {boolean} Returns true if images are loaded without errors.
      */
     DrawlinesQuestion.prototype.getNotYetLoadedImages = function() {
-        return this.getRoot().find('.drawlines img.dropbackground').not(function(i, imgNode) {
-            return this.imageIsLoaded(imgNode);
+        // Get all 'img' elements with the class 'dropbackground' within '.drawlines' inside the root element
+        const images = this.getRoot().querySelectorAll('.drawlines img.dropbackground');
+
+        // Filter out the images that are already loaded
+        Array.from(images).filter((imgNode) => {
+            return !this.imageIsLoaded(imgNode);
         });
     };
 
@@ -876,7 +899,7 @@ define([
     };
 
     /**
-     * Singleton that tracks all the DragDropToTextQuestions on this page, and deals
+     * Singleton that tracks all the DrawlinesQuestions on this page, and deals
      * with event dispatching.
      *
      * @type {Object}
@@ -892,7 +915,7 @@ define([
          * {Object} ensures that the marker event handlers are only initialised once per question,
          * indexed by containerId (id on the .que div).
          */
-        markerEventHandlersInitialised: {},
+        lineEventHandlersInitialised: {},
 
         /**
          * {boolean} is printing or not.
@@ -938,8 +961,8 @@ define([
 
             questionManager.questions[containerId].updateCoordinates();
 
-            if (!questionManager.markerEventHandlersInitialised.hasOwnProperty(containerId)) {
-                questionManager.markerEventHandlersInitialised[containerId] = true;
+            if (!questionManager.lineEventHandlersInitialised.hasOwnProperty(containerId)) {
+                questionManager.lineEventHandlersInitialised[containerId] = true;
 
                 var questionContainer = document.getElementById(containerId);
                 if (questionContainer.classList.contains('drawlines') &&
@@ -947,20 +970,20 @@ define([
 
                     // Add event listeners to the 'previewArea'.
                     // For dropzone SVG.
-                    var dropArea = document.querySelector('.droparea');
-                    // Add event listener for mousedown and touchstart events
+                    var dropArea = questionContainer.querySelector('.droparea');
+                    // Add event listener for mousedown and touchstart events.
                     dropArea.addEventListener('mousedown', questionManager.handleDropZoneEventMove);
                     dropArea.addEventListener('touchstart', questionManager.handleDropZoneEventMove);
-                    // Add event listener for keydown and keypress events
+                    // Add event listener for keydown and keypress events.
                     dropArea.addEventListener('keydown', questionManager.handleKeyPress);
                     dropArea.addEventListener('keypress', questionManager.handleKeyPress);
 
                     // For draghomes SVG.
-                    var drags = document.querySelector('.draghomes');
-                    // Add event listener for mousedown and touchstart events
+                    var drags = questionContainer.querySelector('.draghomes');
+                    // Add event listener for mousedown and touchstart events.
                     drags.addEventListener('mousedown', questionManager.handleDragHomeEventMove);
                     drags.addEventListener('touchstart', questionManager.handleDragHomeEventMove);
-                    // Add event listener for keydown and keypress events
+                    // Add event listener for keydown and keypress events.
                     drags.addEventListener('keydown', questionManager.handleKeyPress);
                     drags.addEventListener('keypress', questionManager.handleKeyPress);
                 }
@@ -988,6 +1011,11 @@ define([
         //     }, 100);
         // },
 
+        /**
+         * Handle mouse and touch events for dropzone svg.
+         *
+         * @param {Event} event
+         */
         handleDropZoneEventMove: function(event) {
             var dropzoneElement, dropzoneNo;
             var question = questionManager.getQuestionForEvent(event);
@@ -1009,10 +1037,15 @@ define([
             }
         },
 
+        /**
+         * Handle mouse and touch events for dragshome svg.
+         *
+         * @param {Event} event
+         */
         handleDragHomeEventMove: function(event) {
             var dropzoneElement, dropzoneNo;
             var question = questionManager.getQuestionForEvent(event);
-            if (event.target.closest('.dropzone polyline.shape')) {
+            if (event.target.closest('g')) {
                 dropzoneElement = event.target.closest('g');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
                 question.handleLineMove(event, dropzoneNo);
@@ -1021,33 +1054,8 @@ define([
         },
 
         /**
-         * Get the SVG element, if there is one, otherwise return null.
-         *
-         * @returns {SVGElement|null} the SVG element or null.
-         */
-        getSvg: function() {
-            var svg = document.querySelector('.droparea svg');
-            if (svg === null) {
-                return null;
-            } else {
-                return svg;
-            }
-        },
-
-        /**
-         * Helper to get the value of a form elements with name like "zonestart[0]".
-         *
-         * @param {String} name the base name, e.g. 'zonestart'.
-         * @param {String[]} indexes the indexes, e.g. ['0'].
-         * @return {String} the value of that field.
-         */
-        getFormValue: function(name, indexes) {
-            var el = this.getEl(name, indexes);
-            return el.value;
-        },
-
-        /**
          * Handle key down / press events on markers.
+         *
          * @param {Event} e
          */
         handleKeyPress: function(e) {
@@ -1076,6 +1084,7 @@ define([
 
         /**
          * Handle when the window is resized.
+         *
          * @param {boolean} isPrinting
          */
         handleWindowResize: function(isPrinting) {
@@ -1089,6 +1098,7 @@ define([
 
         /**
          * Given an event, work out which question it effects.
+         *
          * @param {Event} e the event.
          * @returns {DrawlinesQuestion|undefined} The question, or undefined.
          */
