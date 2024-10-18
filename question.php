@@ -55,40 +55,6 @@ class qtype_drawlines_question extends question_graded_automatically {
     /** @var int The number of lines. */
     public $numberoflines;
 
-    /**
-     * Work out a final grade for this attempt, taking into account
-     * all the tries the student made and return the grade value.
-     *
-     * @param array $responses the response for each try. Each element of this
-     * array is a response array, as would be passed to {@link grade_response()}.
-     * There may be between 1 and $totaltries responses.
-     *
-     * @param int $totaltries The maximum number of tries allowed.
-     *
-     * @return float the fraction that should be awarded for this
-     * sequence of response.
-     */
-    public function compute_final_grade(array $responses, int $totaltries): float {
-        // TODO: To incorporate the question penalty for interactive with multiple tries behaviour.
-
-        $grade = 0;
-        foreach ($responses as $response) {
-            [$fraction, $state] = $this->grade_response($response);
-            $grade += $fraction;
-        }
-        return $grade;
-    }
-
-    /**
-     * Get a choice identifier
-     *
-     * @param int $choice stem number
-     * @return string the question-type variable name.
-     */
-    public function choice($choice) {
-        return 'c' . $choice;
-    }
-
     #[\Override]
     public function get_expected_data() {
         $expecteddata = [];
@@ -247,62 +213,6 @@ class qtype_drawlines_question extends question_graded_automatically {
         } else {
             return parent::check_file_access($qa, $options, $component, $filearea, $args, $forcedownload);
         }
-    }
-
-    /**
-     * Tests to see whether two arrays have the same set of coords at a particular key.
-     * Coords can be in any order.
-     *
-     * @param array $array1 the first array.
-     * @param array $array2 the second array.
-     * @param string $key an array key.
-     * @return bool whether the two arrays have the same set of coords (or lack of them)
-     * for a given key.
-     */
-    public function arrays_same_at_key_integer(array $array1, array $array2, $key) {
-        if (array_key_exists($key, $array1)) {
-            $value1 = $array1[$key];
-        } else {
-            $value1 = '';
-        }
-        if (array_key_exists($key, $array2)) {
-            $value2 = $array2[$key];
-        } else {
-            $value2 = '';
-        }
-        $coords1 = explode(';', $value1);
-        $coords2 = explode(';', $value2);
-        if (count($coords1) !== count($coords2)) {
-            return false;
-        } else {
-            if (count($coords1) === 0) {
-                return true;
-            } else {
-                $valuesinbotharrays = $this->array_intersect_fixed($coords1, $coords2);
-                return (count($valuesinbotharrays) == count($coords1));
-            }
-        }
-    }
-
-    /**
-     *
-     * This function is a variation of array_intersect that checks for the existence of duplicate
-     * array values too.
-     *
-     * @param array $array1
-     * @param array $array2
-     * @return bool whether array1 and array2 contain the same values including duplicate values
-     * @author dml at nm dot ru (taken from comments on php manual)
-     */
-    protected function array_intersect_fixed($array1, $array2) {
-        $result = [];
-        foreach ($array1 as $val) {
-            if (($key = array_search($val, $array2, true)) !== false) {
-                $result[] = $val;
-                unset($array2[$key]);
-            }
-        }
-        return $result;
     }
 
     #[\Override]
