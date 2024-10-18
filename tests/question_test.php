@@ -120,7 +120,7 @@ final class question_test extends \basic_testcase {
         $summary = $question->get_question_summary();
         $this->assertNotEmpty($summary);
 
-        $expected = 'Draw 2 lines on the map. A line segennt from A (line starting point) to B (line Ending point), ' .
+        $expected = 'Draw 2 lines on the map. A line segment from A (line starting point) to B (line Ending point), ' .
                 'and another one from C to D. A is ..., B is ..., C is ... and D is ...';
         $this->assertEquals($expected, $summary);
     }
@@ -135,12 +135,12 @@ final class question_test extends \basic_testcase {
         $actual = $question->summarise_response($correctresponse);
         $this->assertEquals($expected, $actual);
 
-        // Partially correct responses with full makr for Line 1 and half of amrk for Line 2 (mark = 0.75).
+        // Partially correct responses with full marks for Line 1 and half of mark for Line 2 (mark = 0.75).
         $expected = 'Line 1: 10,10 300,10, Line 2: 10,200 300,123';
         $actual = $question->summarise_response(['c0' => '10,10 300,10', 'c1' => '10,200 300,123']);
         $this->assertEquals($expected, $actual);
 
-        // Partially correct responses with full makr for Line 1 and no amrk for Line 2 (mark = 0.5).
+        // Partially correct responses with full marks for Line 1 and no mark for Line 2 (mark = 0.5).
         $expected = 'Line 1: 10,10 300,10, Line 2: 10,123 300,123';
         $actual = $question->summarise_response(['c0' => '10,10 300,10', 'c1' => '10,123 300,123']);
         $this->assertEquals($expected, $actual);

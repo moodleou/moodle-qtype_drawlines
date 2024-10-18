@@ -16,13 +16,7 @@
 
 namespace qtype_drawlines;
 
-use qtype_drawlines\line;
-
 defined('MOODLE_INTERNAL') || die();
-global $CFG;
-
-require_once($CFG->dirroot . '/question/type/drawlines/classes/line.php');
-
 
 /**
  * Unit tests for DrawLines question definition class.
@@ -30,7 +24,7 @@ require_once($CFG->dirroot . '/question/type/drawlines/classes/line.php');
  * @package   qtype_drawlines
  * @copyright 2014 The Open University
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers \qtype_drawlines\line
+ * @covers    \qtype_drawlines\line
  */
 final class line_test extends \advanced_testcase {
 
@@ -42,7 +36,6 @@ final class line_test extends \advanced_testcase {
      * @return bool
      */
     public function test_is_zone_coordinates_valid(string $zonecooredinate, bool $trueorfalse): void {
-        $this->resetAfterTest();
         $this->assertEquals($trueorfalse, line::is_zone_coordinates_valid($zonecooredinate));
     }
 
@@ -74,7 +67,6 @@ final class line_test extends \advanced_testcase {
      * @return void
      */
     public function test_parse_into_cx_cy_with_or_without_radius(string $zonecooredinates, array $coordslist, bool $radius): void {
-        $this->resetAfterTest();
         $this->assertEquals($coordslist, line::parse_into_cx_cy_with_or_without_radius($zonecooredinates, $radius));
     }
 

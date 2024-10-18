@@ -18,15 +18,17 @@ Feature: Test exporting DrawLines questions
       | contextlevel | reference | name           |
       | Course       | C1        | Test questions |
     And the following "questions" exist:
-      | questioncategory | qtype     | name          | template       |
-      | Test questions   | drawlines | Draw lines 01 | mkmap_twolines |
+      | questioncategory | qtype     | name         | template       |
+      | Test questions   | drawlines | Drawlines 01 | mkmap_twolines |
 
   @javascript
   Scenario: Export a DrawLines question
     When I am on the "Course 1" "core_question > course question export" page logged in as teacher
     And I set the field "id_format_xml" to "1"
     And I press "Export questions to file"
-    Then following "click here" should download between "234100" and "234300" bytes
+    Then following "click here" should download a file that:
+      | Has mimetype                 | text/xml     |
+      | Contains text in xml element | Drawlines 01 |
     # If the download step is the last in the scenario then we can sometimes run
     # into the situation where the download page causes a http redirect but behat
     # has already conducted its reset (generating an error). By putting a logout

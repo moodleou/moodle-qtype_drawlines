@@ -39,7 +39,7 @@ Feature: Test editing an DrawLines question
     And I set the field "id_type_1" to "Choose"
     And I press "id_submitbutton"
     And I should see "You have to select a type for Line 2"
-    And I set the field "id_type_1" to "Single arrow -→"
+    And I set the field "id_type_1" to "Single arrow ⟶"
 
     # Chnage the question name
     And I set the following fields to these values:

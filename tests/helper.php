@@ -40,20 +40,6 @@ class qtype_drawlines_test_helper extends question_test_helper {
         global $CFG, $USER;
 
         $qdata = new stdClass();
-        question_bank::load_question_definition_classes('drawlines');
-        $bgdraftitemid = 0;
-        file_prepare_draft_area($bgdraftitemid, null, null, null, null);
-        $fs = get_file_storage();
-        $filerecord = new stdClass();
-        $filerecord->contextid = context_user::instance($USER->id)->id;
-        $filerecord->component = 'user';
-        $filerecord->filearea = 'draft';
-        $filerecord->itemid = $bgdraftitemid;
-        $filerecord->filepath = '/';
-        $filerecord->filename = 'mkmap.png';
-        $fs->create_file_from_pathname($filerecord, $CFG->dirroot .
-                '/question/type/drawlines/tests/fixtures/mkmap.png');
-
         $qdata->createdby = $USER->id;
         $qdata->modifiedby = $USER->id;
         $qdata->qtype = 'drawlines';
@@ -121,7 +107,6 @@ class qtype_drawlines_test_helper extends question_test_helper {
         return $qdata;
     }
 
-
     /**
      * Return the form data for a DrawLines with 2 lines.
      *
@@ -159,7 +144,6 @@ class qtype_drawlines_test_helper extends question_test_helper {
             'format' => FORMAT_HTML,
         ];
         $fromform->bgimage = $bgdraftitemid;
-        $fromform->grademethod = 'partial';
 
         // We create 2 lines in this question.
         $fromform->numberoflines = 2;
@@ -207,7 +191,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $question->modifiedby = $USER->id;
         $question->qtype = 'qtype_drawlines_question';
         $question->name = 'drawlines_mkmap_twolines';
-        $question->questiontext = 'Draw 2 lines on the map. A line segennt from A (line starting point) to B (line Ending point),' .
+        $question->questiontext = 'Draw 2 lines on the map. A line segment from A (line starting point) to B (line Ending point),' .
                 ' and another one from C to D. A is ..., B is ..., C is ... and D is ...';
         $question->questiontextformat = FORMAT_HTML;
         $question->generalfeedback = 'We draw lines from a starting to an end point.';
@@ -236,18 +220,6 @@ class qtype_drawlines_test_helper extends question_test_helper {
                 1 => new line(
                         11, $question->id, 2, line::TYPE_LINE_SEGMENT,
                         'Start2', '', 'End2', '10,200;12', '300,200;12'),
-        ];
-
-        $question->choices = [
-                'c0' => '10,10 300,10',
-                'c1' => '10,200 300,200',
-        ];
-
-        $question->places = [
-            '1' => new drop_zone(1, 'Start1', 10, 10),
-            '2' => new drop_zone(1, 'End1', 300, 10),
-            '3' => new drop_zone(2, 'Start2', 10, 200),
-            '4' => new drop_zone(2, 'End2', 300, 200),
         ];
 
         $question->hints = [

@@ -181,13 +181,7 @@ final class questiontype_test extends \advanced_testcase {
     }
 
     public function test_get_random_guess_score(): void {
-        $this->resetAfterTest(true);
-        $this->setAdminUser();
-        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
-        $cat = $questiongenerator->create_question_category([]);
-        $q = $questiongenerator->create_question('drawlines', 'mkmap_twolines', ['category' => $cat->id]);
-        $questiondata = question_bank::load_question_data($q->id);
-
-        $this->assertEquals(0, $this->qtype->get_random_guess_score($questiondata));
+        $qdata = \test_question_maker::get_question_data('drawlines', 'mkmap_twolines');
+        $this->assertEquals(0, $this->qtype->get_random_guess_score($qdata));
     }
 }

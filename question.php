@@ -25,21 +25,35 @@ use qtype_drawlines\line;
  */
 class qtype_drawlines_question extends question_graded_automatically {
 
+    /** @var string feedback for any correct response. */
+    public string $correctfeedback;
+
+    /** @var int format of $correctfeedback. */
+    public int $correctfeedbackformat;
+
+    /** @var string feedback for any partially correct response. */
+    public string $partiallycorrectfeedback;
+
+    /** @var int format of $partiallycorrectfeedback. */
+    public int $partiallycorrectfeedbackformat;
+
+    /** @var string feedback for any incorrect response. */
+    public string $incorrectfeedback;
+
+    /** @var int format of $incorrectfeedback. */
+    public int $incorrectfeedbackformat;
+
+    /** @var int shows if the drag lines are misplaced. */
+    public $showmisplaced;
+
     /** @var string 'allnone' (All-or-nothing) or 'partial' (Give partial credit) grading method. */
     public string $grademethod;
 
-    /** @var lines[], an array of line objects. */
+    /** @var line[], an array of line objects. */
     public $lines;
 
     /** @var int The number of lines. */
     public $numberoflines;
-
-    /** @var dragableitems[], array of draggable items (list of start and end of lines). */
-    public $dragableitems;
-
-
-    /** @var array The order of the lines, key => choice number in the format c0, c1... */
-    public $choicesorder;
 
     /**
      * Work out a final grade for this attempt, taking into account
