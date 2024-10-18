@@ -90,22 +90,6 @@ class qtype_drawlines_question extends question_graded_automatically {
     }
 
     #[\Override]
-    public function check_file_access($qa, $options, $component, $filearea, $args, $forcedownload) {
-        if ($filearea === 'bgimage') {
-            $validfilearea = true;
-        } else {
-            $validfilearea = false;
-        }
-        if ($component === 'qtype_drawlines' && $validfilearea) {
-            $question = $qa->get_question(false);
-            $itemid = reset($args);
-            return $itemid == $question->id;
-        } else {
-            return parent::check_file_access($qa, $options, $component, $filearea, $args, $forcedownload);
-        }
-    }
-
-    #[\Override]
     public function get_expected_data() {
         $expecteddata = [];
         foreach ($this->lines as $line) {
