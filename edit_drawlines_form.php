@@ -61,9 +61,9 @@ class qtype_drawlines_edit_form extends question_edit_form {
     }
 
     /**
-     * Options shared by all file pickers in the form.
+     * Options shared by all file pickers in the form for background image.
      *
-     * @return array Array of filepicker options.
+     * @return array Array of filepicker options for selecting the background image.
      */
     public static function file_picker_options(): array {
         $filepickeroptions = [];
@@ -79,11 +79,8 @@ class qtype_drawlines_edit_form extends question_edit_form {
 
         $this->set_current_settings();
 
-        // Add hidden form elements, for choices.
-        for ($number = 1; $number <= ($this->numberoflines * 2); $number++) {
-            $mform->addElement('hidden', 'c' . $number);
-            $mform->setType('c' . $number, PARAM_RAW);
-        }
+        $mform->addElement('advcheckbox', 'showmisplaced', get_string('showmisplaced', 'qtype_ddmarker'));
+        $mform->setDefault('showmisplaced', $this->get_default_value('showmisplaced', 0));
 
         $grademethodmenu = [
                 'partial' => get_string('gradepartialcredit', 'qtype_' . $this->qtype()),
@@ -111,6 +108,65 @@ class qtype_drawlines_edit_form extends question_edit_form {
 
         $this->add_combined_feedback_fields(true);
         $this->add_interactive_settings(true, true);
+    }
+
+    /**
+     * Add a set of form fields, obtained from get_per_line_fields.
+     *
+     * @param MoodleQuickForm $mform the form being built.
+     * @param string $label the label to use for each line.
+     */
+    protected function add_per_line_fields(MoodleQuickForm $mform, string $label) {
+        if (isset($this->question->lines)) {
+            $repeatsatstart = count($this->question->lines);
+        } else {
+            $repeatsatstart = line::LINE_NUMBER_START;
+        }
+        $repeatedoptions = [];
+        $this->repeat_elements($this->get_per_line_fields($mform, $label, $repeatedoptions),
+                $repeatsatstart, $repeatedoptions,
+                'numberoflines', 'addlines', line::LINE_NUMBER_ADD,
+                get_string('addmoreblanks', 'qtype_drawlines', 'lines'), true);
+    }
+
+    /**
+     * Returns a line object with relevant input fields.
+     *
+     * @param MoodleQuickForm $mform
+     * @param string $label
+     * @param array $repeatedoptions
+     * @return array
+     */
+    protected function get_per_line_fields(MoodleQuickForm $mform, string $label, array &$repeatedoptions): array {
+
+        $repeated = [];
+
+        $repeated[] = $mform->createElement('header', 'linexheader', $label);
+
+        $repeated[] = $mform->createElement('select', 'type',
+                get_string('type', 'qtype_' . $this->qtype()),
+                array_merge(['choose' => get_string('choose')], line::get_line_types()));
+
+        $repeated[] = $mform->createElement('text', 'labelstart',
+                get_string('labelstart', 'qtype_' . $this->qtype()), ['size' => 20]);
+        $mform->setType('labelstart', PARAM_RAW_TRIMMED);
+
+        $repeated[] = $mform->createElement('text', 'labelmiddle',
+                get_string('labelmiddle', 'qtype_' . $this->qtype()), ['size' => 20]);
+        $mform->setType('labelmiddle', PARAM_RAW_TRIMMED);
+
+        $repeated[] = $mform->createElement('text', 'labelend',
+                get_string('labelend', 'qtype_' . $this->qtype()), ['size' => 20]);
+        $mform->setType('labelend', PARAM_RAW_TRIMMED);
+
+        $repeated[] = $mform->createElement('text', 'zonestart',
+                get_string('zonestart', 'qtype_' . $this->qtype()), ['size' => 20]);
+        $mform->setType('zonestart', PARAM_RAW_TRIMMED);
+
+        $repeated[] = $mform->createElement('text', 'zoneend',
+                get_string('zoneend', 'qtype_' . $this->qtype()), ['size' => 20]);
+        $mform->setType('zoneend', PARAM_RAW_TRIMMED);
+        return $repeated;
     }
 
     /**
@@ -230,7 +286,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
         if ($bgimagesize === null) {
             $errors["bgimage"] = get_string('formerror_nobgimage', 'qtype_' . $this->qtype());
         }
-        $validlines = 0;
+        $hasbothcoordinates = false;
         // Validate whether the line type error needed to be displayed.
         for ($i = 0; $i < count($data["type"]); $i++) {
             // Validate line type.
@@ -252,11 +308,11 @@ class qtype_drawlines_edit_form extends question_edit_form {
             if (in_array($data["type"][$i], array_keys(line::get_line_types())) &&
                     line::is_zone_coordinates_valid($data["zonestart"][$i]) &&
                     line::is_zone_coordinates_valid($data['zoneend'][$i])) {
-                $validlines = 1;
+                $hasbothcoordinates = true;
             }
         }
         // There should be atleast one valid line.
-        if (empty($errors) && $validlines == 0) {
+        if (empty($errors) && $hasbothcoordinates == false) {
             $errors["type[0]"] = get_string('formerror_notype', 'qtype_' . $this->qtype(), 1);
         }
         return $errors;
@@ -286,66 +342,5 @@ class qtype_drawlines_edit_form extends question_edit_form {
             }
         }
         return null;
-    }
-
-    /**
-     * Add a set of form fields, obtained from get_per_line_fields.
-     *
-     * @param MoodleQuickForm $mform the form being built.
-     * @param string $label the label to use for each line.
-     */
-    protected function add_per_line_fields(MoodleQuickForm $mform, string $label) {
-        if (isset($this->question->lines)) {
-            $repeatsatstart = count($this->question->lines);
-        } else {
-            $repeatsatstart = line::LINE_NUMBER_START;
-        }
-        $repeatedoptions = [];
-        $this->repeat_elements($this->get_per_line_fields($mform, $label, $repeatedoptions),
-                $repeatsatstart, $repeatedoptions,
-                'numberoflines', 'addlines', line::LINE_NUMBER_ADD,
-                get_string('addmoreblanks', 'qtype_drawlines', 'lines'), true);
-    }
-
-    /**
-     * Returns a line object with relevant input fields.
-     *
-     * @param MoodleQuickForm $mform
-     * @param string $label
-     * @param array $repeatedoptions
-     * @return array
-     */
-    protected function get_per_line_fields(MoodleQuickForm $mform, string $label, array &$repeatedoptions): array {
-
-        $repeated = [];
-
-        $repeated[] = $mform->createElement('header', 'linexheader', $label);
-        $mform->setType('linexheader', PARAM_RAW);
-
-        $repeated[] = $mform->createElement('select', 'type',
-                get_string('type', 'qtype_' . $this->qtype()),
-                array_merge(['choose' => get_string('choose')], line::get_line_types()));
-        $mform->setType('type', PARAM_RAW);
-
-        $repeated[] = $mform->createElement('text', 'labelstart',
-                get_string('labelstart', 'qtype_' . $this->qtype()), ['size' => 20]);
-        $mform->setType('labelstart', PARAM_RAW_TRIMMED);
-
-        $repeated[] = $mform->createElement('text', 'labelmiddle',
-                get_string('labelmiddle', 'qtype_' . $this->qtype()), ['size' => 20]);
-        $mform->setType('labelmiddle', PARAM_RAW_TRIMMED);
-
-        $repeated[] = $mform->createElement('text', 'labelend',
-                get_string('labelend', 'qtype_' . $this->qtype()), ['size' => 20]);
-        $mform->setType('labelend', PARAM_RAW_TRIMMED);
-
-        $repeated[] = $mform->createElement('text', 'zonestart',
-                get_string('zonestart', 'qtype_' . $this->qtype()), ['size' => 20]);
-        $mform->setType('zonestart', PARAM_RAW_TRIMMED);
-
-        $repeated[] = $mform->createElement('text', 'zoneend',
-                get_string('zoneend', 'qtype_' . $this->qtype()), ['size' => 20]);
-        $mform->setType('zoneend', PARAM_RAW_TRIMMED);
-        return $repeated;
     }
 }
