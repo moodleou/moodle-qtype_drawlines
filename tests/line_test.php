@@ -16,8 +16,6 @@
 
 namespace qtype_drawlines;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Unit tests for DrawLines question definition class.
  *

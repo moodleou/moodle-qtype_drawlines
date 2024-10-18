@@ -187,21 +187,15 @@ class qtype_drawlines extends question_type {
     }
 
     /**
-     * Inittialise the lines for this question.
+     * Initialise the lines for this question.
      *
      * @param question_definition $question
      * @param qtype_drawlines_question $questiondata
      */
     protected function initialise_question_lines(question_definition $question, $questiondata): void {
         $question->numberoflines = count($questiondata->lines);
-
-        //$index = 0;
-        //$placeinex = 1;
         foreach ($questiondata->lines as $line) {
             $question->lines[$line->number - 1] = $this->make_line($line);
-            //$question->choices['c' . $index] = Line::get_coordinates($line->zonestart) .
-            //        ' ' . Line::get_coordinates($line->zoneend);
-            //$index++;
         }
     }
 
