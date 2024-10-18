@@ -684,13 +684,13 @@ define([
         let imageCoords = [];
         var items = this.getRoot().querySelector('svg g.choice' + choiceNo),
             gEleClassAttributes = '';
-            // thiQ = this,
-            // bgRatio = this.bgRatio();
         if (items) {
                 imageCoords = items.querySelector('polyline').getAttribute('points');
                 gEleClassAttributes = items.getAttribute('class');
                 // TODO: Kept the below comment as this could be needed for window resizing.
 
+                // thiQ = this,
+                // bgRatio = this.bgRatio();
                 //     if (drag.data('scaleRatio') !== bgRatio) {
                 //         // The scale ratio for the draggable item was changed. We need to update that.
                 //         drag.data('pagex', drag.offset().left).data('pagey', drag.offset().top);
@@ -869,7 +869,6 @@ define([
 
         // We now have all images. Carry on, but only after giving the layout a chance to settle down.
         this.allImagesLoaded = true;
-        //this.repositionDrags();
         this.drawDropzone();
     };
 

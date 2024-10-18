@@ -104,11 +104,12 @@ class qtype_drawlines_question extends question_graded_automatically {
             return parent::check_file_access($qa, $options, $component, $filearea, $args, $forcedownload);
         }
     }
+
     #[\Override]
     public function get_expected_data() {
         $expecteddata = [];
         foreach ($this->lines as $line) {
-            $expecteddata[$this->choice($line->number - 1)] = PARAM_NOTAGS;
+            $expecteddata[$this->choice($line->number - 1)] = PARAM_RAW;
         }
         return $expecteddata;
     }
@@ -120,7 +121,7 @@ class qtype_drawlines_question extends question_graded_automatically {
             return false;
         }
         // If there is no response for each line return false for all-or-nothing grading method.
-        if (count($response) !== count($this->lines)) {
+        if (count($response) < $this->numberoflines) {
             return false;
         }
         foreach ($this->lines as $key => $line) {
@@ -130,6 +131,37 @@ class qtype_drawlines_question extends question_graded_automatically {
             }
         }
         return true;
+    }
+
+    #[\Override]
+    public function get_correct_response() {
+        $response = [];
+        foreach ($this->lines as $key => $line) {
+            $response[$this->choice($key)] = line::get_coordinates($line->zonestart) . ' '
+                    . line::get_coordinates($line->zoneend);
+        }
+        return $response;
+    }
+
+    #[\Override]
+    public function summarise_response(array $response): ?string {
+        $responsewords = [];
+        $answers = [];
+        foreach ($this->lines as $key => $line) {
+            if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] != '') {
+                $coordinates = explode(' ', $response[$this->choice($key)]);
+                if ($line->type == 'lineinfinite' && count($coordinates) == 4) {
+                    $coordinates = explode(' ', $response[$this->choice($key)]);
+                    $answers[] = 'Line ' . $line->number . ': ' . $coordinates[1] . ' ' . $coordinates[2];
+                    continue;
+                }
+                $answers[] = 'Line ' . $line->number . ': ' . $response[$this->choice($key)];
+            }
+        }
+        if (count($answers) > 0) {
+            $responsewords[] = implode(', ', $answers);
+        }
+        return implode('; ', $responsewords);
     }
 
     #[\Override]
@@ -152,9 +184,90 @@ class qtype_drawlines_question extends question_graded_automatically {
         }
         return true;
     }
+
+    #[\Override]
+    public function grade_response(array $response): array {
+        // Retrieve the number of right responses and the total number of responses.
+        if ($this->grademethod == 'partial') {
+            [$numright, $total] = $this->get_num_parts_right_grade_partialt($response);
+        } else {
+            [$numright, $total] = $this->get_num_parts_right_grade_allornone($response);
+        }
+        $fraction = $numright / $total;
+        return [$fraction, question_state::graded_state_for_fraction($fraction)];
+    }
+
     /**
-     * Tests to see whether two arrays have the same set of coords at a particular key. Coords
-     * can be in any order.
+     * Get the number of correct choices selected in the response, for 'Give partial credit' grade method.
+     *
+     * @param array $response The response list.
+     * @return array The array of number of correct lines (start, end or both points of lines).
+     */
+    public function get_num_parts_right_grade_partialt(array $response): array {
+        if (!$response) {
+            return [0, 0];
+        }
+        $numpartrightstart = 0;
+        $numpartrightend = 0;
+        foreach ($this->lines as $key => $line) {
+            if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
+                $coords = explode(' ', $response[$this->choice($key)]);
+                if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart)) {
+                    $numpartrightstart++;
+                }
+                if (line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
+                    $numpartrightend++;
+                }
+            }
+        }
+        $numpartright = $numpartrightstart + $numpartrightend;
+        $total = count($this->lines) * 2;
+        return [$numpartright, $total];
+    }
+
+    /**
+     * Get the number of correct choices selected in the response, for All-or-nothing grade method.
+     *
+     * @param array $response The response list.
+     * @return array The array of number of correct lines (both start and end points).
+     */
+    public function get_num_parts_right_grade_allornone(array $response): array {
+        if (!$response) {
+            return [0, 0];
+        }
+        $numright = 0;
+        foreach ($this->lines as $key => $line) {
+            if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
+                $coords = explode(' ', $response[$this->choice($key)]);
+                if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart) &&
+                        line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
+                    $numright++;
+                }
+            }
+        }
+        $total = count($this->lines);
+        return [$numright, $total];
+    }
+
+    #[\Override]
+    public function check_file_access($qa, $options, $component, $filearea, $args, $forcedownload) {
+        if ($filearea === 'bgimage') {
+            $validfilearea = true;
+        } else {
+            $validfilearea = false;
+        }
+        if ($component === 'qtype_drawlines' && $validfilearea) {
+            $question = $qa->get_question(false);
+            $itemid = reset($args);
+            return $itemid == $question->id;
+        } else {
+            return parent::check_file_access($qa, $options, $component, $filearea, $args, $forcedownload);
+        }
+    }
+
+    /**
+     * Tests to see whether two arrays have the same set of coords at a particular key.
+     * Coords can be in any order.
      *
      * @param array $array1 the first array.
      * @param array $array2 the second array.
@@ -217,70 +330,6 @@ class qtype_drawlines_question extends question_graded_automatically {
     }
 
     /**
-     * Get the number of correct choices selected in the response, for 'Give partial credit' grade method.
-     *
-     * @param array $response The response list.
-     * @return array The array of number of correct lines (start, end or both points of lines).
-     */
-    public function get_num_parts_right_grade_partialt(array $response): array {
-        if (!$response) {
-            return [0, 0];
-        }
-        $numpartrightstart = 0;
-        $numpartrightend = 0;
-        foreach ($this->lines as $key => $line) {
-            if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
-                $coords = explode(' ', $response[$this->choice($key)]);
-                if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart)) {
-                    $numpartrightstart++;
-                }
-                if (line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
-                    $numpartrightend++;
-                }
-            }
-        }
-        $numpartright = $numpartrightstart + $numpartrightend;
-        $total = count($this->lines) * 2;
-        return [$numpartright, $total];
-    }
-
-    /**
-     * Get the number of correct choices selected in the response, for All-or-nothing grade method.
-     *
-     * @param array $response The response list.
-     * @return array The array of number of correct lines (both start and end points).
-     */
-    public function get_num_parts_right_grade_allornone(array $response): array {
-        if (!$response) {
-            return [0, 0];
-        }
-        $numright = 0;
-        foreach ($this->lines as $key => $line) {
-            if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
-                $coords = explode(' ', $response[$this->choice($key)]);
-                if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart) &&
-                        line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
-                    $numright++;
-                }
-            }
-        }
-        $total = count($this->lines);
-        return [$numright, $total];
-    }
-
-    #[\Override]
-    public function grade_response(array $response): array {
-        // Retrieve the number of right responses and the total number of responses.
-        if ($this->grademethod == 'partial') {
-            [$numright, $total] = $this->get_num_parts_right_grade_partialt($response);
-        } else {
-            [$numright, $total] = $this->get_num_parts_right_grade_allornone($response);
-        }
-        $fraction = $numright / $total;
-        return [$fraction, question_state::graded_state_for_fraction($fraction)];
-    }
-
-    /**
      * Compute the distance from the point ($x, $y) to the line through the two points ($x1, $y1) and ($x2, $y2).
      *
      * @param float $x1
@@ -317,47 +366,37 @@ class qtype_drawlines_question extends question_graded_automatically {
         return $classifiedresponse;
     }
 
-    #[\Override]
-    public function get_correct_response() {
-        $response = [];
-        foreach ($this->lines as $key => $line) {
-            $response[$this->choice($key)] = line::get_coordinates($line->zonestart) . ' '
-                    . line::get_coordinates($line->zoneend);
-        }
-        return $response;
-    }
+    /**
+     * Work out a final grade for this attempt, taking into account
+     * all the tries the student made and return the grade value.
+     *
+     * @param array $responses the response for each try. Each element of this
+     * array is a response array, as would be passed to {@link grade_response()}.
+     * There may be between 1 and $totaltries responses.
+     *
+     * @param int $totaltries The maximum number of tries allowed.
+     *
+     * @return float the fraction that should be awarded for this
+     * sequence of response.
+     */
+    public function compute_final_grade(array $responses, int $totaltries): float {
+        // TODO: To incorporate the question penalty for interactive with multiple tries behaviour.
 
-    #[\Override]
-    public function summarise_response(array $response): ?string {
-        $responsewords = [];
-        $answers = [];
-        foreach ($this->lines as $key => $line) {
-            if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] != '') {
-                $coordinates = explode(' ', $response[$this->choice($key)]);
-                if ($line->type == 'lineinfinite' && count($coordinates) == 4) {
-                    $coordinates = explode(' ', $response[$this->choice($key)]);
-                    $answers[] = 'Line ' . $line->number . ': ' . $coordinates[1] . ' ' . $coordinates[2];
-                    continue;
-                }
-                $answers[] = 'Line ' . $line->number . ': ' . $response[$this->choice($key)];
-            }
+        $grade = 0;
+        foreach ($responses as $response) {
+            [$fraction, $state] = $this->grade_response($response);
+            $grade += $fraction;
         }
-        if (count($answers) > 0) {
-            $responsewords[] = implode(', ', $answers);
-        }
-        return implode('; ', $responsewords);
+        return $grade;
     }
 
     /**
-     * Return the coordinates from the response.
-     * @param string $responsechoice the response coordinates.
-     * @return array $coordinates The array of parsed coordinates.
+     * Get a choice identifier
+     *
+     * @param int $choice stem number
+     * @return string the question-type variable name.
      */
-    public function parse_coordinates(string $responsechoice): array {
-        $coordinates = [];
-        $bits = explode(';', $responsechoice);
-        $coordinates['coords'] = $bits[0];
-        $coordinates['inplace'] = $bits[1];
-        return $coordinates;
+    public function choice($choice) {
+        return 'c' . $choice;
     }
 }

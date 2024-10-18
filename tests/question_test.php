@@ -45,8 +45,8 @@ final class question_test extends \basic_testcase {
         $question->start_attempt(new question_attempt_step(), 1);
 
         $expected = [
-                'c0' => PARAM_NOTAGS,
-                'c1' => PARAM_NOTAGS,
+                'c0' => PARAM_RAW,
+                'c1' => PARAM_RAW,
         ];
         $this->assertEquals($expected, $question->get_expected_data());
     }

@@ -1,7 +1,7 @@
 @qtype @qtype_drawlines @_switch_window
-Feature: Preview a drag-drop marker question
+Feature: Preview a DrawLines question
   As a teacher
-  In order to check my drag-drop marker questions will work for students
+  In order to check my DrawLines questions will work for students
   I need to preview them
 
   Background:
@@ -23,5 +23,5 @@ Feature: Preview a drag-drop marker question
   @javascript @_bug_phantomjs
   Scenario: Preview a question using the mouse
     When I am on the "Drawlines to preview" "core_question > preview" page logged in as teacher
-  And I pause
-# TODO: Finishing this scenario after Js completed and adding other  possible scenarios.
+    And I pause
+    # TODO: Finishing this scenario after Js completed and adding other  possible scenarios.

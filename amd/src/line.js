@@ -492,7 +492,7 @@ define(function() {
      * @param {int} dropY
      * @return {bool}
      */
-    Line.prototype.isInsideSVG = function(svg, dropX, dropY){
+    Line.prototype.isInsideSVG = function(svg, dropX, dropY) {
         const rect = svg.getBoundingClientRect();
         return dropX >= rect.left && dropX <= rect.right && dropY >= rect.top && dropY <= rect.bottom;
     };
