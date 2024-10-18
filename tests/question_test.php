@@ -146,12 +146,6 @@ final class question_test extends \basic_testcase {
         $this->assertEquals($expected, $actual);
     }
 
-
-    public function test_get_random_guess_score(): void {
-        $question = \test_question_maker::make_question('drawlines');
-        $this->assertEquals(null, $question->get_random_guess_score());
-    }
-
     public function test_get_num_parts_right_grade_partialt(): void {
         $question = \test_question_maker::make_question('drawlines');
         $question->start_attempt(new question_attempt_step(), 1);

@@ -40,7 +40,7 @@ final class questiontype_test extends \advanced_testcase {
 
     protected function setUp(): void {
         parent::setUp();
-        $this->qtype = question_bank::get_qtype('drawlines');;
+        $this->qtype = question_bank::get_qtype('drawlines');
     }
 
     protected function tearDown(): void {
@@ -178,5 +178,16 @@ final class questiontype_test extends \advanced_testcase {
             $this->assertEquals($line->zonestart, $questiondata->lines[$id]->zonestart);
             $this->assertEquals($line->zoneend, $questiondata->lines[$id]->zoneend);
         }
+    }
+
+    public function test_get_random_guess_score(): void {
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
+        $cat = $questiongenerator->create_question_category([]);
+        $q = $questiongenerator->create_question('drawlines', 'mkmap_twolines', ['category' => $cat->id]);
+        $questiondata = question_bank::load_question_data($q->id);
+
+        $this->assertEquals(0, $this->qtype->get_random_guess_score($questiondata));
     }
 }

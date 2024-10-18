@@ -23,7 +23,6 @@ use qtype_drawlines\line;
  * @copyright  2024 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-#[AllowDynamicProperties]
 class qtype_drawlines_question extends question_graded_automatically {
 
     /** @var string 'allnone' (All-or-nothing) or 'partial' (Give partial credit) grading method. */
@@ -38,39 +37,9 @@ class qtype_drawlines_question extends question_graded_automatically {
     /** @var dragableitems[], array of draggable items (list of start and end of lines). */
     public $dragableitems;
 
-    /**
-     * @var array of arrays. The outer keys are the choice group numbers.
-     * The inner keys for most question types number sequentialy from 1. However
-     * for ddimageortext questions it is strange (and difficult to change now).
-     * the first item in each group gets numbered 1, and the other items get numbered
-     * $choice->no. Be careful!
-     * The values are arrays of qtype_gapselect_choice objects (or a subclass).
-     */
-    public $choices;
-
-    /**
-     * @var array place number => group number of the places in the question
-     * text where choices can be put. Places are numbered from 1.
-     */
-    public $places;
 
     /** @var array The order of the lines, key => choice number in the format c0, c1... */
     public $choicesorder;
-
-    #[\Override]
-    public function start_attempt(question_attempt_step $step, $variant) {
-        $choices = [];
-        $this->choicesorder = array_keys($this->choices);
-        if ($this->shuffleanswers) {
-            shuffle($this->choicesorder);
-        }
-        $step->set_qt_var('_choicesorder', implode(',', $this->choicesorder));
-    }
-
-    #[\Override]
-    public function apply_attempt_state(question_attempt_step $step) {
-        $this->choicesorder = explode(',', $step->get_qt_var('_choicesorder'));
-    }
 
     /**
      * Work out a final grade for this attempt, taking into account
@@ -161,7 +130,7 @@ class qtype_drawlines_question extends question_graded_automatically {
 
     #[\Override]
     public function is_same_response(array $prevresponse, array $newresponse) {
-        foreach ($this->choicesorder as $key => $notused) {
+        foreach ($this->lines as $key => $line) {
             $fieldname = $this->choice($key);
             if (!question_utils::arrays_same_at_key_missing_is_blank($prevresponse, $newresponse, $fieldname)) {
                 return false;
@@ -376,10 +345,5 @@ class qtype_drawlines_question extends question_graded_automatically {
         $coordinates['coords'] = $bits[0];
         $coordinates['inplace'] = $bits[1];
         return $coordinates;
-    }
-
-    #[\Override]
-    public function get_random_guess_score() {
-        return null;
     }
 }

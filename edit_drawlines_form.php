@@ -286,7 +286,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
         if ($bgimagesize === null) {
             $errors["bgimage"] = get_string('formerror_nobgimage', 'qtype_' . $this->qtype());
         }
-        $hasbothcoordinates = false;
+        $hasbothcoordinates = 0;
         // Validate whether the line type error needed to be displayed.
         for ($i = 0; $i < count($data["type"]); $i++) {
             // Validate line type.
@@ -300,19 +300,19 @@ class qtype_drawlines_edit_form extends question_edit_form {
                 $errors["zonestart[$i]"] = get_string('formerror_zonestart', 'qtype_' . $this->qtype());
             }
             if (in_array($data["type"][$i], array_keys(line::get_line_types())) &&
-                    !line::is_zone_coordinates_valid($data['zoneend'][$i])) {
+                    !line::is_zone_coordinates_valid($data["zoneend"][$i])) {
                 $errors["zoneend[$i]"] = get_string('formerror_zoneend', 'qtype_' . $this->qtype());
             }
-
             // Verify that there should be atleast one valid line.
             if (in_array($data["type"][$i], array_keys(line::get_line_types())) &&
                     line::is_zone_coordinates_valid($data["zonestart"][$i]) &&
                     line::is_zone_coordinates_valid($data['zoneend'][$i])) {
-                $hasbothcoordinates = true;
+                $hasbothcoordinates = 1;
             }
         }
+
         // There should be atleast one valid line.
-        if (empty($errors) && $hasbothcoordinates == false) {
+        if (empty($errors) && $hasbothcoordinates == 0) {
             $errors["type[0]"] = get_string('formerror_notype', 'qtype_' . $this->qtype(), 1);
         }
         return $errors;

@@ -15,7 +15,6 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 use qtype_drawlines\line;
-use qtype_drawlines\drop_zone;
 
 /**
  * Test helper for the draw lines  question type.

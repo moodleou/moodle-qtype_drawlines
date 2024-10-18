@@ -15,8 +15,6 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 use qtype_drawlines\line;
-use qtype_drawlines\drag_item;
-use qtype_drawlines\drop_zone;
 
 /**
  * The Draw lines question type class.
@@ -26,9 +24,6 @@ use qtype_drawlines\drop_zone;
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class qtype_drawlines extends question_type {
-
-    /** @var lines[], an array of line objects. */
-    public $lines;
 
     #[\Override]
     public function get_question_options($question): bool {
@@ -50,6 +45,7 @@ class qtype_drawlines extends question_type {
         parent::save_defaults_for_new_questions($fromform);
         $this->set_default_value('grademethod', $fromform->grademethod);
         $this->set_default_value('shownumcorrect', $fromform->shownumcorrect);
+        $this->set_default_value('showmisplaced', $fromform->showmisplaced);
     }
 
     #[\Override]
@@ -199,18 +195,6 @@ class qtype_drawlines extends question_type {
     protected function initialise_question_lines(question_definition $question, $questiondata): void {
         $question->numberoflines = count($questiondata->lines);
 
-        // Initialise question choices, places and right choices.
-        if ($question->choices === null) {
-            $question->choices = [];
-        }
-        if ($question->places === null) {
-            $question->places = [];
-        }
-        if ($question->rightchoices === null) {
-            $question->rightchoices = [];
-        }
-
-        $choicecount = 1;
         $index = 0;
         $placeinex = 1;
         foreach ($questiondata->lines as $line) {
@@ -218,10 +202,6 @@ class qtype_drawlines extends question_type {
             $question->choices['c' . $index] = Line::get_coordinates($line->zonestart) .
                     ' ' . Line::get_coordinates($line->zoneend);
             $index++;
-            $question->places[$placeinex++] = line::make_drop_zone(
-                    $line->number,  $line->labelstart ?? 's' . $line->number, $line->zonestart);
-            $question->places[$placeinex++] = line::make_drop_zone(
-                    $line->number,  $line->labelend ?? 'e' . $line->number, $line->zoneend);
         }
     }
 
@@ -394,6 +374,6 @@ class qtype_drawlines extends question_type {
 
     #[\Override]
     public function get_random_guess_score($questiondata) {
-        return null;
+        return 0;
     }
 }

@@ -16,8 +16,6 @@
 
 namespace qtype_drawlines;
 
-defined('MOODLE_INTERNAL') || die;
-
 /**
  * Represents a line object of drawlines question.
  *
@@ -46,7 +44,7 @@ class line {
 
 
     /** @var string validate-zone-coordinates for start and the end of the line */
-    const VALIDATE_ZONE_COORDINATES = "/^([^-][0-9]+),([^-][0-9]+);([^-][0-9]+)$/";
+    const VALIDATE_ZONE_COORDINATES = "/^([0-9]+),([0-9]+);([0-9]+)$/";
 
     /** @var string validate-response-coordinates for a line
      * as the start(scx,scy) and the end(ecx,ecy) coordinates of the line in 'scx,scy ecx,ecy' format.
@@ -238,51 +236,5 @@ class line {
         }
         // Match found.
         return true;
-    }
-
-    public static function make_drop_zone(int $linenumber, string $label, string $zone): drop_zone {
-        // TODO: Need to chek if we need this.
-        [$xleft, $ytop] = self::parse_into_cx_cy_with_or_without_radius($zone);
-        return new drop_zone($linenumber, $label, $xleft, $ytop);
-    }
-}
-
-/**
- * Represents a drop-zone objet for start or end of a line.
- *
- * @package   qtype_drawlines
- * @copyright 2024 The Open University
- * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-class drop_zone {
-    /** @var int The number of the line */
-    public $linenumber;
-
-    /** @var string Alt text for the drop zone item */
-    public $label;
-
-    /** @var array X and Y location of the drop zone */
-    public $xy;
-
-    /**
-     * Create a drop zone object.
-     *
-     * @param int $linenumber Which line the drop zone belong to
-     * @param string $alttextlabel The alt text of the drop zone
-     * @param int $x X location
-     * @param int $y Y location
-     */
-    public function __construct($linenumber, $label, $x, $y) {
-        $this->linenumber = $linenumber;
-        $this->label = $label;
-        $this->xy = [$x, $y];
-    }
-
-    /**
-     * Returns the line number for this droo zone.
-     *
-     */
-    public function get_linenumber(): int {
-        return $this->linenumber;
     }
 }

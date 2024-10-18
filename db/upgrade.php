@@ -30,10 +30,5 @@
 function xmldb_qtype_drawlines_upgrade($oldversion) {
     global $DB;
     $dbman = $DB->get_manager();
-
-    if ($oldversion < 2024043000) {
-        // Adding new fields to table qtype_drawlines_options.
-        // Adding new fields to table qtype_drawlines_lines.
-    }
     return true;
 }
