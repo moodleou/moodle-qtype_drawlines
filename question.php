@@ -71,7 +71,7 @@ class qtype_drawlines_question extends question_graded_automatically {
             return false;
         }
         // If there is no response for each line return false for all-or-nothing grading method.
-        if (count($response) < $this->numberoflines) {
+        if (count($response) < count($this->lines)) {
             return false;
         }
         foreach ($this->lines as $key => $line) {
