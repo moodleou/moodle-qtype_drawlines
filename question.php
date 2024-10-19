@@ -76,7 +76,7 @@ class qtype_drawlines_question extends question_graded_automatically {
         }
         foreach ($this->lines as $key => $line) {
             if (isset($response[$this->choice($key)]) &&
-                    !line::are_response_coordinates_valid($response[$this->choice($key)])) {
+                    !line::are_response_coordinates_valid($response[$this->choice($key)], $line->type)) {
                 return false;
             }
         }

@@ -32,7 +32,7 @@ form.mform fieldset#id_previewareaheader .dropbackground {
 }
 .que.drawlines .dropzone .startcircle:focus,
 .que.drawlines .dropzone .endcircle:focus,
-.que.drawlines .dropzone polyline:focus {
+.que.drawlines g.dropzone:focus {
     outline: 2px solid #facb4e;
 }
 

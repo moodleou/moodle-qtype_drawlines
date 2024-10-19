@@ -481,7 +481,6 @@ define(function() {
             selectedElement.childNodes[1].setAttribute('tabindex', '-1');
             selectedElement.childNodes[2].setAttribute('tabindex', '-1');
         }
-        return '';
     };
 
     /**
@@ -600,9 +599,9 @@ define(function() {
      */
     function createSvgShapeGroup(svg, tagName) {
         var svgEl = createSvgElement(svg, 'g');
+        svgEl.setAttribute('tabindex', '0');
         var lineEl = createSvgElement(svgEl, tagName);
         lineEl.setAttribute('class', 'shape');
-        lineEl.setAttribute('tabindex', '0');
         var startcircleEl = createSvgElement(svgEl, 'circle');
         startcircleEl.setAttribute('class', 'startcircle shape');
         var endcirleEl = createSvgElement(svgEl, 'circle');
@@ -665,8 +664,8 @@ define(function() {
             var linestartbits = startcoordinates[0].split(',');
             var lineendbits = endcoordinates[0].split(',');
 
-            return new Line(labels[0], linestartbits[0], linestartbits[1], startcoordinates[1], labels[1],
-                lineendbits[0], lineendbits[1], endcoordinates[1], lineType);
+            return new Line(labels[0], parseInt(linestartbits[0]), parseInt(linestartbits[1]), parseInt(startcoordinates[1]),
+                labels[1], parseInt(lineendbits[0]), parseInt(lineendbits[1]), parseInt(endcoordinates[1]), lineType);
         },
 
         /**

@@ -58,17 +58,13 @@ define([
         }
         thisQ.allImagesLoaded = false;
         // Get all images that are not yet loaded
-        const images = thisQ.getNotYetLoadedImages();
-
-        // Loop over each image and add an event listener for the 'load' event
-        if (images) {
-            images.forEach((imgNode) => {
-                imgNode.addEventListener('load', function() {
-                    thisQ.waitForAllImagesToBeLoaded();
-                }, {once: true}); // The { once: true } option ensures the listener is called only once
+        thisQ.waitForAllImagesToBeLoaded()
+            .then(() => {
+                thisQ.drawDropzone(); // Call your function here
+            })
+            .catch((error) => {
+                throw error;
             });
-        }
-        thisQ.waitForAllImagesToBeLoaded();
     }
 
     /**
@@ -731,8 +727,7 @@ define([
             dropzoneElement,
             question = questionManager.getQuestionForEvent(e);
 
-        dropzoneElement = event.target.closest('g');
-
+        dropzoneElement = drag.closest('g');
         switch (e.code) {
             case 'ArrowLeft':
             case 'KeyA': // A.
@@ -787,10 +782,10 @@ define([
 
         if (activeElement === 'line') {
             // Move the entire line when the focus is on it.
-            question.lines[dropzoneNo].moveDrags(x, y, parseInt(maxX), parseInt(maxY), whichSVG);
+            question.lines[dropzoneNo].moveDrags(parseInt(x), parseInt(y), parseInt(maxX), parseInt(maxY), whichSVG);
         } else {
             // Move the line endpoints.
-            question.lines[dropzoneNo].move(activeElement, x, y, parseInt(maxX), parseInt(maxY));
+            question.lines[dropzoneNo].move(activeElement, parseInt(x), parseInt(y), parseInt(maxX), parseInt(maxY));
         }
         question.updateSvgEl(dropzoneNo);
         this.saveCoordsForChoice(dropzoneNo);
@@ -842,6 +837,8 @@ define([
      *
      * This function is called from the onLoad of each image, and also polls with
      * a time-out, because image on-loads are allegedly unreliable.
+     *
+     * @return {Promise<void>}
      */
     DrawlinesQuestion.prototype.waitForAllImagesToBeLoaded = function() {
 
@@ -850,26 +847,20 @@ define([
         if (this.allImagesLoaded) {
             return;
         }
+        const images = document.querySelectorAll('img');
+        const promises = Array.from(images).map((img) => {
+            return new Promise((resolve, reject) => {
+                if (img.complete) {
+                    resolve(); // If image is already loaded
+                } else {
+                    img.onload = () => resolve();
+                    img.onerror = () => reject(new Error(`Failed to load image: ${img.src}`));
+                }
+            });
+        });
 
-        // Clear any current timeout, if set.
-        if (this.imageLoadingTimeoutId !== null) {
-            clearTimeout(this.imageLoadingTimeoutId);
-        }
-
-        // If we have not yet loaded all images, set a timeout to
-        // call ourselves again, since apparently images on-load
-        // events are flakey.
-        const images = this.getNotYetLoadedImages();
-        if (images && images.length > 0) {
-            this.imageLoadingTimeoutId = setTimeout(function() {
-                this.waitForAllImagesToBeLoaded();
-            }, 100);
-            return;
-        }
-
-        // We now have all images. Carry on, but only after giving the layout a chance to settle down.
         this.allImagesLoaded = true;
-        this.drawDropzone();
+        return Promise.all(promises);
     };
 
     /**
@@ -1070,8 +1061,8 @@ define([
                 dropzoneElement = e.target.closest('.dropzone');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
                 activeElement = 'endcircle';
-            } else if (e.target.closest('.dropzone polyline.shape')) {
-                drag = e.target.closest('.dropzone polyline.shape');
+            } else if (e.target.closest('g.dropzone')) {
+                drag = e.target.closest('g.dropzone');
                 dropzoneElement = e.target.closest('.dropzone');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
                 activeElement = 'line';

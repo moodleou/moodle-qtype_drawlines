@@ -46,10 +46,15 @@ class line {
     /** @var string validate-zone-coordinates for start and the end of the line */
     const VALIDATE_ZONE_COORDINATES = "/^([0-9]+),([0-9]+);([0-9]+)$/";
 
-    /** @var string validate-response-coordinates for a line
-     * as the start(scx,scy) and the end(ecx,ecy) coordinates of the line in 'scx,scy ecx,ecy' format.
+    /** @var string validate-response-coordinates for a line of type linesegment, linesinglearrow, linedoublearrows.
+     * as the start(x1,y1) and the end(x2,y2) coordinates of the line in 'x1,y1 x2,y2' format.
      */
-    const VALIDATE_RESPONSE_COORDINATES = "/^([^-][0-9]+),([^-][0-9]+)\b([^-][0-9]+),([^-][0-9]+)$/";
+    const VALIDATE_RESPONSE_COORDINATES = "/^(\d+,\d+)( \d+,\d+)$/";
+
+    /** @var string validate-response-coordinates for infinite line.
+     * as the coordinates of the line in the format 'x1,y1 x2,y2 x3,y3 x4,y4' format.
+     */
+    const VALIDATE_INFINITE_RESPONSE_COORDINATES = "/^(\d+,\d+)( \d+,\d+)( \d+,\d+)( \d+,\d+)$/";
 
     /** @var int The line id. */
     public $id;
@@ -219,14 +224,19 @@ class line {
      * the start zone and ecx,ecy are the end zone coordinates of a line respectively.
      *
      * @param string $linecoordinates the coordinates for start and end of the line in 'scx,scy ecx,ecy' format.
+     * @param string $lineType the type of the line.
      * @return bool
      */
-    public static function are_response_coordinates_valid(string $linecoordinates): bool {
+    public static function are_response_coordinates_valid(string $linecoordinates, string $lineType): bool {
         // If the line-coordinates is empty return false.
         if (trim($linecoordinates) === '') {
             return false;
         }
-        preg_match_all(self::VALIDATE_RESPONSE_COORDINATES, $linecoordinates, $matches, PREG_SPLIT_NO_EMPTY);
+        if ($lineType == 'lineinfinite') {
+            preg_match_all(self::VALIDATE_INFINITE_RESPONSE_COORDINATES, $linecoordinates, $matches, PREG_SPLIT_NO_EMPTY);
+        } else {
+            preg_match_all(self::VALIDATE_RESPONSE_COORDINATES, $linecoordinates, $matches, PREG_SPLIT_NO_EMPTY);
+        }
 
         // If there is no match return false.
         foreach ($matches as $i => $match) {
