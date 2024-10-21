@@ -605,7 +605,7 @@ define([
             bgImage = this.bgImage(),
             isMoveFromDragsToDropzones,
             isMoveFromDropzonesToDrags,
-            svgClass;
+            svgClass = '';
 
         var selectedElement = this.lineSVGs[dropzoneNo];
         const dropX = e.clientX;
