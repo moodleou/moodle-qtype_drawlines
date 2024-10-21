@@ -224,15 +224,15 @@ class line {
      * the start zone and ecx,ecy are the end zone coordinates of a line respectively.
      *
      * @param string $linecoordinates the coordinates for start and end of the line in 'scx,scy ecx,ecy' format.
-     * @param string $lineType the type of the line.
+     * @param string $linetype the type of the line.
      * @return bool
      */
-    public static function are_response_coordinates_valid(string $linecoordinates, string $lineType): bool {
+    public static function are_response_coordinates_valid(string $linecoordinates, string $linetype): bool {
         // If the line-coordinates is empty return false.
         if (trim($linecoordinates) === '') {
             return false;
         }
-        if ($lineType == 'lineinfinite') {
+        if ($linetype == 'lineinfinite') {
             preg_match_all(self::VALIDATE_INFINITE_RESPONSE_COORDINATES, $linecoordinates, $matches, PREG_SPLIT_NO_EMPTY);
         } else {
             preg_match_all(self::VALIDATE_RESPONSE_COORDINATES, $linecoordinates, $matches, PREG_SPLIT_NO_EMPTY);

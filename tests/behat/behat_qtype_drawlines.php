@@ -34,12 +34,12 @@ class behat_qtype_drawlines extends behat_base {
      * @return string the xpath expression.
      */
     protected function line_xpath($line, $part, $iskeyboard = false) {
-        $lineNo = (int)$line - 1;
+        $lineno = (int)$line - 1;
         if ($iskeyboard) {
             if ($part == 'line') {
-                return '//*[name()="svg"]/*[name()="g" and contains(@class, "choice' . $this->escape($lineNo) . '")]';
+                return '//*[name()="svg"]/*[name()="g" and contains(@class, "choice' . $this->escape($lineno) . '")]';
             } else {
-                return '//*[name()="svg"]/*[name()="g" and contains(@class, "choice' . $this->escape($lineNo) . '")]' .
+                return '//*[name()="svg"]/*[name()="g" and contains(@class, "choice' . $this->escape($lineno) . '")]' .
                 '/*[name()="circle" and contains(@class, "' . $this->escape($part) . '")]';
             }
         }
