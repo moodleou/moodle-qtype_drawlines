@@ -61,6 +61,7 @@ define([
         thisQ.waitForAllImagesToBeLoaded()
             .then(() => {
                 thisQ.drawDropzone(); // Call your function here
+                return null;
             })
             .catch((error) => {
                 throw error;
@@ -845,7 +846,7 @@ define([
         // This method may get called multiple times (via image on-loads or timeouts.
         // If we are already done, don't do it again.
         if (this.allImagesLoaded) {
-            return;
+            return Promise.resolve(null); // Return a resolved promise;
         }
         const images = document.querySelectorAll('img');
         const promises = Array.from(images).map((img) => {
@@ -859,8 +860,17 @@ define([
             });
         });
 
-        this.allImagesLoaded = true;
-        return Promise.all(promises);
+        // Wait for all images to load
+        return Promise.all(promises)
+            .then(() => {
+                // Only mark allImagesLoaded as true once all images are successfully loaded.
+                this.allImagesLoaded = true;
+                return null; // Return null explicitly to avoid ESLint errors.
+            })
+            .catch((error) => {
+                this.allImagesLoaded = true; // Even on error, set this to avoid re-checking
+                throw error; // Rethrow the error so it can be caught in a calling function if necessary.
+            });
     };
 
     /**
