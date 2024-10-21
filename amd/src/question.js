@@ -605,7 +605,7 @@ define([
             bgImage = this.bgImage(),
             isMoveFromDragsToDropzones,
             isMoveFromDropzonesToDrags,
-            svgClass = '';
+            svgClass;
 
         var selectedElement = this.lineSVGs[dropzoneNo];
         const dropX = e.clientX;
@@ -716,6 +716,7 @@ define([
 
     /**
      * Handle key down / press events on svg lines.
+     *
      * @param {KeyboardEvent} e
      * @param {SVGElement} drag SVG element being dragged.
      * @param {int} dropzoneNo
@@ -818,6 +819,7 @@ define([
         var svgElement = dragElement.closest('svg');
         var svgElementClass = svgElement.getAttribute('class');
         var svgDragsHome, svgDropZone, parent;
+
         if (svgElementClass === "dragshome") {
             svgDragsHome = svgElement;
             parent = svgElement.closest('.ddarea');
