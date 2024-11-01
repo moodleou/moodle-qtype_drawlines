@@ -56,7 +56,7 @@ $string['linesinglearrow'] = 'Single arrow &xrarr;';
 $string['linexheader'] = 'Line {no}';
 
 $string['pleasedragalllines'] = 'Your answer is not complete; you must place all lines on the image.';
-$string['pluginname'] = 'DrawLines';
+$string['pluginname'] = 'Draw lines';
 $string['pluginname_help'] = 'DrawLines require the respondent to position the lines on a background image.';
 $string['pluginname_link'] = 'question/type/drawlines';
 $string['pluginnameadding'] = 'Adding a DrawLines question';

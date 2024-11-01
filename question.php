@@ -157,20 +157,43 @@ class qtype_drawlines_question extends question_graded_automatically {
         if (!$response) {
             return [0, 0];
         }
-        $numpartrightstart = 0;
-        $numpartrightend = 0;
+        $numpartright = 0;
         foreach ($this->lines as $key => $line) {
             if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
                 $coords = explode(' ', $response[$this->choice($key)]);
-                if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart)) {
-                    $numpartrightstart++;
-                }
-                if (line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
-                    $numpartrightend++;
+                if ($line->type == 'lineinfinite') {
+                    if (count($coords) == 2) {
+                        // Response with 2 coordinates (x1,y1 x2,y2).
+                        if (line::is_item_positioned_correctly_on_axis(
+                                $coords[0], $line->zonestart, $line->zoneend, 'start')) {
+                            $numpartright++;
+                        }
+                        if (line::is_item_positioned_correctly_on_axis(
+                                $coords[1], $line->zonestart, $line->zoneend, 'end')) {
+                            $numpartright++;
+                        }
+                    } else {
+                        // Response has 4 coordinates(x1,y1 x2,y2 x3,y3 x4,y4).
+                        // Here we need to consider x2,y2 x3,y3 for calculation.
+                        if (line::is_item_positioned_correctly_on_axis(
+                                $coords[1], $line->zonestart, $line->zoneend, 'start')) {
+                            $numpartright++;
+                        }
+                        if (line::is_item_positioned_correctly_on_axis(
+                                $coords[2], $line->zonestart, $line->zoneend, 'end')) {
+                            $numpartright++;
+                        }
+                    }
+                } else {
+                    if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart)) {
+                        $numpartright++;
+                    }
+                    if (line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
+                        $numpartright++;
+                    }
                 }
             }
         }
-        $numpartright = $numpartrightstart + $numpartrightend;
         $total = count($this->lines) * 2;
         return [$numpartright, $total];
     }
@@ -189,9 +212,33 @@ class qtype_drawlines_question extends question_graded_automatically {
         foreach ($this->lines as $key => $line) {
             if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
                 $coords = explode(' ', $response[$this->choice($key)]);
-                if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart) &&
-                        line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
-                    $numright++;
+                if ($line->type == 'lineinfinite') {
+                    if (count($coords) == 2) {
+                        // Response with 2 coordinates (x1,y1 x2,y2 x3,y3 x4,y4).
+                        $isstartrightplace = line::is_item_positioned_correctly_on_axis(
+                            $coords[0], $line->zonestart, $line->zoneend, 'start'
+                        );
+                        $isendrightplace = line::is_item_positioned_correctly_on_axis(
+                            $coords[1], $line->zonestart, $line->zoneend, 'end'
+                        );
+                    } else {
+                        // Response has 4 coordinates(x1,y1 x2,y2 x3,y3 x4,y4).
+                        // Here we need to consider x2,y2 x3,y3 for calculation.
+                        $isstartrightplace = line::is_item_positioned_correctly_on_axis(
+                            $coords[1], $line->zonestart, $line->zoneend, 'start'
+                        );
+                        $isendrightplace = line::is_item_positioned_correctly_on_axis(
+                            $coords[2], $line->zonestart, $line->zoneend, 'end'
+                        );
+                    }
+                    if ($isstartrightplace && $isendrightplace) {
+                        $numright++;
+                    }
+                } else {
+                    if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart) &&
+                            line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
+                        $numright++;
+                    }
                 }
             }
         }
@@ -221,22 +268,6 @@ class qtype_drawlines_question extends question_graded_automatically {
             return '';
         }
         return get_string('pleasedragalllines', 'qtype_drawlines');
-    }
-
-    /**
-     * Compute the distance from the point ($x, $y) to the line through the two points ($x1, $y1) and ($x2, $y2).
-     *
-     * @param float $x1
-     * @param float $y1
-     * @param float $x2
-     * @param float $y2
-     * @param float $x
-     * @param float $y
-     * @return float distance from the point ($x, $y) to the line through points ($x1, $y1), ($x2, $y2).
-     */
-    public function compute_distance_to_line(float $x1, float $y1, float $x2, float $y2, float $x, float $y): float {
-        return sqrt(($x - $x1) ** 2 + ($y - $y1) ** 2 -
-                (($x2 - $x1) * ($x - $x1) + ($y2 - $y1) * ($y - $y1)) ** 2 / (($x2 - $x1) ** 2 + ($y2 - $y1) ** 2));
     }
 
     #[\Override]

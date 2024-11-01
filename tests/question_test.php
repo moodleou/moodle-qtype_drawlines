@@ -228,48 +228,4 @@ final class question_test extends \basic_testcase {
         $fraction = $question->compute_final_grade($responses, $totaltries);
         $this->assertEquals($fraction, 1 / $totaltries, 'All correct responses should return fraction of 1');
     }
-
-    /**
-     * Test compute_distance_to_line.
-     *
-     * @dataProvider compute_distance_to_line_testcases
-     *
-     * @param float $expecteddistance
-     * @param float[] $p1 the point ($x1, $y1)
-     * @param float[] $p2 the point ($x2, $y2)
-     * @param float[] $p the point ($x, $y)
-     */
-    public function test_compute_distance_to_line(float $expecteddistance, array $p1, array $p2, array $p): void {
-        $question = \test_question_maker::make_question('drawlines');
-        [$x1, $y1] = $p1;
-        [$x2, $y2] = $p2;
-        [$x, $y] = $p;
-        $this->assertEqualsWithDelta(
-                $expecteddistance,
-                $question->compute_distance_to_line($x1, $y1, $x2, $y2, $x, $y),
-                1e-10,
-        );
-    }
-
-    /**
-     * Data provider for {@see test_compute_distance_to_line}.
-     *
-     * @return array[]
-     */
-    public static function compute_distance_to_line_testcases(): array {
-        return [
-                '(x, y) is p1' => [0, [0, 0], [1, 1], [0, 0]],
-                '(x, y) is p2' => [0, [0, 0], [1, 1], [1, 1]],
-                '(x, y) is on the line beyond p1' => [0, [0, 0], [1, 1], [-2, -2]],
-                '(x, y) is on the line in the middle' => [0, [0, 0], [2, 2], [1, 1]],
-                '(x, y) is on the line beyond p2' => [0, [0, 0], [1, 1], [5, 5]],
-                '(x, y) is orthogonal to p1' => [5, [0, 0], [1, 0], [0, 5]],
-                '(x, y) is orthogonal to p2' => [2, [0, -10], [0, 0], [-2, 0]],
-                '(x, y) is orthogonal to the midpoint' => [2, [0, -10], [0, 10], [-2, 0]],
-                '45deg diagonal case' => [sqrt(2), [0, -2], [2, 0], [0, 0]],
-                'diagonal case' => [12, [0, 15], [20, 0], [0, 0]],
-                'diagonal case flipped' => [12, [20, 0], [0, 15], [0, 0]],
-                'diagonal case flipped other way' => [12, [0, 15], [20, 0], [20, 15]],
-        ];
-    }
 }
