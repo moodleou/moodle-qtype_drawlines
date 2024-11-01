@@ -54,7 +54,7 @@ class line {
     /** @var string validate-response-coordinates for infinite line.
      * as the coordinates of the line in the format 'x1,y1 x2,y2 x3,y3 x4,y4' format.
      */
-    const VALIDATE_INFINITE_RESPONSE_COORDINATES = "/^(\d+,\d+)( \d+,\d+)( \d+,\d+)( \d+,\d+)$/";
+    const VALIDATE_INFINITE_RESPONSE_COORDINATES = "/^(-?\d+,-?\d+)( \d+,\d+)( \d+,\d+)( -?\d+,-?\d+)$/";
 
     /** @var int The line id. */
     public $id;
@@ -152,6 +152,28 @@ class line {
     }
 
     /**
+     * Return true or false
+     *
+     * @param $responsecoord string 'cx,cy' format
+     * @param $linestart string 'cx,cy;radius' format.
+     * @param $lineend string 'cx,cy;radius' format.
+     * @param $which string which end of the line is being compared, start or end.
+     * @return bool
+     */
+    public static function is_item_positioned_correctly_on_axis($responsecoord, $linestart, $lineend, $which): bool {
+        [$scx, $scy, $sr] = self::parse_into_cx_cy_with_or_without_radius($linestart, true);
+        [$ecx, $ecy, $er] = self::parse_into_cx_cy_with_or_without_radius($lineend, true);
+        [$rescx, $rescy] = self::parse_into_cx_cy_with_or_without_radius($responsecoord);
+
+        $distance = self::compute_distance_to_line($scx, $scy, $ecx, $ecy, $rescx, $rescy);
+        if ($which == 'start') {
+            return ((int)$distance <= $sr);
+        } else {
+            return ((int)$distance <= $er);
+        }
+    }
+
+    /**
      * Parse the input and return the parts in a list of 'cx', 'cy' with or whothout 'r'.
      *
      * @param string $dropzone, the string in a given format with or whithout radius
@@ -169,6 +191,22 @@ class line {
         $coordinates = explode(',', $dropzone);
         // Return the parsts in a list of 'cx'and 'cy'in numbers.
         return [(int)$coordinates[0], (int)$coordinates[1]];
+    }
+
+    /**
+     * Compute the distance from the point ($x, $y) to the line through the two points ($x1, $y1) and ($x2, $y2).
+     *
+     * @param float $x1
+     * @param float $y1
+     * @param float $x2
+     * @param float $y2
+     * @param float $x
+     * @param float $y
+     * @return float distance from the point ($x, $y) to the line through points ($x1, $y1), ($x2, $y2).
+     */
+    public static function compute_distance_to_line(float $x1, float $y1, float $x2, float $y2, float $x, float $y): float {
+        return sqrt(($x - $x1) ** 2 + ($y - $y1) ** 2 -
+                (($x2 - $x1) * ($x - $x1) + ($y2 - $y1) * ($y - $y1)) ** 2 / (($x2 - $x1) ** 2 + ($y2 - $y1) ** 2));
     }
 
     /**
@@ -233,13 +271,19 @@ class line {
             return false;
         }
         if ($linetype == 'lineinfinite') {
-            preg_match_all(self::VALIDATE_INFINITE_RESPONSE_COORDINATES, $linecoordinates, $matches, PREG_SPLIT_NO_EMPTY);
+            $coords = explode(' ', $linecoordinates);
+            if (count($coords) == 2) {
+                // In case of fill in correct responses, we get only two coordinates.
+                preg_match_all(self::VALIDATE_RESPONSE_COORDINATES, $linecoordinates, $matches, PREG_SPLIT_NO_EMPTY);
+            } else {
+                preg_match_all(self::VALIDATE_INFINITE_RESPONSE_COORDINATES, $linecoordinates, $matches, PREG_SPLIT_NO_EMPTY);
+            }
         } else {
             preg_match_all(self::VALIDATE_RESPONSE_COORDINATES, $linecoordinates, $matches, PREG_SPLIT_NO_EMPTY);
         }
 
         // If there is no match return false.
-        foreach ($matches as $i => $match) {
+        foreach ($matches as $match) {
             if (empty($match)) {
                 return false;
             }
