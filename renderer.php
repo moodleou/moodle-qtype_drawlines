@@ -104,7 +104,7 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
      * @return mixed
      */
     protected function hidden_field_choice(question_attempt $qa, $choicenumber, $value = null, $class = null) {
-        $varname = 'c'. $choicenumber;
+        $varname = $qa->get_question()->field($choicenumber);
         $classes = ['choices', 'choice'. $choicenumber];
         [, $html] = $this->hidden_field_for_qt_var($qa, $varname, $value, $classes);
         return $html;

@@ -146,27 +146,27 @@ final class question_test extends \basic_testcase {
         $this->assertEquals($expected, $actual);
     }
 
-    public function test_get_num_parts_right_grade_partialt(): void {
+    public function test_get_num_parts_right_grade_partial(): void {
         $question = \test_question_maker::make_question('drawlines');
         $question->start_attempt(new question_attempt_step(), 1);
 
         $correctresponse = $question->get_correct_response();
-        [$numpartright, $total] = $question->get_num_parts_right_grade_partialt($correctresponse);
+        [$numpartright, $total] = $question->get_num_parts_right_grade_partial($correctresponse);
         $this->assertEquals(4, $numpartright);
         $this->assertEquals(4, $total);
 
         $response = ['c0' => '10,10 300,123', 'c1' => '10,123 300,123'];
-        [$numpartright, $total] = $question->get_num_parts_right_grade_partialt($response);
+        [$numpartright, $total] = $question->get_num_parts_right_grade_partial($response);
         $this->assertEquals(1, $numpartright);
         $this->assertEquals(4, $total);
 
         $response = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123'];
-        [$numpartright, $total] = $question->get_num_parts_right_grade_partialt($response);
+        [$numpartright, $total] = $question->get_num_parts_right_grade_partial($response);
         $this->assertEquals(2, $numpartright);
         $this->assertEquals(4, $total);
 
         $response = ['c0' => '10,10 300,10', 'c1' => '10,200 300,123'];
-        [$numpartright, $total] = $question->get_num_parts_right_grade_partialt($response);
+        [$numpartright, $total] = $question->get_num_parts_right_grade_partial($response);
         $this->assertEquals(3, $numpartright);
         $this->assertEquals(4, $total);
     }
@@ -196,36 +196,114 @@ final class question_test extends \basic_testcase {
         $this->assertEquals(2, $total);
     }
 
+    public function test_retrieve_numright_numtotal(): void {
+        $question = \test_question_maker::make_question('drawlines');
+        $question->start_attempt(new question_attempt_step(), 1);
+
+        // The grade method is set to 'Give partial credit' by default.
+        $correctresponse = $question->get_correct_response();
+        [$numpartright, $total] = $question->retrieve_numright_numtotal($correctresponse);
+        $this->assertEquals(4, $numpartright);
+        $this->assertEquals(4, $total);
+
+        $response = ['c0' => '10,10 300,123', 'c1' => '10,123 300,123'];
+        [$numpartright, $total] = $question->retrieve_numright_numtotal($response);
+        $this->assertEquals(1, $numpartright);
+        $this->assertEquals(4, $total);
+
+        $response = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123'];
+        [$numpartright, $total] = $question->retrieve_numright_numtotal($response);
+        $this->assertEquals(2, $numpartright);
+        $this->assertEquals(4, $total);
+
+        $response = ['c0' => '10,10 300,10', 'c1' => '10,200 300,123'];
+        [$numpartright, $total] = $question->retrieve_numright_numtotal($response);
+        $this->assertEquals(3, $numpartright);
+        $this->assertEquals(4, $total);
+
+        // Set the  grade method to 'All-or-nothing'.
+        $question->grademethod = 'allnone';
+        $correctresponse = $question->get_correct_response();
+        [$numright, $total] = $question->retrieve_numright_numtotal($correctresponse);
+        $this->assertEquals(2, $numright);
+        $this->assertEquals(2, $total);
+
+        $response = ['c0' => '10,10 300,123', 'c1' => '10,123 300,123'];
+        [$numright, $total] = $question->retrieve_numright_numtotal($response);
+        $this->assertEquals(0, $numright);
+        $this->assertEquals(2, $total);
+
+        $response = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123'];
+        [$numright, $total] = $question->retrieve_numright_numtotal($response);
+        $this->assertEquals(1, $numright);
+        $this->assertEquals(2, $total);
+
+        $response = ['c0' => '10,10 300,10', 'c1' => '10,200 300,123'];
+        [$numright, $total] = $question->retrieve_numright_numtotal($response);
+        $this->assertEquals(1, $numright);
+        $this->assertEquals(2, $total);
+    }
+
+    public function test_grade_response(): void {
+        $question = \test_question_maker::make_question('drawlines');
+        $question->start_attempt(new question_attempt_step(), 1);
+
+        $correctresponse = $question->get_correct_response();
+        $this->assertEquals([1, question_state::$gradedright], $question->grade_response($correctresponse));
+
+        $partiallycorrectresponse = ['c0' => '10,10 300,10', 'c1' => '10,200 300,123'];
+        $this->assertEquals([0.75, question_state::$gradedpartial], $question->grade_response($partiallycorrectresponse));
+
+        $partiallycorrectresponse = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123'];
+        $this->assertEquals([0.5, question_state::$gradedpartial], $question->grade_response($partiallycorrectresponse));
+
+        $wrongresponse = ['c0' => '123,10 123,10', 'c1' => '10,123 300,123'];
+        $this->assertEquals([0, question_state::$gradedwrong], $question->grade_response($wrongresponse));
+    }
+
     public function test_compute_final_grade(): void {
         $question = \test_question_maker::make_question('drawlines');
         $question->start_attempt(new question_attempt_step(), 1);
-        // TODO: To incorporate the question penalty for interactive with multiple tries behaviour.
 
         $totaltries = 1;
-
-        $response = ['c0' => '100,10 300,100', 'c1' => '10,123 300,123'];
-        $responses[] = $response;
+        $responses[1] = ['c0' => '10,123 300,123', 'c1' => '10,123 300,123'];
         $fraction = $question->compute_final_grade($responses, $totaltries);
-        $this->assertEquals($fraction, 0 / $totaltries, 'Incorrect responses should return fraction of 0');
+        $this->assertEquals(0, $fraction, 'Incorrect responses should return fraction of 0');
 
-        $responses = null;
-        $response = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123'];
-        $responses[] = $response;
+        $totaltries = 1;
+        $responses[1] = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123'];
         $fraction = $question->compute_final_grade($responses, $totaltries);
-        $this->assertEquals($fraction, 0.5 / $totaltries,
+        $this->assertEquals(0.5, $fraction,
                 'Partially correct responses(line 1 is correct and line 2 is incorrect) should return fraction of 0.5');
 
-        $responses = null;
-        $response = ['c0' => '10,10 300,10', 'c1' => '10,200 300,123'];
-        $responses[] = $response;
+        $responses[1] = ['c0' => '10,10 300,10', 'c1' => '10,200 300,123'];
         $fraction = $question->compute_final_grade($responses, $totaltries);
         $this->assertEquals($fraction, 0.75 / $totaltries,
                 'Partially correct responses(line 1 is correct and line 2 is half-correct) should return fraction of 0.75');
 
-        $responses = null;
-        $correctresponse = $question->get_correct_response();
-        $responses[] = $correctresponse;
+        $responses[1] = $question->get_correct_response();
         $fraction = $question->compute_final_grade($responses, $totaltries);
         $this->assertEquals($fraction, 1 / $totaltries, 'All correct responses should return fraction of 1');
+
+        // Multiple tries with penalties.
+        $totaltries = 2;
+        $responses[1] = ['c0' => '10,10 300,100', 'c1' => '10,123 300,123']; // 1 correct 3 incorrect.
+        $responses[2] = $question->get_correct_response(); // 4 correct 0 incorrect.
+        $fraction = $question->compute_final_grade($responses, $totaltries);
+        $this->assertEquals(0.5000000125, $fraction);
+
+        $totaltries = 3;
+        $responses[1] = ['c0' => '10,10 300,123', 'c1' => '10,123 300,123']; // 1 correct 3 incorrect.
+        $responses[2] = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123']; // 2 correct 2 incorrect.
+        $responses[3] = $question->get_correct_response(); // 4 correct 0 incorrect.
+        $fraction = $question->compute_final_grade($responses, $totaltries);
+        $this->assertEquals(0.44444445833333335, $fraction);
+
+        $totaltries = 3;
+        $responses[1] = ['c0' => '10,10 300,123', 'c1' => '10,123 300,123']; // 1 correct 3 incorrect.
+        $responses[2] = ['c0' => '10,10 300,10', 'c1' => '10,123 300,200']; // 3 correct 1 incorrect.
+        $responses[3] = $question->get_correct_response(); // 4 correct 0 incorrect.
+        $fraction = $question->compute_final_grade($responses, $totaltries);
+        $this->assertEquals(0.5555555666666667, $fraction);
     }
 }
