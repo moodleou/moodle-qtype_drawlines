@@ -40,6 +40,30 @@ require_once($CFG->dirroot . '/question/type/drawlines/question.php');
  */
 final class question_test extends \basic_testcase {
 
+    /** @var string Line1 right start. */
+    const L1_RIGHT_START = '10,10';
+
+    /** @var string Line1 wrong start. */
+    const L1_WRONG_START = '10,123';
+
+    /** @var string Line1 right end. */
+    const L1_RIGHT_END = '300,10';
+
+    /** @var string Line1 wrong end. */
+    const L1_WRONG_END = '300,123';
+
+    /** @var string Line1 right start. */
+    const L2_RIGHT_START = '10,200';
+
+    /** @var string Line2 wrong start. */
+    const L2_WRONG_START = '10,123';
+
+    /** @var string Line2 right end. */
+    const L2_RIGHT_END = '300,200';
+
+    /** @var string Line2 wrong end. */
+    const L2_WRONG_END = '300,123';
+
     public function test_get_expected_data(): void {
         $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
         $question->start_attempt(new question_attempt_step(), 1);
@@ -125,107 +149,327 @@ final class question_test extends \basic_testcase {
         $this->assertEquals($expected, $summary);
     }
 
-    public function test_summarise_response(): void {
+    /**
+     * Test the summarise_response function.
+     *
+     * @dataProvider summarise_response_provider
+     * @param int|float $expected
+     * @param array $responses
+     * @return void
+     */
+    public function test_summarise_response(string $expected, array $response): void {
         $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
         $question->start_attempt(new question_attempt_step(), 1);
 
-        // Correct responses with full mark for both Lines (mark = 1).
-        $correctresponse = $question->get_correct_response();
-        $expected = 'Line 1: 10,10 300,10, Line 2: 10,200 300,200';
-        $actual = $question->summarise_response($correctresponse);
-        $this->assertEquals($expected, $actual);
-
-        // Partially correct responses with full marks for Line 1 and half of mark for Line 2 (mark = 0.75).
-        $expected = 'Line 1: 10,10 300,10, Line 2: 10,200 300,123';
-        $actual = $question->summarise_response(['c0' => '10,10 300,10', 'c1' => '10,200 300,123']);
-        $this->assertEquals($expected, $actual);
-
-        // Partially correct responses with full marks for Line 1 and no mark for Line 2 (mark = 0.5).
-        $expected = 'Line 1: 10,10 300,10, Line 2: 10,123 300,123';
-        $actual = $question->summarise_response(['c0' => '10,10 300,10', 'c1' => '10,123 300,123']);
+        $actual = $question->summarise_response($response);
         $this->assertEquals($expected, $actual);
     }
 
-    public function test_get_num_parts_right_grade_partialt(): void {
+    /**
+     * Test the get_num_parts_right_grade_partial function.
+     *
+     * @dataProvider response_provider
+     * @param int|float $expected
+     * @param array $responses
+     * @param string $grademethod
+     * @return void
+     */
+    public function test_get_num_parts_right_grade_partial(int $expected, array $response, string $grademethod): void {
+        if ($grademethod !== 'partial') {
+            return;
+        }
+
         $question = \test_question_maker::make_question('drawlines');
         $question->start_attempt(new question_attempt_step(), 1);
 
-        $correctresponse = $question->get_correct_response();
-        [$numpartright, $total] = $question->get_num_parts_right_grade_partialt($correctresponse);
-        $this->assertEquals(4, $numpartright);
-        $this->assertEquals(4, $total);
-
-        $response = ['c0' => '10,10 300,123', 'c1' => '10,123 300,123'];
-        [$numpartright, $total] = $question->get_num_parts_right_grade_partialt($response);
-        $this->assertEquals(1, $numpartright);
-        $this->assertEquals(4, $total);
-
-        $response = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123'];
-        [$numpartright, $total] = $question->get_num_parts_right_grade_partialt($response);
-        $this->assertEquals(2, $numpartright);
-        $this->assertEquals(4, $total);
-
-        $response = ['c0' => '10,10 300,10', 'c1' => '10,200 300,123'];
-        [$numpartright, $total] = $question->get_num_parts_right_grade_partialt($response);
-        $this->assertEquals(3, $numpartright);
+        [, $numpartright, $total] = $question->get_num_parts_right_grade_partial($response);
+        $this->assertEquals($expected, $numpartright);
         $this->assertEquals(4, $total);
     }
 
-    public function test_get_num_parts_right_grade_allornone(): void {
+    /**
+     * Test the get_num_parts_right_grade_allornone function.
+     *
+     * @dataProvider response_provider
+     * @param int|float $expected
+     * @param array $responses
+     * @param string $grademethod
+     * @return void
+     */
+    public function test_get_num_parts_right_grade_allornone(int $expected, array $response, string $grademethod): void {
+        if ($grademethod !== 'allnone') {
+            return;
+        }
+
         $question = \test_question_maker::make_question('drawlines');
         $question->start_attempt(new question_attempt_step(), 1);
 
-        $correctresponse = $question->get_correct_response();
-        [$numright, $total] = $question->get_num_parts_right_grade_allornone($correctresponse);
-        $this->assertEquals(2, $numright);
-        $this->assertEquals(2, $total);
-
-        $response = ['c0' => '10,10 300,123', 'c1' => '10,123 300,123'];
         [$numright, $total] = $question->get_num_parts_right_grade_allornone($response);
-        $this->assertEquals(0, $numright);
-        $this->assertEquals(2, $total);
-
-        $response = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123'];
-        [$numright, $total] = $question->get_num_parts_right_grade_allornone($response);
-        $this->assertEquals(1, $numright);
-        $this->assertEquals(2, $total);
-
-        $response = ['c0' => '10,10 300,10', 'c1' => '10,200 300,123'];
-        [$numright, $total] = $question->get_num_parts_right_grade_allornone($response);
-        $this->assertEquals(1, $numright);
+        $this->assertEquals($expected, $numright);
         $this->assertEquals(2, $total);
     }
 
-    public function test_compute_final_grade(): void {
+    /**
+     * Test the grade_response function.
+     *
+     * @dataProvider grade_response_provider
+     * @param int|float $expected
+     * @param array $responses
+     * @param string $grademethod
+     * @return void
+     */
+    public function test_grade_response(int|float $expected, array $response, string $grademethod): void {
         $question = \test_question_maker::make_question('drawlines');
         $question->start_attempt(new question_attempt_step(), 1);
-        // TODO: To incorporate the question penalty for interactive with multiple tries behaviour.
+        $question->grademethod = $grademethod;
+        if ($grademethod === 'partial') {
+            if ($expected === 1) {
+                $questionstate = question_state::$gradedright;
+            } else if ($expected === 0) {
+                $questionstate = question_state::$gradedwrong;
+            } else if ($expected > 0 && $expected < 1) {
+                $questionstate = question_state::$gradedpartial;
+            }
+            $this->assertEquals([$expected, $questionstate], $question->grade_response($response));
+        } else if ($grademethod === 'allnone') {
+            if ($expected === 1) {
+                $questionstate = question_state::$gradedright;
+            } else if ($expected === 0) {
+                $questionstate = question_state::$gradedwrong;
+            }
+            $this->assertEquals([$expected, $questionstate], $question->grade_response($response));
+        }
+    }
 
-        $totaltries = 1;
-
-        $response = ['c0' => '100,10 300,100', 'c1' => '10,123 300,123'];
-        $responses[] = $response;
+    /**
+     * Test the compute_final_grade function.
+     *
+     * @dataProvider compute_final_grade_provider
+     * @param int|float $expected
+     * @param array $responses
+     * @param int $totaltries
+     * @return void
+     */
+    public function test_compute_final_grade($expected, $responses, $totaltries): void {
+        $question = \test_question_maker::make_question('drawlines');
+        $question->start_attempt(new question_attempt_step(), 1);
         $fraction = $question->compute_final_grade($responses, $totaltries);
-        $this->assertEquals($fraction, 0 / $totaltries, 'Incorrect responses should return fraction of 0');
+        if (is_float($fraction)) {
+            $this->assertEqualsWithDelta($expected, $fraction, 0.00001);
+        } else {
+            $this->assertEquals($expected, $fraction);
+        }
+    }
 
-        $responses = null;
-        $response = ['c0' => '10,10 300,10', 'c1' => '10,123 300,123'];
-        $responses[] = $response;
-        $fraction = $question->compute_final_grade($responses, $totaltries);
-        $this->assertEquals($fraction, 0.5 / $totaltries,
-                'Partially correct responses(line 1 is correct and line 2 is incorrect) should return fraction of 0.5');
+    /**
+     * Data provider for methods taking question response {@see get_num_part_..., ...}.
+     *
+     * @return array[]
+     */
+    public static function response_provider(): array {
+        $l1rightstart = self::L1_RIGHT_START;
+        $l1wrongstart = self::L1_WRONG_START;
+        $l1rightend = self::L1_RIGHT_END;
+        $l1wrongend = self::L1_WRONG_END;
 
-        $responses = null;
-        $response = ['c0' => '10,10 300,10', 'c1' => '10,200 300,123'];
-        $responses[] = $response;
-        $fraction = $question->compute_final_grade($responses, $totaltries);
-        $this->assertEquals($fraction, 0.75 / $totaltries,
-                'Partially correct responses(line 1 is correct and line 2 is half-correct) should return fraction of 0.75');
+        $l2rightstart = self::L2_RIGHT_START;
+        $l2wrongstart = self::L2_WRONG_START;
+        $l2rightend = self::L2_RIGHT_END;
+        $l2wrongend = self::L2_WRONG_END;
 
-        $responses = null;
-        $correctresponse = $question->get_correct_response();
-        $responses[] = $correctresponse;
-        $fraction = $question->compute_final_grade($responses, $totaltries);
-        $this->assertEquals($fraction, 1 / $totaltries, 'All correct responses should return fraction of 1');
+        return
+                [
+                        'part l1=00 L2=00' =>
+                                [0, ['c0' => "$l1wrongstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"], 'partial'],
+                        'part l1=10 L2=00' =>
+                                [1, ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"], 'partial'],
+                        'part l1=11 L2=00' =>
+                                [2, ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2wrongstart $l2wrongend"], 'partial'],
+                        'part l1=10 L2=10' =>
+                                [2, ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2rightstart $l2wrongend"], 'partial'],
+                        'part l1=10 L2=01' =>
+                                [2, ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2rightend"], 'partial'],
+                        'part l1=11 L2=10' =>
+                                [3, ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2wrongend"], 'partial'],
+                        'part l1=11 L2=11' =>
+                                [4, ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"], 'partial'],
+
+                        'aLL l1=00 L2=00' =>
+                                [0, ['c0' => "$l1wrongstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"], 'allnone'],
+                        'aLL l1=10 L2=00' =>
+                                [0, ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"], 'allnone'],
+                        'aLL l1=10 L2=10' =>
+                                [0, ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2rightstart $l2wrongend"], 'allnone'],
+                        'aLL l1=10 L2=01' =>
+                                [0, ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2rightend"], 'allnone'],
+                        'aLL l1=11 L2=10' =>
+                                [1, ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2wrongend"], 'allnone'],
+                        'aLL l1=11 L2=11' =>
+                                [2, ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"], 'allnone'],
+                ];
+    }
+
+    /**
+     * Data provider for methods taking question response {@see grade_response..., ...}.
+     *
+     * @return array[]
+     */
+    public static function grade_response_provider(): array {
+        $l1rightstart = self::L1_RIGHT_START;
+        $l1wrongstart = self::L1_WRONG_START;
+        $l1rightend = self::L1_RIGHT_END;
+        $l1wrongend = self::L1_WRONG_END;
+
+        $l2rightstart = self::L2_RIGHT_START;
+        $l2wrongstart = self::L2_WRONG_START;
+        $l2rightend = self::L2_RIGHT_END;
+        $l2wrongend = self::L2_WRONG_END;
+
+        return
+                [
+                        'part l1=00 L2=00' =>
+                                [0, ['c0' => "$l1wrongstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"], 'partial'],
+                        'part l1=10 L2=00' =>
+                                [0.25, ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"], 'partial'],
+                        'part l1=11 L2=00' =>
+                                [0.50, ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2wrongstart $l2wrongend"], 'partial'],
+                        'part l1=10 L2=10' =>
+                                [0.50, ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2rightstart $l2wrongend"], 'partial'],
+                        'part l1=10 L2=01' =>
+                                [0.50, ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2rightend"], 'partial'],
+                        'part l1=11 L2=10' =>
+                                [0.75, ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2wrongend"], 'partial'],
+                        'part l1=11 L2=11' =>
+                                [1, ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"], 'partial'],
+
+                        'all l1=00 L2=00' =>
+                                [0, ['c0' => "$l1wrongstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"], 'allnone'],
+                        'all l1=10 L2=00' =>
+                                [0, ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"], 'allnone'],
+                        'all l1=11 L2=00' =>
+                                [0, ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2wrongstart $l2wrongend"], 'allnone'],
+                        'all l1=10 L2=10' =>
+                                [0, ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2rightstart $l2wrongend"], 'allnone'],
+                        'all l1=10 L2=01' =>
+                                [0, ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2rightend"], 'allnone'],
+                        'all l1=11 L2=10' =>
+                                [0, ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2wrongend"], 'allnone'],
+                        'all l1=11 L2=11' =>
+                                [1, ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"], 'allnone'],
+                ];
+    }
+
+    /**
+     * Data provider for methods taking question response {@see summarise_response..., ...}.
+     *
+     * @return array[]
+     */
+    public static function summarise_response_provider(): array {
+        $l1rightstart = self::L1_RIGHT_START;
+        $l1wrongstart = self::L1_WRONG_START;
+        $l1rightend = self::L1_RIGHT_END;
+        $l1wrongend = self::L1_WRONG_END;
+
+        $l2rightstart = self::L2_RIGHT_START;
+        $l2wrongstart = self::L2_WRONG_START;
+        $l2rightend = self::L2_RIGHT_END;
+        $l2wrongend = self::L2_WRONG_END;
+
+        return
+                [
+                        'l1=00 L2=00' => ['Line 1: ' . "$l1wrongstart $l1wrongend". ', Line 2: ' . "$l2wrongstart $l2wrongend",
+                                ['c0' => "$l1wrongstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"]],
+                        'l1=10 L2=00' => ['Line 1: ' . "$l1rightstart $l1wrongend". ', Line 2: ' . "$l2wrongstart $l2wrongend",
+                                ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"]],
+                        'l1=11 L2=00' => ['Line 1: ' . "$l1rightstart $l1rightend". ', Line 2: ' . "$l2wrongstart $l2wrongend",
+                                ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2wrongstart $l2wrongend"]],
+                        'l1=10 L2=10' => ['Line 1: ' . "$l1rightstart $l1wrongend". ', Line 2: ' . "$l2rightstart $l2wrongend",
+                                ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2rightstart $l2wrongend"]],
+                        'l1=10 L2=01' => ['Line 1: ' . "$l1rightstart $l1wrongend". ', Line 2: ' . "$l2wrongstart $l2rightend",
+                                ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2rightend"]],
+                        'l1=11 L2=10' => ['Line 1: ' . "$l1rightstart $l1rightend". ', Line 2: ' . "$l2rightstart $l2wrongend",
+                                ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2wrongend"]],
+                        'l1=11 L2=11' => ['Line 1: ' . "$l1rightstart $l1rightend". ', Line 2: ' . "$l2rightstart $l2rightend",
+                                ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"]],
+                ];
+    }
+
+    /**
+     * Data provider for {@see test_compute_final_grade}.
+     *
+     * @return array[]
+     */
+    public static function compute_final_grade_provider(): array {
+        $l1rightstart = self::L1_RIGHT_START;
+        $l1wrongstart = self::L1_WRONG_START;
+        $l1rightend = self::L1_RIGHT_END;
+        $l1wrongend = self::L1_WRONG_END;
+
+        $l2rightstart = self::L2_RIGHT_START;
+        $l2wrongstart = self::L2_WRONG_START;
+        $l2rightend = self::L2_RIGHT_END;
+        $l2wrongend = self::L2_WRONG_END;
+
+        return
+        [
+                // Single try.
+                'L1=00 L2=00' => [0, ['1' => ['c0' => "$l1wrongstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"]], 1],
+                'L1=11 L2=00' => [0.50, ['1' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2wrongstart $l2wrongend"]], 1],
+                'L1=01 L2=10' => [0.50, ['1' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2wrongstart $l2wrongend"]], 1],
+                'L1=11 L2=01' => [0.75, ['1' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2wrongstart $l2rightend"]], 1],
+                'L1=11 L2=10' => [0.75, ['1' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2wrongend"]], 1],
+                'L1=11 L2=11' => [1, ['1' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"]], 1],
+
+                // Multiple tries with penalties, totaltries set to 3.
+                'T1: L1=00 L2=00, T2: L1=00 L2=00, T3: L1=11 L2=11' => [0.33334,
+                        [
+                                '1' => ['c0' => "$l1wrongstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"],
+                                '2' => ['c0' => "$l1wrongstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"],
+                                '3' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"],
+                        ], 3],
+                'T1: L1=00 L2=00, T2: L1=10 L2=00, T3: L1=11 L2=11' => [0.41667,
+                        [
+                                '1' => ['c0' => "$l1wrongstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"],
+                                '2' => ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"],
+                                '3' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"],
+                        ], 3],
+                'T1: L1=00 L2=00, T2: L1=11 L2=00, T3: L1=11 L2=11' => [0.5,
+                        [
+                                '1' => ['c0' => "$l1wrongstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"],
+                                '2' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2wrongstart $l2wrongend"],
+                                '3' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"],
+                        ], 3],
+                'T1: L1=10 L2=00, T2: L1=11 L2=10, T3: L1=11 L2=11' => [0.66667,
+                        [
+                                '1' => ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"],
+                                '2' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2wrongend"],
+                                '3' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"],
+                        ], 3],
+                'T1: L1=00 L2=00, T2: L1=11 L2=11:' => [0.66667,
+                        [
+                                '1' => ['c0' => "$l1wrongstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"],
+                                '2' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"],
+                        ], 3],
+                'T1: L1=10 L2=00, T2: L1=11 L2=11:' => [0.75,
+                        [
+                                '1' => ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"],
+                                '2' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"],
+                        ], 3],
+                'T1: L1=11 L2=00, T2: L1=11 L2=11:' => [0.916667,
+                        [
+                                '1' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2wrongstart $l2rightend"],
+                                '2' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"],
+                        ], 3],
+                'T1: L1=11 L2=11:' => [1,
+                        [
+                                '1' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2rightend"],
+                        ], 3],
+                'T1: L1=10 L2=00, T2: L1=11 L2=10, T3: L1=11 L2=10' => [0.41667,
+                        [
+                                '1' => ['c0' => "$l1rightstart $l1wrongend", 'c1' => "$l2wrongstart $l2wrongend"],
+                                '2' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2wrongend"],
+                                '3' => ['c0' => "$l1rightstart $l1rightend", 'c1' => "$l2rightstart $l2wrongend"],
+                        ], 3],
+        ];
     }
 }

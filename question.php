@@ -59,7 +59,7 @@ class qtype_drawlines_question extends question_graded_automatically {
     public function get_expected_data() {
         $expecteddata = [];
         foreach ($this->lines as $line) {
-            $expecteddata[$this->choice($line->number - 1)] = PARAM_RAW;
+            $expecteddata[$this->field($line->number - 1)] = PARAM_RAW;
         }
         return $expecteddata;
     }
@@ -75,8 +75,8 @@ class qtype_drawlines_question extends question_graded_automatically {
             return false;
         }
         foreach ($this->lines as $key => $line) {
-            if (isset($response[$this->choice($key)]) &&
-                    !line::are_response_coordinates_valid($response[$this->choice($key)], $line->type)) {
+            if (isset($response[$this->field($key)]) &&
+                    !line::are_response_coordinates_valid($response[$this->field($key)], $line->type)) {
                 return false;
             }
         }
@@ -87,7 +87,7 @@ class qtype_drawlines_question extends question_graded_automatically {
     public function get_correct_response() {
         $response = [];
         foreach ($this->lines as $key => $line) {
-            $response[$this->choice($key)] = line::get_coordinates($line->zonestart) . ' '
+            $response[$this->field($key)] = line::get_coordinates($line->zonestart) . ' '
                     . line::get_coordinates($line->zoneend);
         }
         return $response;
@@ -98,14 +98,14 @@ class qtype_drawlines_question extends question_graded_automatically {
         $responsewords = [];
         $answers = [];
         foreach ($this->lines as $key => $line) {
-            if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] != '') {
-                $coordinates = explode(' ', $response[$this->choice($key)]);
+            if (array_key_exists($this->field($key), $response) && $response[$this->field($key)] != '') {
+                $coordinates = explode(' ', $response[$this->field($key)]);
                 if ($line->type == 'lineinfinite' && count($coordinates) == 4) {
-                    $coordinates = explode(' ', $response[$this->choice($key)]);
+                    $coordinates = explode(' ', $response[$this->field($key)]);
                     $answers[] = 'Line ' . $line->number . ': ' . $coordinates[1] . ' ' . $coordinates[2];
                     continue;
                 }
-                $answers[] = 'Line ' . $line->number . ': ' . $response[$this->choice($key)];
+                $answers[] = 'Line ' . $line->number . ': ' . $response[$this->field($key)];
             }
         }
         if (count($answers) > 0) {
@@ -115,9 +115,12 @@ class qtype_drawlines_question extends question_graded_automatically {
     }
 
     #[\Override]
-    public function is_gradable_response(array $response) {
+    public function is_gradable_response(array $response): bool {
+        if (!isset($response)) {
+            return false;
+        }
         foreach ($this->lines as $key => $line) {
-            if (array_key_exists($this->choice($key), $response)) {
+            if (array_key_exists($this->field($key), $response)) {
                 return true;
             }
         }
@@ -127,24 +130,12 @@ class qtype_drawlines_question extends question_graded_automatically {
     #[\Override]
     public function is_same_response(array $prevresponse, array $newresponse) {
         foreach ($this->lines as $key => $line) {
-            $fieldname = $this->choice($key);
+            $fieldname = $this->field($key);
             if (!question_utils::arrays_same_at_key_missing_is_blank($prevresponse, $newresponse, $fieldname)) {
                 return false;
             }
         }
         return true;
-    }
-
-    #[\Override]
-    public function grade_response(array $response): array {
-        // Retrieve the number of right responses and the total number of responses.
-        if ($this->grademethod == 'partial') {
-            [$numright, $total] = $this->get_num_parts_right_grade_partialt($response);
-        } else {
-            [$numright, $total] = $this->get_num_parts_right_grade_allornone($response);
-        }
-        $fraction = $numright / $total;
-        return [$fraction, question_state::graded_state_for_fraction($fraction)];
     }
 
     /**
@@ -153,49 +144,64 @@ class qtype_drawlines_question extends question_graded_automatically {
      * @param array $response The response list.
      * @return array The array of number of correct lines (start, end or both points of lines).
      */
-    public function get_num_parts_right_grade_partialt(array $response): array {
+    public function get_num_parts_right_grade_partial(array $response): array {
         if (!$response) {
             return [0, 0];
         }
+        $rightstart = 0;
+        $rightend = 0;
+
         $numpartright = 0;
+        $numpartrightarray = [];
         foreach ($this->lines as $key => $line) {
-            if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
-                $coords = explode(' ', $response[$this->choice($key)]);
-                if ($line->type == 'lineinfinite') {
+            if (array_key_exists($this->field($key), $response) && $response[$this->field($key)] !== '') {
+                $coords = explode(' ', $response[$this->field($key)]);
+                if ($line->type === line::TYPE_LINE_INFINITE) {
                     if (count($coords) == 2) {
                         // Response with 2 coordinates (x1,y1 x2,y2).
                         if (line::is_item_positioned_correctly_on_axis(
                                 $coords[0], $line->zonestart, $line->zoneend, 'start')) {
-                            $numpartright++;
+                            $rightstart++;
                         }
                         if (line::is_item_positioned_correctly_on_axis(
                                 $coords[1], $line->zonestart, $line->zoneend, 'end')) {
-                            $numpartright++;
+                            $rightend++;
                         }
                     } else {
                         // Response has 4 coordinates(x1,y1 x2,y2 x3,y3 x4,y4).
                         // Here we need to consider x2,y2 x3,y3 for calculation.
                         if (line::is_item_positioned_correctly_on_axis(
                                 $coords[1], $line->zonestart, $line->zoneend, 'start')) {
-                            $numpartright++;
+                            $rightstart++;
                         }
                         if (line::is_item_positioned_correctly_on_axis(
                                 $coords[2], $line->zonestart, $line->zoneend, 'end')) {
-                            $numpartright++;
+                            $rightend++;
                         }
                     }
                 } else {
                     if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart)) {
-                        $numpartright++;
+                        $numpartrightarray[$line->number]['start'] = 1;
+                        $rightstart++;
+                    } else {
+                        $numpartrightarray[$line->number]['start'] = 0;
                     }
                     if (line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
-                        $numpartright++;
+                        $numpartrightarray[$line->number]['end'] = 1;
+                        $rightend++;
+                    } else {
+                        $numpartrightarray[$line->number]['end'] = 0;
+
                     }
+                    $numpartright = $rightstart + $rightend;
                 }
             }
         }
-        $total = count($this->lines) * 2;
-        return [$numpartright, $total];
+        $numtotal = count($this->lines) * 2;
+        if (!empty($numpartrightarray)) {
+            return [$numpartrightarray, $numpartright, $numtotal];
+        }
+        return [$numpartright, $numtotal];
     }
 
     /**
@@ -210,25 +216,25 @@ class qtype_drawlines_question extends question_graded_automatically {
         }
         $numright = 0;
         foreach ($this->lines as $key => $line) {
-            if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
-                $coords = explode(' ', $response[$this->choice($key)]);
-                if ($line->type == 'lineinfinite') {
+            if (array_key_exists($this->field($key), $response) && $response[$this->field($key)] !== '') {
+                $coords = explode(' ', $response[$this->field($key)]);
+                if ($line->type == line::TYPE_LINE_INFINITE) {
                     if (count($coords) == 2) {
                         // Response with 2 coordinates (x1,y1 x2,y2 x3,y3 x4,y4).
                         $isstartrightplace = line::is_item_positioned_correctly_on_axis(
-                            $coords[0], $line->zonestart, $line->zoneend, 'start'
+                                $coords[0], $line->zonestart, $line->zoneend, 'start'
                         );
                         $isendrightplace = line::is_item_positioned_correctly_on_axis(
-                            $coords[1], $line->zonestart, $line->zoneend, 'end'
+                                $coords[1], $line->zonestart, $line->zoneend, 'end'
                         );
                     } else {
                         // Response has 4 coordinates(x1,y1 x2,y2 x3,y3 x4,y4).
                         // Here we need to consider x2,y2 x3,y3 for calculation.
                         $isstartrightplace = line::is_item_positioned_correctly_on_axis(
-                            $coords[1], $line->zonestart, $line->zoneend, 'start'
+                                $coords[1], $line->zonestart, $line->zoneend, 'start'
                         );
                         $isendrightplace = line::is_item_positioned_correctly_on_axis(
-                            $coords[2], $line->zonestart, $line->zoneend, 'end'
+                                $coords[2], $line->zonestart, $line->zoneend, 'end'
                         );
                     }
                     if ($isstartrightplace && $isendrightplace) {
@@ -274,7 +280,7 @@ class qtype_drawlines_question extends question_graded_automatically {
     public function classify_response(array $response) {
         $classifiedresponse = [];
         foreach ($this->lines as $key => $line) {
-            if (array_key_exists($this->choice($key), $response) && $response[$this->choice($key)] !== '') {
+            if (array_key_exists($this->field($key), $response) && $response[$this->field($key)] !== '') {
                 if ($this->grademethod == 'partial') {
                     $fraction = 0.5;
                 } else {
@@ -282,13 +288,49 @@ class qtype_drawlines_question extends question_graded_automatically {
                 }
                 $classifiedresponse[$key] = new question_classified_response(
                         $line->number,
-                        'Line ' . $line->number . ': ' . $response[$this->choice($key)],
+                        'Line ' . $line->number . ': ' . $response[$this->field($key)],
                         $fraction);
             } else {
                 $classifiedresponse[$key] = question_classified_response::no_response();
             }
         }
         return $classifiedresponse;
+    }
+
+    #[\Override]
+    public function grade_response(array $response): array {
+        // Retrieve the number of right responses and the total number of responses.
+        $fraction = 0;
+        if ($this->grademethod == 'partial') {
+            [$notused, $numright, $numtotal] = $this->get_num_parts_right_grade_partial($response);
+            $fraction = $numright / $numtotal;
+        } else if ($this->grademethod == 'allnone') {
+            [$numright, $numtotal] = $this->get_num_parts_right_grade_allornone($response);
+            if ($numright === $numtotal) {
+                $fraction = 1;
+            }
+        }
+        return [$fraction, question_state::graded_state_for_fraction($fraction)];
+    }
+
+    /**
+     * Return the final garde for the question.
+     *
+     * @param array $responses The respnses array
+     * @return array
+     */
+    public function get_tries_responses(array $responses): array {
+        $allgrades = [];
+        foreach ($responses as $trynumber => $response) {
+            if ($this->grademethod == 'partial') {
+                [$array, $numpartright, $numtotal] = $this->get_num_parts_right_grade_partial($response);
+                $allgrades[$trynumber] = $array;
+            } else {
+                [$numright, $numtotal] = $this->get_num_parts_right_grade_allornone($response);
+                $allgrades[$trynumber] = $numright;
+            }
+        }
+        return $allgrades;
     }
 
     /**
@@ -302,26 +344,51 @@ class qtype_drawlines_question extends question_graded_automatically {
      * @param int $totaltries The maximum number of tries allowed.
      *
      * @return float the fraction that should be awarded for this
-     * sequence of response.
+     * sequence of responses.
      */
-    public function compute_final_grade(array $responses, int $totaltries): float {
-        // TODO: To incorporate the question penalty for interactive with multiple tries behaviour.
-
+    public function compute_final_grade(array $responses, int $totaltries): int|float {
+        $penalties = 0;
         $grade = 0;
-        foreach ($responses as $response) {
+        $allgrades = $this->get_tries_responses($responses);
+        foreach ($responses as $trynumber => $response) {
             [$fraction, $state] = $this->grade_response($response);
-            $grade += $fraction;
+            if ($state->is_graded() === true) {
+                if ($totaltries === 1) {
+                    return $fraction;
+                }
+                $grade = max(0, $fraction - $penalties);
+                if ($state->get_feedback_class() === 'correct') {
+                    return $grade;
+                }
+                if ($state->get_feedback_class() === 'incorrect') {
+                    $penalties += $this->penalty;
+                }
+                if ($state->get_feedback_class() === 'partiallycorrect') {
+                    $trynumright = 0;
+                    foreach ($this->lines as $line) {
+                        $trynumright += $allgrades[$trynumber][$line->number]['start'] +
+                                $allgrades[$trynumber][$line->number]['end'];
+                    }
+                    if ($this->grademethod == 'partial') {
+                        [, , $numtotal] = $this->get_num_parts_right_grade_partial($response);
+                    } else {
+                        [, $numtotal] = $this->get_num_parts_right_grade_allornone($response);
+                    }
+                    $partpenaly = (($numtotal - $trynumright) * $this->penalty / $numtotal);
+                    $penalties += min($this->penalty, $partpenaly);
+                }
+            }
         }
         return $grade;
     }
 
     /**
-     * Get a choice identifier
+     * Get a choice index identifier
      *
-     * @param int $choice stem number
+     * @param int $choice
      * @return string the question-type variable name.
      */
-    public function choice($choice) {
+    public function field($choice): string {
         return 'c' . $choice;
     }
 }
