@@ -210,11 +210,6 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
      * Set this line element as being edited.
      */
     LineManager.prototype.setActive = function() {
-        // Move this one to last, so that it is always on top.
-        // (Otherwise the handles may not be able to receive events.)
-        var parent = this.svgEl.parentNode;
-        parent.removeChild(this.svgEl);
-        parent.appendChild(this.svgEl);
         this.svgEl.setAttribute('class', this.svgEl.getAttribute('class') + ' active');
     };
 
@@ -266,6 +261,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
         moveHandle.setAttribute('r', 7);
         moveHandle.setAttribute('class', handleclass);
         moveHandle.setAttribute('data-move-handle-no', index);
+        moveHandle.setAttribute('tabindex', 0);
     };
 
     /**
@@ -283,37 +279,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
         editHandle.setAttribute('height', 11);
         editHandle.setAttribute('class', handleclass);
         editHandle.setAttribute('data-edit-handle-no', index);
-    };
-
-    /**
-     * Start responding to dragging the move handle.
-     *
-     * @param {Event} e Event object
-     * @param {String} handleIndex
-     */
-    LineManager.prototype.handleMove = function(e, handleIndex) {
-        var info = dragDrop.prepare(e);
-        if (!info.start) {
-            return;
-        }
-
-        var movingDropZone = this,
-            lastX = info.x,
-            lastY = info.y,
-            dragProxy = this.makeDragProxy(info.x, info.y),
-            bgImg = document.querySelector('fieldset#id_previewareaheader .dropbackground'),
-            maxX = bgImg.width,
-            maxY = bgImg.height;
-
-        dragDrop.start(e, $(dragProxy), function(pageX, pageY) {
-            movingDropZone.line.move(handleIndex, pageX - lastX, pageY - lastY, maxX, maxY);
-            lastX = pageX;
-            lastY = pageY;
-            movingDropZone.updateSvgEl();
-            movingDropZone.setCoordinatesInForm();
-        }, function() {
-            document.body.removeChild(dragProxy);
-        });
+        editHandle.setAttribute('tabindex', 0);
     };
 
     /**
@@ -335,37 +301,103 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
     };
 
     /**
-     * Start responding to dragging the move handle.
+     * Start responding to dragging the line elements.
      *
      * @param {Event} e Event object
      * @param {String} handleIndex
+     * @param {String} handleType
      */
-    LineManager.prototype.handleEdit = function(e, handleIndex) {
+    LineManager.prototype.handleMouseEvents = function(e, handleIndex, handleType) {
         var info = dragDrop.prepare(e);
         if (!info.start) {
             return;
         }
 
         var changingDropZone = this,
-            lastX = info.x,
-            lastY = info.y,
+            lastX = parseInt(info.x),
+            lastY = parseInt(info.y),
             dragProxy = this.makeDragProxy(info.x, info.y),
             bgImg = document.querySelector('fieldset#id_previewareaheader .dropbackground'),
-            maxX = bgImg.width,
-            maxY = bgImg.height;
+            maxX = parseInt(bgImg.width),
+            maxY = parseInt(bgImg.height);
 
         dragDrop.start(e, $(dragProxy), function(pageX, pageY) {
-            changingDropZone.line.edit(handleIndex, pageX - lastX, pageY - lastY, maxX, maxY);
+            switch (handleType) {
+                case 'edit':
+                    changingDropZone.line.edit(handleIndex, parseInt(pageX) - lastX,
+                        parseInt(pageY) - lastY, maxX, maxY);
+                    changingDropZone.line.normalizeShape();
+                    break;
+                case 'move':
+                    changingDropZone.line.move(handleIndex, parseInt(pageX) - lastX,
+                        parseInt(pageY) - lastY, maxX, maxY);
+                    break;
+                case 'line':
+                    changingDropZone.line.moveDrags(
+                        parseInt(pageX) - lastX, parseInt(pageY) - lastY, maxX, maxY, '');
+                    break;
+            }
             lastX = pageX;
             lastY = pageY;
             changingDropZone.updateSvgEl();
             changingDropZone.setCoordinatesInForm();
         }, function() {
             document.body.removeChild(dragProxy);
-            changingDropZone.line.normalizeShape();
-            changingDropZone.updateSvgEl();
-            changingDropZone.setCoordinatesInForm();
         });
+    };
+
+    /**
+     * Handle key down / press events on markers.
+     *
+     * @param {Event} event
+     * @param {SVGElement} drag SVG element being dragged.
+     * @param {String} handleIndex which line handle was moved.
+     * @param {String} handleType the type of handle - edit, move or line.
+     */
+    LineManager.prototype.handleKeyPress = function(event, drag, handleIndex, handleType) {
+        var x = 0,
+            y = 0;
+        switch (event.code) {
+            case 'ArrowLeft':
+            case 'KeyA': // A.
+                x = -1;
+                break;
+            case 'ArrowRight':
+            case 'KeyD': // D.
+                x = 1;
+                break;
+            case 'ArrowDown':
+            case 'KeyS': // S.
+                y = 1;
+                break;
+            case 'ArrowUp':
+            case 'KeyW': // W.
+                y = -1;
+                break;
+            case 'Space':
+            case 'Escape':
+                break;
+            default:
+                return; // Ingore other keys.
+        }
+        event.preventDefault();
+
+        // Get the dimensions of the selected element's svg.
+        var bgImg = document.querySelector('fieldset#id_previewareaheader .dropbackground'),
+            maxX = bgImg.width,
+            maxY = bgImg.height;
+
+        if (handleType === 'move') {
+            this.line.move(handleIndex, parseInt(x), parseInt(y), parseInt(maxX), parseInt(maxY));
+        } else if (handleType === 'edit') {
+            this.line.edit(handleIndex, parseInt(x), parseInt(y), parseInt(maxX), parseInt(maxY));
+            this.line.normalizeShape();
+        } else if (handleType === 'line') {
+            this.line.moveDrags(parseInt(x), parseInt(y), parseInt(maxX), parseInt(maxY), '');
+        }
+        this.updateSvgEl();
+        this.setCoordinatesInForm();
+        drag.focus();
     };
 
     /**
@@ -523,29 +555,57 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
             previewArea.addEventListener('click', function(event) {
                 if (event.target.closest('g.dropzone')) {
                     var dropzoneElement = event.target.closest('g.dropzone');
-
-                    var dropzoneNo = dropzoneElement.dataset.dropzoneNo;
-                    var currentlyActive = drawlinesForm.dropZones[dropzoneNo].isActive();
-
-                    // Find all active dropzones and remove the 'active' class
-                    var svgElement = drawlinesForm.getSvg();
-                    var activeDropzones = svgElement.querySelectorAll('.dropzone.active');
-                    activeDropzones.forEach(function(activeDropzone) {
-                        activeDropzone.classList.remove('active');
-                    });
-
-                    // If the dropzone was not active, set it as active
-                    if (!currentlyActive) {
-                        drawlinesForm.dropZones[dropzoneNo].setActive();
-                    }
+                    drawlinesForm.setElementActive(dropzoneElement);
+                } else {
+                    drawlinesForm.setElementActive(null);
+                }
+            });
+            previewArea.addEventListener('keydown', function(event) {
+                if (event.target.closest('g.dropzone')) {
+                    var dropzoneElement = event.target.closest('g.dropzone');
+                    drawlinesForm.setElementActive(dropzoneElement);
                 }
             });
 
             // Add event listeners to the 'previewArea'.
+            previewArea.addEventListener('mousedown', drawlinesForm.handleEventLine);
+            previewArea.addEventListener('touchstart', drawlinesForm.handleEventLine);
             previewArea.addEventListener('mousedown', drawlinesForm.handleEventMove);
             previewArea.addEventListener('touchstart', drawlinesForm.handleEventMove);
             previewArea.addEventListener('mousedown', drawlinesForm.handleEventEdit);
             previewArea.addEventListener('touchstart', drawlinesForm.handleEventEdit);
+            // Add keyboard events.
+            previewArea.addEventListener('keydown', drawlinesForm.handleKeyPress);
+            previewArea.addEventListener('keypress', drawlinesForm.handleKeyPress);
+        },
+
+        /**
+         * Set the element as active.
+         *
+         * @param {SVGElement|null} dropzoneElement SVG element to set active or null to remove.
+         */
+        setElementActive: function(dropzoneElement) {
+            let svgElement, activeDropzones;
+            if (dropzoneElement !== null) {
+                let dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                let currentlyActive = drawlinesForm.dropZones[dropzoneNo].isActive();
+                if (!currentlyActive) {
+                    // Find all active dropzones and remove the 'active' class
+                    svgElement = drawlinesForm.getSvg();
+                    activeDropzones = svgElement.querySelectorAll('.dropzone.active');
+                    activeDropzones.forEach(function(activeDropzone) {
+                        activeDropzone.classList.remove('active');
+                    });
+                    drawlinesForm.dropZones[dropzoneNo].setActive();
+                }
+            } else {
+                // When mouse is clicked away from the line element, the active class should be removed.
+                svgElement = drawlinesForm.getSvg();
+                activeDropzones = svgElement.querySelectorAll('.dropzone.active');
+                activeDropzones.forEach(function(activeDropzone) {
+                    activeDropzone.classList.remove('active');
+                });
+            }
         },
 
         /**
@@ -558,15 +618,13 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
             if (event.target.closest('.dropzone .handlestart.move')) {
                 dropzoneElement = event.target.closest('g');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
-                handleIndex = event.target.getAttribute('data-move-handle-no');
                 handleIndex = 'startcircle';
-                drawlinesForm.dropZones[dropzoneNo].handleMove(event, handleIndex);
+                drawlinesForm.dropZones[dropzoneNo].handleMouseEvents(event, handleIndex, 'move');
             } else if (event.target.closest('.dropzone .handleend.move')) {
                 dropzoneElement = event.target.closest('g');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
-                handleIndex = event.target.getAttribute('data-move-handle-no');
                 handleIndex = 'endcircle';
-                drawlinesForm.dropZones[dropzoneNo].handleMove(event, handleIndex);
+                drawlinesForm.dropZones[dropzoneNo].handleMouseEvents(event, handleIndex, 'move');
             }
         },
 
@@ -581,12 +639,72 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
                 dropzoneElement = event.target.closest('g');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
                 handleIndex = event.target.getAttribute('data-edit-handle-no');
-                drawlinesForm.dropZones[dropzoneNo].handleEdit(event, handleIndex);
+                drawlinesForm.dropZones[dropzoneNo].handleMouseEvents(event, handleIndex, 'edit');
             } else if (event.target.closest('.dropzone .handleend.edit')) {
                 dropzoneElement = event.target.closest('g');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
                 handleIndex = event.target.getAttribute('data-edit-handle-no');
-                drawlinesForm.dropZones[dropzoneNo].handleEdit(event, handleIndex);
+                drawlinesForm.dropZones[dropzoneNo].handleMouseEvents(event, handleIndex, 'edit');
+            }
+        },
+
+        /**
+         * Handle events linked to moving the line.
+         *
+         * @param {Event} event
+         */
+        handleEventLine: function(event) {
+            var dropzoneElement, dropzoneNo;
+            if (event.target.closest('g.dropzone.active')) {
+                dropzoneElement = event.target.closest('g.active');
+                dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                drawlinesForm.dropZones[dropzoneNo].handleMouseEvents(event, '', 'line');
+            }
+        },
+
+        /**
+         * Handle key down / press events on lines.
+         *
+         * @param {Event} e
+         */
+        handleKeyPress: function(e) {
+            var dropzoneElement, dropzoneNo, handleIndex, drag;
+
+            if (event.target.closest('.dropzone.active .handlestart.move')) {
+                // Handle moving startcircle of a line.
+                dropzoneElement = event.target.closest('g');
+                dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                handleIndex = 'startcircle';
+                drag = e.target.closest('.dropzone.active .handlestart.move');
+                drawlinesForm.dropZones[dropzoneNo].handleKeyPress(event, drag, handleIndex, 'move');
+            } else if (event.target.closest('.dropzone.active .handleend.move')) {
+                // Handle moving endcircle of a line.
+                dropzoneElement = event.target.closest('g');
+                dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                handleIndex = 'endcircle';
+                drag = e.target.closest('.dropzone.active .handleend.move');
+                drawlinesForm.dropZones[dropzoneNo].handleKeyPress(event, drag, handleIndex, 'move');
+            } else if (event.target.closest('.dropzone.active .handlestart.edit')) {
+                // Handle editing radius for start point of a line.
+                dropzoneElement = event.target.closest('g');
+                dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                handleIndex = event.target.getAttribute('data-edit-handle-no');
+                drag = e.target.closest('.dropzone.active .handlestart.edit');
+                drawlinesForm.dropZones[dropzoneNo].handleKeyPress(event, drag, handleIndex, 'edit');
+            } else if (event.target.closest('.dropzone.active .handleend.edit')) {
+                // Handle editing radius for end point of a line.
+                dropzoneElement = event.target.closest('g');
+                dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                handleIndex = event.target.getAttribute('data-edit-handle-no');
+                drag = e.target.closest('.dropzone.active .handleend.edit');
+                drawlinesForm.dropZones[dropzoneNo].handleKeyPress(event, drag, handleIndex, 'edit');
+            } else if (e.target.closest('g.dropzone')) {
+                // Handle moving entire line.
+                dropzoneElement = event.target.closest('.dropzone');
+                // DrawlinesForm.setElementActive(dropzoneElement);
+                dropzoneNo = dropzoneElement.dataset.dropzoneNo;
+                drag = e.target.closest('g.dropzone.active');
+                drawlinesForm.dropZones[dropzoneNo].handleKeyPress(event, drag, '', 'line');
             }
         },
 

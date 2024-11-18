@@ -332,23 +332,23 @@ define(function() {
                 this.centre1.x = maxX - this.startRadius;
                 this.x1 = maxX - this.startRadius;
             }
-            if (this.centre1.y < this.endRadius) {
-                this.centre1.y = this.endRadius;
-                this.y1 = this.endRadius;
+            if (this.centre1.y < this.startRadius) {
+                this.centre1.y = this.startRadius;
+                this.y1 = this.startRadius;
             }
-            if (this.centre1.y > maxY - this.endRadius) {
-                this.centre1.y = maxY - this.endRadius;
-                this.y1 = maxY - this.endRadius;
+            if (this.centre1.y > maxY - this.startRadius) {
+                this.centre1.y = maxY - this.startRadius;
+                this.y1 = maxY - this.startRadius;
             }
         } else {
             this.centre2.move(dx, dy);
-            if (this.centre2.x < this.startRadius) {
-                this.centre2.x = this.startRadius;
-                this.x2 = this.startRadius;
+            if (this.centre2.x < this.endRadius) {
+                this.centre2.x = this.endRadius;
+                this.x2 = this.endRadius;
             }
-            if (this.centre2.x > maxX - this.startRadius) {
-                this.centre2.x = maxX - this.startRadius;
-                this.x2 = maxX - this.startRadius;
+            if (this.centre2.x > maxX - this.endRadius) {
+                this.centre2.x = maxX - this.endRadius;
+                this.x2 = maxX - this.endRadius;
             }
             if (this.centre2.y < this.endRadius) {
                 this.centre2.y = this.endRadius;
@@ -391,22 +391,22 @@ define(function() {
                 this.centre1.x = maxX - this.startRadius;
                 this.x1 = maxX - this.startRadius;
             }
-            if (this.centre2.x < this.startRadius) {
-                this.centre2.x = this.startRadius;
-                this.x2 = this.startRadius;
+            if (this.centre2.x < this.endRadius) {
+                this.centre2.x = this.endRadius;
+                this.x2 = this.endRadius;
             }
-            if (this.centre2.x > maxX - this.startRadius) {
-                this.centre2.x = maxX - this.startRadius;
-                this.x2 = maxX - this.startRadius;
+            if (this.centre2.x > maxX - this.endRadius) {
+                this.centre2.x = maxX - this.endRadius;
+                this.x2 = maxX - this.endRadius;
             }
         }
-        if (this.centre1.y < this.endRadius) {
-            this.centre1.y = this.endRadius;
-            this.y1 = this.endRadius;
+        if (this.centre1.y < this.startRadius) {
+            this.centre1.y = this.startRadius;
+            this.y1 = this.startRadius;
         }
-        if (this.centre1.y > maxY - this.endRadius) {
-            this.centre1.y = maxY - this.endRadius;
-            this.y1 = maxY - this.endRadius;
+        if (this.centre1.y > maxY - this.startRadius) {
+            this.centre1.y = maxY - this.startRadius;
+            this.y1 = maxY - this.startRadius;
         }
         if (this.centre2.y < this.endRadius) {
             this.centre2.y = this.endRadius;
