@@ -56,16 +56,8 @@ define([
         if (readOnly) {
             this.getRoot().classList.add('qtype_drawlines-readonly');
         }
-        thisQ.allImagesLoaded = false;
-        // Get all images that are not yet loaded
-        thisQ.waitForAllImagesToBeLoaded()
-            .then(() => {
-                thisQ.drawDropzone(); // Call your function here
-                return null;
-            })
-            .catch((error) => {
-                throw error;
-            });
+        let bgImage = this.bgImage();
+        thisQ.createSvgOnImageLoad(bgImage);
     }
 
     /**
@@ -605,7 +597,7 @@ define([
             bgImage = this.bgImage(),
             isMoveFromDragsToDropzones,
             isMoveFromDropzonesToDrags,
-            svgClass = '';
+            svgClass;
 
         var selectedElement = this.lineSVGs[dropzoneNo];
         const dropX = e.clientX;
@@ -836,68 +828,23 @@ define([
     };
 
     /**
-     * Waits until all images are loaded before setting up question.
+     * Loading SVG image.
      *
-     * This function is called from the onLoad of each image, and also polls with
-     * a time-out, because image on-loads are allegedly unreliable.
-     *
-     * @return {Promise<void>}
+     * @param {HTMLImageElement}  img
      */
-    DrawlinesQuestion.prototype.waitForAllImagesToBeLoaded = function() {
-
-        // This method may get called multiple times (via image on-loads or timeouts.
-        // If we are already done, don't do it again.
-        if (this.allImagesLoaded) {
-            return Promise.resolve(null); // Return a resolved promise;
+    DrawlinesQuestion.prototype.createSvgOnImageLoad = function(img) {
+        if (!img) {
+            window.console.error(`Image with id '${img}' not found.`);
+            return;
         }
-        const images = document.querySelectorAll('img');
-        const promises = Array.from(images).map((img) => {
-            return new Promise((resolve, reject) => {
-                if (img.complete) {
-                    resolve(); // If image is already loaded
-                } else {
-                    img.onload = () => resolve();
-                    img.onerror = () => reject(new Error(`Failed to load image: ${img.src}`));
-                }
-            });
-        });
 
-        // Wait for all images to load
-        return Promise.all(promises)
-            .then(() => {
-                // Only mark allImagesLoaded as true once all images are successfully loaded.
-                this.allImagesLoaded = true;
-                return null; // Return null explicitly to avoid ESLint errors.
-            })
-            .catch((error) => {
-                this.allImagesLoaded = true; // Even on error, set this to avoid re-checking
-                throw error; // Rethrow the error so it can be caught in a calling function if necessary.
-            });
-    };
-
-    /**
-     * Get any of the images in the drag-drop area that are not yet fully loaded.
-     *
-     * @returns {boolean} Returns true if images are loaded without errors.
-     */
-    DrawlinesQuestion.prototype.getNotYetLoadedImages = function() {
-        // Get all 'img' elements with the class 'dropbackground' within '.drawlines' inside the root element
-        const images = this.getRoot().querySelectorAll('.drawlines img.dropbackground');
-
-        // Filter out the images that are already loaded
-        Array.from(images).filter((imgNode) => {
-            return !this.imageIsLoaded(imgNode);
-        });
-    };
-
-    /**
-     * Check if an image has loaded without errors.
-     *
-     * @param {HTMLImageElement} imgElement an image.
-     * @returns {boolean} true if this image has loaded without errors.
-     */
-    DrawlinesQuestion.prototype.imageIsLoaded = function(imgElement) {
-        return imgElement.complete && imgElement.naturalHeight !== 0;
+        // Check if the image is already loaded
+        if (img.complete && img.naturalHeight !== 0) {
+            this.drawDropzone();
+        } else {
+            // Add an event listener for the load event
+            img.addEventListener('load', () => this.drawDropzone());
+        }
     };
 
     /**
