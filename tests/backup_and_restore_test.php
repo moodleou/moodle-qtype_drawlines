@@ -25,6 +25,8 @@ require_once($CFG->dirroot . '/backup/util/includes/backup_includes.php');
 require_once($CFG->dirroot . '/backup/util/includes/restore_includes.php');
 require_once($CFG->dirroot . '/course/externallib.php');
 require_once($CFG->libdir . "/phpunit/classes/restore_date_testcase.php");
+require_once($CFG->dirroot . '/question/engine/tests/helpers.php');
+require_once($CFG->dirroot . '/question/type/drawlines/tests/helper.php');
 
 /**
  * Tests for drawlines question type backup and restore.
@@ -36,26 +38,44 @@ require_once($CFG->libdir . "/phpunit/classes/restore_date_testcase.php");
 final class backup_and_restore_test extends \restore_date_testcase {
 
     /**
-     * Backup and restore the course containing an drawlines question for testing drawlines backup and restore.
+     * Test backup and restore of the course containing a drawlines question.
      * @covers \restore_qtype_drawlines_plugin
      */
     public function test_restore_create_qtype_drawlines_mkmap_twolines(): void {
         global $DB;
 
-        // Create a course with one drawlines question in its question bank.
+        // Create a course with one draw lines question in its question bank.
         $generator = $this->getDataGenerator();
         $course = $generator->create_course();
-        $contexts = new \core_question\local\bank\question_edit_contexts(\context_course::instance($course->id));
-        $category = question_make_default_categories($contexts->all());
+        if (\qtype_drawlines_test_helper::plugin_is_installed('mod_qbank')) {
+            $qbank = $generator->create_module('qbank', ['course' => $course->id]);
+            $context = \context_module::instance($qbank->cmid);
+            $category = question_get_default_category($context->id, true);
+        } else {
+            // TODO: remove this once Moodle 5.0 is the lowest supported version.
+            $contexts = new \core_question\local\bank\question_edit_contexts(\context_course::instance($course->id));
+            $category = question_make_default_categories($contexts->all());
+        }
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $drawlines = $questiongenerator->create_question('drawlines', 'mkmap_twolines', ['category' => $category->id]);
 
         // Do backup and restore the course.
         $newcourseid = $this->backup_and_restore($course);
 
+        if (\qtype_drawlines_test_helper::plugin_is_installed('mod_qbank')) {
+            $modinfo = get_fast_modinfo($newcourseid);
+            $newqbanks = array_filter(
+                    $modinfo->get_instances_of('qbank'),
+                    static fn($qbank) => $qbank->get_name() === 'Question bank 1'
+            );
+            $newqbank = reset($newqbanks);
+            $newcategory = question_get_default_category(\context_module::instance($newqbank->id)->id, true);
+        } else {
+            // TODO: remove this once Moodle 5.0 is the lowest supported version.
+            $contexts = new \core_question\local\bank\question_edit_contexts(\context_course::instance($newcourseid));
+            $newcategory = question_make_default_categories($contexts->all());
+        }
         // Verify that the restored question has the extra data such as options, lines.
-        $contexts = new \core_question\local\bank\question_edit_contexts(\context_course::instance($newcourseid));
-        $newcategory = question_make_default_categories($contexts->all());
         $newdrawlines = $DB->get_record_sql('SELECT q.*
                                               FROM {question} q
                                               JOIN {question_versions} qv ON qv.questionid = q.id
