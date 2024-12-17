@@ -89,3 +89,15 @@ Feature: Test creating a drawlines question
 
     When I click on "id_submitbutton" "button"
     Then I should see "Drawlines02"
+
+  @javascript @_file_upload
+  Scenario: Selecting a line type, should display a line on the background image with default start and end coordinates
+    Given I am on the "Course 1" "core_question > course question bank" page logged in as teacher
+    And I press "Create a new question ..."
+    And I set the field "Draw lines" to "1"
+    And I click on "Add" "button" in the "Choose a question type to add" "dialogue"
+    And I should see "Adding a DrawLines question"
+    And I expand all fieldsets
+    And I upload "question/type/drawlines/tests/fixtures/mkmap.png" file to "Background image" filemanager
+    When I select "linesegment" from the "id_type_0" singleselect
+    Then "//*[name()='svg']/*[name()='g' and @data-dropzone-no='0']/*[name()='polyline' and @points='15,15 30,30']" "xpath_element" should exist
