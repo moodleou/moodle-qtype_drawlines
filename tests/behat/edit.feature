@@ -56,3 +56,11 @@ Feature: Test editing an draw lines question
       | Question name | Drawline edited |
     And I press "id_submitbutton"
     Then I should see "Drawline edited"
+
+  @javascript @_file_upload
+  Scenario: Validate the background image size for Draw lines question
+    Given I am on the "Drawlines to edit" "core_question > edit" page logged in as teacher
+    And I should see "Editing a Draw lines question"
+    When I upload "question/type/drawlines/tests/fixtures/grid_650x600.png" file to "Background image" filemanager
+    And I press "id_submitbutton"
+    Then I should see "Image file should not be larger than 600x600 px. The uploaded image file size is 650x600 px."
