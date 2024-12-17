@@ -32,6 +32,7 @@ $string['correctanswersare'] = 'The correct answers are: {$a}';
 $string['dropbackground'] = 'Background image for Draw lines';
 
 $string['formerror_nobgimage'] = 'You need to select an image to use as the background for the drag and drop area.';
+$string['formerror_invalidimagesize'] = 'Image file should not be larger than 600x600 px. The uploaded image file size is {$a->width}x{$a->height} px.';
 $string['formerror_nolines'] = 'You need to expand \'Line 1\' and fill the form for it';
 $string['formerror_notype'] = 'You have to select a type for Line {$a}';
 $string['formerror_zoneend'] = 'End zone coordinates should be in x,y;r format, where x,y are the coordinates of the centre of a circle and r is the radius.';
@@ -65,7 +66,7 @@ $string['pluginnamesummary'] = 'Two markers that control a line are dragged and 
 
 Note: This question type is not accessible to users who are visually impaired.';
 $string['previewareaheader'] = 'Preview';
-$string['previewareamessage'] = 'Select a background image file, enter text labels for markers and define the drop zones on the background image to which they must be dragged.';
+$string['previewareamessage'] = 'Select a background image file (it is recommended not to be bigger than 600x600 px). When you add lines and define zones, they will appear here too.';
 $string['privacy:preference:defaultmark'] = 'The default mark set for a given question.';
 $string['privacy:preference:grademethod'] = 'The penalty for each incorrect try when questions are run using the \'Interactive with multiple tries\' or \'Adaptive mode\' behaviour.';
 $string['privacy:preference:penalty'] = 'The penalty for each incorrect try when questions are run using the \'Interactive with multiple tries\' or \'Adaptive mode\' behaviour.';

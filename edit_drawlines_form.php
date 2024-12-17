@@ -286,6 +286,10 @@ class qtype_drawlines_edit_form extends question_edit_form {
         if ($bgimagesize === null) {
             $errors["bgimage"] = get_string('formerror_nobgimage', 'qtype_' . $this->qtype());
         }
+        if ($bgimagesize[0] > '600' || $bgimagesize[1] > '600') {
+            $errors["bgimage"] = get_string('formerror_invalidimagesize', 'qtype_' . $this->qtype(),
+                    ['width' => $bgimagesize[0], 'height' => $bgimagesize[1]]);
+        }
         $hasbothcoordinates = 0;
         // Validate whether the line type error needed to be displayed.
         for ($i = 0; $i < count($data["type"]); $i++) {
