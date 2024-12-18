@@ -173,12 +173,6 @@ class qtype_drawlines extends question_type {
     }
 
     #[\Override]
-    protected function make_question_instance($questiondata) {
-        question_bank::load_question_definition_classes($this->name());
-            return new qtype_drawlines_question;
-    }
-
-    #[\Override]
     protected function initialise_question_instance(question_definition $question, $questiondata): void {
         parent::initialise_question_instance($question, $questiondata);
         $question->grademethod = $questiondata->options->grademethod;

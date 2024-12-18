@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 // NOTE: no MOODLE_INTERNAL test here, this file may be required by behat before including /config.php.
+
 /**
  * Steps definitions related with the drawlines question type.
  *

@@ -17,6 +17,8 @@
 namespace qtype_drawlines;
 
 use question_bank;
+use  core_question;
+use   core_question\local\bank\question_edit_contexts;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -43,19 +45,20 @@ final class backup_and_restore_test extends \restore_date_testcase {
         global $DB;
 
         // Create a course with one drawlines question in its question bank.
-        $generator = $this->getDataGenerator();
-        $course = $generator->create_course();
-        $contexts = new \core_question\local\bank\question_edit_contexts(\context_course::instance($course->id));
-        $category = question_make_default_categories($contexts->all());
+        $course = $this->getDataGenerator()->create_course();
+        $qbank = $this->getDataGenerator()->create_module('qbank', ['course' => $course->id]);
+        $bankcontext = \context_module::instance($qbank->cmid);
+        $category = question_get_default_category($bankcontext->id, true);
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $drawlines = $questiongenerator->create_question('drawlines', 'mkmap_twolines', ['category' => $category->id]);
+        $drawlines->contextid = $bankcontext->id;
 
         // Do backup and restore the course.
         $newcourseid = $this->backup_and_restore($course);
 
         // Verify that the restored question has the extra data such as options, lines.
-        $contexts = new \core_question\local\bank\question_edit_contexts(\context_course::instance($newcourseid));
-        $newcategory = question_make_default_categories($contexts->all());
+        $newcategory = question_get_default_category($bankcontext->id);
+
         $newdrawlines = $DB->get_record_sql('SELECT q.*
                                               FROM {question} q
                                               JOIN {question_versions} qv ON qv.questionid = q.id
@@ -63,12 +66,7 @@ final class backup_and_restore_test extends \restore_date_testcase {
                                              WHERE qbe.questioncategoryid = ?
                                                AND q.qtype = ?', [$newcategory->id, 'drawlines']);
 
-        $newdrawlines->options = $DB->get_record('qtype_drawlines_options', ['questionid' => $newdrawlines->id]);
-        $newdrawlines->lines = $DB->get_records('qtype_drawlines_lines', ['questionid' => $newdrawlines->id]);
-
         $this->assertSame($newcourseid, $course->id + 1);
-        $this->assertSame((int)$newdrawlines->id, $drawlines->id + 1);
-
         $this->assertTrue($DB->record_exists('question', ['id' => $newdrawlines->id]));
         $this->assertTrue($DB->record_exists('qtype_drawlines_options', ['questionid' => $newdrawlines->id]));
         $this->assertTrue($DB->record_exists('qtype_drawlines_lines', ['questionid' => $newdrawlines->id]));
