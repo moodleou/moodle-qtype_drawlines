@@ -1,7 +1,7 @@
 @qtype @qtype_drawlines
-Feature: Test importing DrawLines questions
+Feature: Test importing draw lines questions
   As a teacher
-  In order to reuse DrawLines questions
+  In order to reuse draw lines questions
   I need to import them
 
   Background:

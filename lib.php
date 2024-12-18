@@ -24,7 +24,7 @@
  */
 
 /**
- * Checks file access for drawlines questions.
+ * Checks file access for draw lines questions.
  *
  * @param object $course The course we are in
  * @param object $cm Course module

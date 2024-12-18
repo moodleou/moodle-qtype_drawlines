@@ -17,7 +17,7 @@
 use qtype_drawlines\line;
 
 /**
- * Defines the editing form for DrawLines question type.
+ * Defines the editing form for draw lines question type.
  *
  * @package   qtype_drawlines
  * @copyright 2024 The Open University

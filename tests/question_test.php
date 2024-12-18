@@ -31,7 +31,7 @@ require_once($CFG->dirroot . '/question/type/drawlines/question.php');
 
 
 /**
- * Unit tests for DrawLines question definition class.
+ * Unit tests for draw lines question definition class.
  *
  * @package   qtype_drawlines
  * @copyright 2014 The Open University

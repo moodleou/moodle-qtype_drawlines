@@ -30,11 +30,11 @@ class qtype_drawlines extends question_type {
         global $DB, $OUTPUT;
         parent::get_question_options($question);
         if (!$question->options = $DB->get_record('qtype_drawlines_options', ['questionid' => $question->id])) {
-            echo $OUTPUT->notification('Error: Missing drawlines question options!');
+            echo $OUTPUT->notification('Error: Missing draw lines question options!');
             return false;
         }
         if (!$question->lines = $DB->get_records('qtype_drawlines_lines', ['questionid' => $question->id], 'id')) {
-            echo $OUTPUT->notification('Error: Missing drawlines question lines!');
+            echo $OUTPUT->notification('Error: Missing draw lines question lines!');
             return false;
         }
         return true;

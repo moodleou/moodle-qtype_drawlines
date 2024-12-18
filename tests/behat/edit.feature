@@ -1,5 +1,5 @@
 @qtype @qtype_drawlines
-Feature: Test editing an DrawLines question
+Feature: Test editing an draw lines question
   As a teacher
   In order to be able to update my DrawLines question
   I need to edit them
@@ -24,7 +24,7 @@ Feature: Test editing an DrawLines question
   @javascript
   Scenario: Edit and validate a DrawLines question
     Given I am on the "Drawlines to edit" "core_question > edit" page logged in as teacher
-    And I should see "Editing a DrawLines question"
+    And I should see "Editing a Draw lines question"
     And I should see "Line 1"
     And I should see "Line 2"
     And I click on "Line 1" "link"
@@ -35,13 +35,23 @@ Feature: Test editing an DrawLines question
     # Correct the input for end zone coordinates.
     And I set the field "id_zonestart_0" to "10,10;12"
 
+    # Verify that the zone coordinates are reset when line type is set to 'Choose'.
     And I click on "Line 2" "link"
     And I set the field "id_type_1" to "Choose"
-    And I press "id_submitbutton"
-    And I should see "You have to select a type for Line 2"
-    And I set the field "id_type_1" to "Single arrow ⟶"
+    And I should see "" in the "#id_zonestart_1" "css_element"
+    And I should see "" in the "#id_zoneend_1" "css_element"
 
-    # Chnage the question name
+    # Validate that the line type is set, when there are input zone coordinates.
+    And I click on "id_addlines" "button"
+    And I expand all fieldsets
+    And I set the following fields to these values:
+      | id_zonestart_2 | 10,50;10  |
+      | id_zoneend_2   | 200,50;10 |
+    And I press "id_submitbutton"
+    And I should see "You have to select a type for Line 3"
+    And I set the field "id_type_2" to "Single arrow ⟶"
+
+    # Change the question name
     And I set the following fields to these values:
       | Question name | Drawline edited |
     And I press "id_submitbutton"

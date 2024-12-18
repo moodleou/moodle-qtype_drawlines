@@ -37,6 +37,34 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
     }
 
     /**
+     * Set the initial start and end coordinates for the line and display the line on the svg, when the line type is selected.
+     * When the type is reset to 'Choose' option, the coordinates are removed.
+     */
+    LineManager.prototype.displayInitialLine = function() {
+        let coords = this.getCoordinatesFromForm(this.lineNo);
+        let linespacing = 0,
+            linelength = 15,
+            defaultstartpoint,
+            defaultendpoint,
+            startCoords,
+            endCoords;
+        if ((coords[0] === '' || coords[1] === '') && this.getLineType() !== 'choose') {
+            // Add some linespacing between the lines when initially displayed.
+            linespacing = this.lineNo === 0 ? 0 : (linelength * this.lineNo);
+            defaultstartpoint = 15 * (this.lineNo + 1) + linespacing;
+            defaultendpoint = defaultstartpoint + linelength;
+            startCoords = defaultstartpoint + ',' + defaultstartpoint + ';8';
+            endCoords = defaultendpoint + ',' + defaultendpoint + ';8';
+            drawlinesForm.setFormValue('zonestart', [this.lineNo], startCoords);
+            drawlinesForm.setFormValue('zoneend', [this.lineNo], endCoords);
+        }
+        if (this.getLineType() === 'choose') {
+            drawlinesForm.setFormValue('zonestart', [this.lineNo], '');
+            drawlinesForm.setFormValue('zoneend', [this.lineNo], '');
+        }
+    };
+
+    /**
      * Update the coordinates from a particular string.
      *
      * @param {SVGElement} [svg] the SVG element that is the preview.
@@ -519,7 +547,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
 
             for (var lineNo = 0; lineNo < drawlinesForm.noOfLines; lineNo++) {
                 lineSelector = 'fieldset#id_linexheader_' + lineNo;
-                document.querySelector(lineSelector).addEventListener('input', function(e) {
+                document.querySelector(lineSelector).addEventListener('change', function(e) {
                     if (e.target.matches('input, select')) {
                         var ids = e.target.name.match(/^([a-z]*)\[(\d+)]$/);
                         var id = e.target.name;
@@ -537,6 +565,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
                                 break;
 
                             case 'type':
+                                dropZone.displayInitialLine();
                                 dropZone.updateCoordinatesFromForm(drawlinesForm.getSvg());
                                 dropZone.changeShape(drawlinesForm.getSvg());
                                 break;
