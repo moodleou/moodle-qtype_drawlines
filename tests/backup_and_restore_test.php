@@ -38,7 +38,7 @@ require_once($CFG->dirroot . '/question/type/drawlines/tests/helper.php');
 final class backup_and_restore_test extends \restore_date_testcase {
 
     /**
-     * Test backup and restore of the course containing a drawlines question.
+     * Test backup and restore of the course containing drawlines question.
      * @covers \restore_qtype_drawlines_plugin
      */
     public function test_restore_create_qtype_drawlines_mkmap_twolines(): void {

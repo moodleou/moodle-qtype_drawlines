@@ -17,7 +17,7 @@
 namespace qtype_drawlines;
 
 /**
- * Unit tests for DrawLines question definition class.
+ * Unit tests for draw lines question definition class.
  *
  * @package   qtype_drawlines
  * @copyright 2014 The Open University

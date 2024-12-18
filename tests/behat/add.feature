@@ -1,5 +1,5 @@
 @qtype @qtype_drawlines
-Feature: Test creating a drawlines question
+Feature: Test creating a draw lines question
   As a teacher
   In order to test my students
   I need to be able to create drawlines questions
@@ -16,12 +16,12 @@ Feature: Test creating a drawlines question
       | teacher | C1     | editingteacher |
 
   @javascript @_file_upload
-  Scenario: Create a drawlines question with one line
+  Scenario: Create a draw lines question with one line
     Given I am on the "Course 1" "core_question > course question bank" page logged in as teacher
     And I press "Create a new question ..."
     And I set the field "Draw lines" to "1"
     And I click on "Add" "button" in the "Choose a question type to add" "dialogue"
-    And I should see "Adding a DrawLines question"
+    And I should see "Adding a Draw lines question"
     And I expand all fieldsets
     And I set the following fields to these values:
       | id_name            | Drawlines01                            |
@@ -48,12 +48,12 @@ Feature: Test creating a drawlines question
     Then I should see "Drawlines01"
 
   @javascript @_file_upload
-  Scenario: Create a drawlines question with 2 lines
+  Scenario: Create a draw lines question with 2 lines
     Given I am on the "Course 1" "core_question > course question bank" page logged in as teacher
     And I press "Create a new question ..."
     And I set the field "Draw lines" to "1"
     And I click on "Add" "button" in the "Choose a question type to add" "dialogue"
-    And I should see "Adding a DrawLines question"
+    And I should see "Adding a Draw lines question"
     And I expand all fieldsets
     And I set the following fields to these values:
       | id_name                            | Drawlines02                            |
@@ -96,7 +96,7 @@ Feature: Test creating a drawlines question
     And I press "Create a new question ..."
     And I set the field "Draw lines" to "1"
     And I click on "Add" "button" in the "Choose a question type to add" "dialogue"
-    And I should see "Adding a DrawLines question"
+    And I should see "Adding a Draw lines question"
     And I expand all fieldsets
     And I upload "question/type/drawlines/tests/fixtures/mkmap.png" file to "Background image" filemanager
     When I select "linesegment" from the "id_type_0" singleselect

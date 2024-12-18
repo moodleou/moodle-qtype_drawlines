@@ -1,7 +1,7 @@
 @qtype @qtype_drawlines
-Feature: Test duplicating a course containing a DrawLines question
+Feature: Test duplicating a course containing a draw lines question
   As a teacher
-  In order re-use my courses containing DrawLines questions
+  In order re-use my courses containing draw lines questions
   I need to be able to backup and restore them
 
   Background:
@@ -25,7 +25,7 @@ Feature: Test duplicating a course containing a DrawLines question
       | enableasyncbackup | 0 |
 
   @javascript
-  Scenario: Backup and restore a course containing a DrawLines question
+  Scenario: Backup and restore a course containing a draw lines question
     Given I backup "Course 1" course using this options:
       | Confirmation | Filename | test_backup.mbz |
     When I restore "test_backup.mbz" backup into a new course using this options:

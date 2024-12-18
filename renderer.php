@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * DrawLines question renderer class.
+ * Draw lines question renderer class.
  *
  * @package   qtype_drawlines
  * @copyright 2024 The Open University
@@ -31,7 +31,7 @@ require_once($CFG->dirroot . '/question/type/rendererbase.php');
 
 
 /**
- * Generates the output for DrawLines questions.
+ * Generates the output for draw lines questions.
  *
  * @copyright  2024 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later

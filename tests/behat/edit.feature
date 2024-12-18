@@ -1,5 +1,5 @@
 @qtype @qtype_drawlines
-Feature: Test editing an DrawLines question
+Feature: Test editing an draw lines question
   As a teacher
   In order to be able to update my DrawLines question
   I need to edit them
@@ -24,7 +24,7 @@ Feature: Test editing an DrawLines question
   @javascript
   Scenario: Edit and validate a DrawLines question
     Given I am on the "Drawlines to edit" "core_question > edit" page logged in as teacher
-    And I should see "Editing a DrawLines question"
+    And I should see "Editing a Draw lines question"
     And I should see "Line 1"
     And I should see "Line 2"
     And I click on "Line 1" "link"
