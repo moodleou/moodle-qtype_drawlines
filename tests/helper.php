@@ -218,7 +218,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
                         11, $question->id, 1, line::TYPE_LINE_SEGMENT,
                         'Start1', 'Mid1', 'End1', '10,10;12', '300,10;12'),
                 1 => new line(
-                        11, $question->id, 2, line::TYPE_LINE_SEGMENT,
+                        12, $question->id, 2, line::TYPE_LINE_SEGMENT,
                         'Start2', '', 'End2', '10,200;12', '300,200;12'),
         ];
 

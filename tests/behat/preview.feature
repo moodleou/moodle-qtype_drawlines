@@ -23,11 +23,11 @@ Feature: Preview a DrawLines question
 
   @javascript
   Scenario: Preview a question using the keyboard
-    When I am on the "Drawlines to preview" "core_question > preview" page logged in as teacher
+    Given I am on the "Drawlines to preview" "core_question > preview" page logged in as teacher
     And I type "up" "360" times on line "1" "line" in the drawlines question
     And I type "left" "40" times on line "1" "line" in the drawlines question
     And I type "down" "190" times on line "1" "endcircle" in the drawlines question
     And I type "left" "200" times on line "1" "endcircle" in the drawlines question
-    And I press "Submit and finish"
+    When I press "Submit and finish"
     Then the state of "Draw 2 lines on the map" question is shown as "Partially correct"
     And I should see "Mark 0.50 out of 1.00"
