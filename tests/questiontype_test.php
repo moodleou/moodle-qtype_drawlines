@@ -27,7 +27,7 @@ require_once($CFG->dirroot . '/question/type/drawlines/tests/helper.php');
 
 
 /**
- * Unit tests for the drawlines question definition class.
+ * Unit tests for the draw lines question definition class.
  *
  * @package    qtype_drawlines
  * @copyright  2024 The Open University

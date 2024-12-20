@@ -29,7 +29,7 @@ $string['bgimage'] = 'Background image';
 
 $string['correctansweris'] = 'The correct answer is: {$a}';
 $string['correctanswersare'] = 'The correct answers are: {$a}';
-$string['dropbackground'] = 'Background image for DrawLines';
+$string['dropbackground'] = 'Background image for Draw lines';
 
 $string['formerror_nobgimage'] = 'You need to select an image to use as the background for the drag and drop area.';
 $string['formerror_nolines'] = 'You need to expand \'Line 1\' and fill the form for it';
@@ -57,10 +57,10 @@ $string['linexheader'] = 'Line {no}';
 
 $string['pleasedragalllines'] = 'Your answer is not complete; you must place all lines on the image.';
 $string['pluginname'] = 'Draw lines';
-$string['pluginname_help'] = 'DrawLines require the respondent to position the lines on a background image.';
+$string['pluginname_help'] = 'Draw lines require the respondent to position the lines on a background image.';
 $string['pluginname_link'] = 'question/type/drawlines';
-$string['pluginnameadding'] = 'Adding a DrawLines question';
-$string['pluginnameediting'] = 'Editing a DrawLines question';
+$string['pluginnameadding'] = 'Adding a Draw lines question';
+$string['pluginnameediting'] = 'Editing a Draw lines question';
 $string['pluginnamesummary'] = 'Two markers that control a line are dragged and dropped onto a background image.
 
 Note: This question type is not accessible to users who are visually impaired.';
