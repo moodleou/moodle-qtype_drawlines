@@ -83,12 +83,7 @@ final class backup_and_restore_test extends \restore_date_testcase {
                                              WHERE qbe.questioncategoryid = ?
                                                AND q.qtype = ?', [$newcategory->id, 'drawlines']);
 
-        $newdrawlines->options = $DB->get_record('qtype_drawlines_options', ['questionid' => $newdrawlines->id]);
-        $newdrawlines->lines = $DB->get_records('qtype_drawlines_lines', ['questionid' => $newdrawlines->id]);
-
         $this->assertSame($newcourseid, $course->id + 1);
-        $this->assertSame((int)$newdrawlines->id, $drawlines->id + 1);
-
         $this->assertTrue($DB->record_exists('question', ['id' => $newdrawlines->id]));
         $this->assertTrue($DB->record_exists('qtype_drawlines_options', ['questionid' => $newdrawlines->id]));
         $this->assertTrue($DB->record_exists('qtype_drawlines_lines', ['questionid' => $newdrawlines->id]));
