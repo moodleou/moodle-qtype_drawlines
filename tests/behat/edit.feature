@@ -57,6 +57,18 @@ Feature: Test editing an draw lines question
     And I press "id_submitbutton"
     Then I should see "Drawline edited"
 
+  @javascript
+  Scenario: Editing DrawLines question labels should rellect in svg
+    Given I am on the "Drawlines to edit" "core_question > edit" page logged in as teacher
+    And I should see "Editing a Draw lines question"
+    And I expand all fieldsets
+    When I set the field "id_labelstart_0" to "new label start"
+    And I set the field "id_labelmiddle_0" to "new label middle"
+    And I set the field "id_labelend_0" to "new label end"
+    Then "//*[name()='svg']/*[name()='g' and @data-dropzone-no='0']/*[name()='text'][1][contains(text(), 'new label start')]" "xpath_element" should exist
+    And "//*[name()='svg']/*[name()='g' and @data-dropzone-no='0']/*[name()='text'][2][contains(text(), 'new label middle')]" "xpath_element" should exist
+    And "//*[name()='svg']/*[name()='g' and @data-dropzone-no='0']/*[name()='text'][3][contains(text(), 'new label end')]" "xpath_element" should exist
+
   @javascript @_file_upload
   Scenario: Validate the background image size for Draw lines question
     Given I am on the "Drawlines to edit" "core_question > edit" page logged in as teacher

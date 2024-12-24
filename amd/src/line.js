@@ -94,20 +94,19 @@ define(function() {
     /**
      * Line constructor. Class to represent the different types of drop zone shapes.
      *
-     * @param {String} [labelstart] start label of a line.
      * @param {int} [x1] centre X1.
      * @param {int} [y1] centre Y1.
      * @param {int} [startRadius] startRadius.
-     * @param {String} [labelend] end label of a line.
      * @param {int} [x2] centre X2.
      * @param {int} [y2] centre Y2.
      * @param {int} [endRadius] endRadius.
      * @param {String} [lineType] Line type.
+     * @param {String} [labelstart] start label of a line.
+     * @param {String} [labelmiddle] middle label of a line.
+     * @param {String} [labelend] end label of a line.
      * @constructor
      */
-    function Line(labelstart, x1, y1, startRadius, labelend, x2, y2, endRadius, lineType) {
-        this.labelstart = labelstart;
-        this.labelend = labelend;
+    function Line(x1, y1, startRadius, x2, y2, endRadius, lineType, labelstart, labelmiddle, labelend) {
         this.x1 = x1;
         this.y1 = y1;
 
@@ -121,6 +120,10 @@ define(function() {
         this.endRadius = endRadius;
 
         this.lineType = lineType;
+
+        this.labelstart = labelstart;
+        this.labelmiddle = labelmiddle;
+        this.labelend = labelend;
     }
     Line.prototype = new Line();
 
@@ -178,18 +181,56 @@ define(function() {
 
         // Set start and end label attributes.
         svgEl.childNodes[3].textContent = this.labelstart;
-        svgEl.childNodes[3].setAttribute('x', this.centre1.x);
-        svgEl.childNodes[3].setAttribute('y', parseInt(this.centre1.y) + 20);
+        this.adjustTextPosition(svgEl, svgEl.childNodes[3], this.centre1.x, parseInt(this.centre1.y));
 
-        svgEl.childNodes[4].textContent = this.labelend;
-        svgEl.childNodes[4].setAttribute('x', this.centre2.x);
-        svgEl.childNodes[4].setAttribute('y', parseInt(this.centre2.y) + 20);
+        svgEl.childNodes[4].textContent = this.labelmiddle;
+        let middlex = Math.abs((this.centre1.x + this.centre2.x) / 2);
+        let middley = Math.abs((this.centre1.y + this.centre2.y) / 2);
+        this.adjustTextPosition(svgEl, svgEl.childNodes[4], middlex, middley);
+
+        svgEl.childNodes[5].textContent = this.labelend;
+        this.adjustTextPosition(svgEl, svgEl.childNodes[5], this.centre2.x, parseInt(this.centre2.y));
 
         // If the svg g element is already placed in dropzone, then add the keyboard support.
         var svgClass = svgEl.getAttribute('class');
         if (svgClass && svgClass.includes('placed')) {
             svgEl.childNodes[1].setAttribute('tabindex', '0');
             svgEl.childNodes[2].setAttribute('tabindex', '0');
+        }
+    };
+
+    /**
+     * Update svg line attributes.
+     *
+     * @param {SVGElement} [svgEl] the g element of the SVG.
+     * @param {SVGElement} [svgTextEl] the text node of the SVG.
+     * @param {int} [linex] coordinate of the line.
+     * @param {int} [liney] coordinate of the line.
+     */
+    Line.prototype.adjustTextPosition = function(svgEl, svgTextEl, linex, liney) {
+        // SVG container dimensions
+        let parentSVG = svgEl.parentNode;
+        const svgWidth = parentSVG.getAttribute('width');
+        const svgHeight = parentSVG.getAttribute('height');
+        const padding = 20;
+
+        // Text element dimensions.
+        const bbox = svgTextEl.getBBox();
+        const textWidth = bbox.width;
+
+        svgTextEl.setAttribute('x', linex);
+        svgTextEl.setAttribute('y', liney + padding);
+
+        // Recalculate the position of x and y coordinates of text, to make sure the text content is fully displayed.
+        if (linex < textWidth / 2) {
+            svgTextEl.setAttribute('x', Math.abs(textWidth / 2));
+        } else if ((linex + (textWidth / 2)) > svgWidth) {
+            svgTextEl.setAttribute('x', Math.abs(svgWidth - (textWidth / 2)));
+        }
+
+        if (liney + padding > svgHeight) {
+            // Adjust if the line is very near to the bottom of the svg.
+            svgTextEl.setAttribute('y', liney - padding);
         }
     };
 
@@ -607,6 +648,7 @@ define(function() {
         var endcirleEl = createSvgElement(svgEl, 'circle');
         endcirleEl.setAttribute('class', 'endcircle shape');
         createSvgElement(svgEl, 'text').setAttribute('class', 'labelstart shapeLabel');
+        createSvgElement(svgEl, 'text').setAttribute('class', 'labelmiddle shapeLabel');
         createSvgElement(svgEl, 'text').setAttribute('class', 'labelend shapeLabel');
         return svgEl;
     }
@@ -627,15 +669,16 @@ define(function() {
         /**
          * Line constructor. Class to represent the different types of drop zone shapes.
          *
-         * @param {String} [labelstart] start label of a line.
          * @param {int} [x1] centre X1.
          * @param {int} [y1] centre Y1.
          * @param {int} [startRadius] startRadius.
-         * @param {String} [labelend] end label of a line.
          * @param {int} [x2] centre X2.
          * @param {int} [y2] centre Y2.
          * @param {int} [endRadius] endRadius.
          * @param {String} [lineType] Line type.
+         * @param {String} [labelstart] start label of a line.
+         * @param {String} [labelmiddle] middle label of a line.
+         * @param {String} [labelend] end label of a line.
          * @constructor
          */
         Line: Line,
@@ -652,20 +695,21 @@ define(function() {
         /**
          * Make a line of the given type.
          *
-         * @param {Array} linecoordinates in the format (x,y;radius).
-         * @param {Array} labels Start and end labels of a line.
-         * @param {String} lineType The linetype (e.g., linesinglearrow, linedoublearrows, ...).
+         * @param {Array} [linecoordinates] in the format (x,y;radius).
+         * @param {String} [lineType] The linetype (e.g., linesinglearrow, linedoublearrows, ...).
+         * @param {Array} [labels] Start, middle and end labels of a line.
          * @return {Line} the new line.
          */
-        make: function(linecoordinates, labels, lineType) {
+        make: function(linecoordinates, lineType, labels) {
             // Line coordinates are in the format (x,y;radius).
             var startcoordinates = linecoordinates[0].split(';');
             var endcoordinates = linecoordinates[1].split(';');
             var linestartbits = startcoordinates[0].split(',');
             var lineendbits = endcoordinates[0].split(',');
 
-            return new Line(labels[0], parseInt(linestartbits[0]), parseInt(linestartbits[1]), parseInt(startcoordinates[1]),
-                labels[1], parseInt(lineendbits[0]), parseInt(lineendbits[1]), parseInt(endcoordinates[1]), lineType);
+            return new Line(parseInt(linestartbits[0]), parseInt(linestartbits[1]), parseInt(startcoordinates[1]),
+                parseInt(lineendbits[0]), parseInt(lineendbits[1]), parseInt(endcoordinates[1]), lineType,
+                labels[0], labels[1], labels[2]);
         },
 
         /**
@@ -676,8 +720,9 @@ define(function() {
          * @return {line} the similar line of a different linetype.
          */
         getSimilar: function(lineType, line) {
-            return new Line(line.labelstart, parseInt(line.x1), parseInt(line.y1), parseInt(line.startRadius),
-                line.labelend, parseInt(line.x2), parseInt(line.y2), parseInt(line.endRadius), lineType);
+            return new Line(parseInt(line.x1), parseInt(line.y1), parseInt(line.startRadius),
+                parseInt(line.x2), parseInt(line.y2), parseInt(line.endRadius), lineType,
+                line.labelstart, line.labelmiddle, line.labelend);
         }
     };
 });
