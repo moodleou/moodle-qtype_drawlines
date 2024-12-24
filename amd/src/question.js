@@ -152,16 +152,16 @@ define([
                 endcoordinates = coords[1] + ';10';
                 this.lines[line] = Line.make(
                     [startcoordinates, endcoordinates],
-                    [questionLines[line].labelstart, questionLines[line].labelend],
-                    questionLines[line].type
+                    questionLines[line].type,
+                    [questionLines[line].labelstart, questionLines[line].labelmiddle, questionLines[line].labelend]
                 );
                 this.addToSvg(line, dropzoneSvg);
             } else {
                 // Need to be added to draghomeSvg.
                 this.lines[line] = Line.make(
                     [startcoordinates, endcoordinates],
-                    [questionLines[line].labelstart, questionLines[line].labelend],
-                    questionLines[line].type
+                    questionLines[line].type,
+                    [questionLines[line].labelstart, questionLines[line].labelmiddle, questionLines[line].labelend]
                 );
                 this.addToSvg(line, draghomeSvg);
             }

@@ -32,7 +32,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
     function LineManager(lineNo) {
         this.lineNo = lineNo;
         this.svgEl = null;
-        this.line = Line.make(this.getCoordinatesFromForm(this.lineNo), this.getLabel(), this.getLineType());
+        this.line = Line.make(this.getCoordinatesFromForm(this.lineNo), this.getLineType(), this.getLabel());
         this.updateCoordinatesFromForm();
     }
 
@@ -138,11 +138,10 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
      */
     LineManager.prototype.updateLabel = function() {
         var label = this.getLabel();
-        if (this.line.labelstart !== label[0] || this.line.labelend !== label[1]) {
-            this.line.labelstart = label[0];
-            this.line.labelend = label[1];
-            this.updateSvgEl();
-        }
+        this.line.labelstart = label[0];
+        this.line.labelmiddle = label[1];
+        this.line.labelend = label[2];
+        this.updateSvgEl();
     };
 
     /**
@@ -162,6 +161,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
     LineManager.prototype.getLabel = function() {
         return [
             drawlinesForm.getFormValue('labelstart', [this.lineNo]),
+            drawlinesForm.getFormValue('labelmiddle', [this.lineNo]),
             drawlinesForm.getFormValue('labelend', [this.lineNo])
         ];
     };
@@ -189,14 +189,14 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
         // Then comes the move handle followed by the edit handles.
         var i = 0;
         for (i = 0; i < handles.moveHandles.length; ++i) {
-            this.svgEl.childNodes[5 + i].setAttribute('cx', handles.moveHandles[i].x);
-            this.svgEl.childNodes[5 + i].setAttribute('cy', handles.moveHandles[i].y);
+            this.svgEl.childNodes[6 + i].setAttribute('cx', handles.moveHandles[i].x);
+            this.svgEl.childNodes[6 + i].setAttribute('cy', handles.moveHandles[i].y);
         }
 
         // Edit handles.
         for (i = 0; i < handles.editHandles.length; ++i) {
-            this.svgEl.childNodes[7 + i].setAttribute('x', handles.editHandles[i].x - 6);
-            this.svgEl.childNodes[7 + i].setAttribute('y', handles.editHandles[i].y - 6);
+            this.svgEl.childNodes[8 + i].setAttribute('x', handles.editHandles[i].x - 6);
+            this.svgEl.childNodes[8 + i].setAttribute('y', handles.editHandles[i].y - 6);
         }
     };
 
@@ -571,6 +571,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
                                 break;
 
                             case 'labelstart':
+                            case 'labelmiddle':
                             case 'labelend':
                                 dropZone.updateLabel();
                                 break;
