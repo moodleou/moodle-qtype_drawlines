@@ -176,7 +176,9 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
         if (!this.validateFormCoordinates(this.lineNo)) {
             return;
         }
+        var img = document.querySelector('fieldset#id_previewareaheader .dropbackground');
         this.line.updateSvg(this.svgEl);
+        this.line.updateSvgLabels(this.svgEl, img.naturalWidth, img.naturalHeight);
 
         // Adjust handles.
         var handles = this.line.getHandlePositions();
@@ -253,7 +255,8 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
         if (!this.validateFormCoordinates(this.lineNo)) {
             return;
         }
-        this.svgEl = this.line.makeSvg(svg);
+        var img = document.querySelector('fieldset#id_previewareaheader .dropbackground');
+        this.svgEl = this.line.makeSvg(svg, img.naturalWidth, img.naturalHeight);
         if (!this.svgEl) {
             return;
         }
@@ -788,6 +791,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
                     '<svg xmlns="http://www.w3.org/2000/svg" class="dropzones" ' +
                     'width="' + bgImg.width + '" ' +
                     'height="' + bgImg.height + '">' +
+                    'viewBox="0 0 ' + bgImg.width + ' ' + bgImg.height + '" ' +
                     '</svg>';
                 for (var lines = 0; lines < drawlinesForm.noOfLines; lines++) {
                     drawlinesForm.dropZones[lines].addToSvg(drawlinesForm.getSvg());
