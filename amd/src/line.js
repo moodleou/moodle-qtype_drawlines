@@ -152,12 +152,15 @@ define(function() {
      * Create the svg group with line.
      *
      * @param {SVGElement} svg the SVG graphic to add this shape to.
+     * @param {int} bgImageWidth
+     * @param {int} bgImageHeight
      * @return {SVGElement} SVG representation of this shape.
      */
-    Line.prototype.makeSvg = function(svg) {
+    Line.prototype.makeSvg = function(svg, bgImageWidth, bgImageHeight) {
         addLineArrow(svg);
         var svgEl = createSvgShapeGroup(svg, 'polyline');
         this.updateSvg(svgEl);
+        this.updateSvgLabels(svgEl, bgImageWidth, bgImageHeight);
         return svgEl;
     };
 
@@ -179,18 +182,6 @@ define(function() {
         svgEl.childNodes[2].setAttribute('cy', this.centre2.y);
         svgEl.childNodes[2].setAttribute('r', Math.abs(this.endRadius));
 
-        // Set start and end label attributes.
-        svgEl.childNodes[3].textContent = this.labelstart;
-        this.adjustTextPosition(svgEl, svgEl.childNodes[3], this.centre1.x, parseInt(this.centre1.y));
-
-        svgEl.childNodes[4].textContent = this.labelmiddle;
-        let middlex = Math.abs((this.centre1.x + this.centre2.x) / 2);
-        let middley = Math.abs((this.centre1.y + this.centre2.y) / 2);
-        this.adjustTextPosition(svgEl, svgEl.childNodes[4], middlex, middley);
-
-        svgEl.childNodes[5].textContent = this.labelend;
-        this.adjustTextPosition(svgEl, svgEl.childNodes[5], this.centre2.x, parseInt(this.centre2.y));
-
         // If the svg g element is already placed in dropzone, then add the keyboard support.
         var svgClass = svgEl.getAttribute('class');
         if (svgClass && svgClass.includes('placed')) {
@@ -200,18 +191,39 @@ define(function() {
     };
 
     /**
+     * Update the SVG representation of this shape.
+     *
+     * @param {SVGElement} svgEl the SVG representation of this shape.
+     * @param {int} bgImageWidth
+     * @param {int} bgImageHeight
+     */
+    Line.prototype.updateSvgLabels = function(svgEl, bgImageWidth, bgImageHeight) {
+        // Set start and end label attributes.
+        svgEl.childNodes[3].textContent = this.labelstart;
+        this.adjustTextPosition(svgEl.childNodes[3], this.centre1.x, this.centre1.y,
+            bgImageWidth, bgImageHeight);
+
+        svgEl.childNodes[4].textContent = this.labelmiddle;
+        let middlex = Math.abs((this.centre1.x + this.centre2.x) / 2);
+        let middley = Math.abs((this.centre1.y + this.centre2.y) / 2);
+        this.adjustTextPosition(svgEl.childNodes[4], parseInt(middlex), parseInt(middley), bgImageWidth, bgImageHeight);
+
+        svgEl.childNodes[5].textContent = this.labelend;
+        this.adjustTextPosition(svgEl.childNodes[5], this.centre2.x, this.centre2.y,
+            bgImageWidth, bgImageHeight);
+    };
+
+    /**
      * Update svg line attributes.
      *
-     * @param {SVGElement} [svgEl] the g element of the SVG.
      * @param {SVGElement} [svgTextEl] the text node of the SVG.
      * @param {int} [linex] coordinate of the line.
      * @param {int} [liney] coordinate of the line.
+     * @param {int} bgImageWidth
+     * @param {int} bgImageHeight
      */
-    Line.prototype.adjustTextPosition = function(svgEl, svgTextEl, linex, liney) {
+    Line.prototype.adjustTextPosition = function(svgTextEl, linex, liney, bgImageWidth, bgImageHeight) {
         // SVG container dimensions
-        let parentSVG = svgEl.parentNode;
-        const svgWidth = parentSVG.getAttribute('width');
-        const svgHeight = parentSVG.getAttribute('height');
         const padding = 20;
 
         // Text element dimensions.
@@ -223,12 +235,12 @@ define(function() {
 
         // Recalculate the position of x and y coordinates of text, to make sure the text content is fully displayed.
         if (linex < textWidth / 2) {
-            svgTextEl.setAttribute('x', Math.abs(textWidth / 2));
-        } else if ((linex + (textWidth / 2)) > svgWidth) {
-            svgTextEl.setAttribute('x', Math.abs(svgWidth - (textWidth / 2)));
+            svgTextEl.setAttribute('x', Math.abs(parseInt(textWidth / 2)));
+        } else if ((linex + (textWidth / 2)) > bgImageWidth) {
+            svgTextEl.setAttribute('x', Math.abs(parseInt(bgImageWidth - (textWidth / 2))));
         }
 
-        if (liney + padding > svgHeight) {
+        if (liney + padding > bgImageHeight) {
             // Adjust if the line is very near to the bottom of the svg.
             svgTextEl.setAttribute('y', liney - padding);
         }
@@ -468,12 +480,13 @@ define(function() {
      * @param {SVG} svgDragsHome
      * @param {int|null} dropX Used by mouse events to calculate the svg to which it belongs.
      * @param {int|null} dropY
+     * @param {int|null} bgImageHeight height of the background image, to decide the position of where to drop the line.
      * @param {String|null} whichSVG
      */
-    Line.prototype.addToDropZone = function(eventType, selectedElement, svgDropZones, svgDragsHome, dropX, dropY, whichSVG) {
-        var maxY = 0,
-            dropzoneNo = selectedElement.getAttribute('data-dropzone-no'),
-            classattributes = '',
+    Line.prototype.addToDropZone = function(eventType, selectedElement, svgDropZones, svgDragsHome,
+            dropX, dropY, bgImageHeight, whichSVG) {
+        let dropzoneNo = selectedElement.getAttribute('data-dropzone-no'),
+            classattributes,
             dropZone = false;
         if (eventType === 'mouse') {
             dropZone = this.isInsideSVG(svgDragsHome, dropX, dropY);
@@ -482,8 +495,6 @@ define(function() {
         }
         if (dropZone) {
             // Append the element to the dropzone SVG.
-            // Get the height of the dropZone SVG, to decide the position to where to drop the line.
-            maxY = svgDropZones.height.baseVal.value;
             svgDropZones.appendChild(selectedElement);
             selectedElement.getAttribute('data-dropzone-no');
 
@@ -492,10 +503,10 @@ define(function() {
             selectedElement.childNodes[2].setAttribute('tabindex', '0');
 
             // Caluculate the position of line drop.
-            this.centre1.y = maxY - (2 * this.startRadius);
-            this.y1 = maxY - (2 * this.startRadius);
-            this.centre2.y = maxY - (2 * this.endRadius);
-            this.y2 = maxY - (2 * this.endRadius);
+            this.centre1.y = bgImageHeight - (2 * this.startRadius);
+            this.y1 = bgImageHeight - (2 * this.startRadius);
+            this.centre2.y = bgImageHeight - (2 * this.endRadius);
+            this.y2 = bgImageHeight - (2 * this.endRadius);
 
             // Update the class attributes to 'placed' if the line is in the svgDropZone.
             classattributes = selectedElement.getAttribute('class');

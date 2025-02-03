@@ -56,6 +56,9 @@ form.mform fieldset#id_previewareaheader .dropbackground {
 
 .que.drawlines .droparea {
     position: relative;
+    display: inline-block;
+    vertical-align: top;
+    width: 100%;
 }
 
 .que.drawlines div.ddarea,
