@@ -53,6 +53,7 @@ define([
         this.lineSVGs = [];
         this.lines = [];
         this.svgEl = null;
+        this.isPrinting = false;
         if (readOnly) {
             this.getRoot().classList.add('qtype_drawlines-readonly');
         }
@@ -114,9 +115,11 @@ define([
                     'class= "dropzones" ' +
                     'width="' + bgImage.width + '" ' +
                     'height="' + bgImage.height + '" ' +
+                    'viewBox="0 0 ' + bgImage.width + ' ' + bgImage.height + '" ' +
+                    'preserveAspectRatio="xMinYMin meet" ' +
                 '></svg>';
+            this.drawSVGLines(this.questionLines);
         }
-        this.drawSVGLines(this.questionLines);
     };
 
     /**
@@ -126,6 +129,7 @@ define([
      */
     DrawlinesQuestion.prototype.drawSVGLines = function(questionLines) {
         var bgImage = this.bgImage(),
+            bgratio = this.bgRatio(),
             height, startcoordinates, endcoordinates, draginitialcoords;
 
         var drags = this.getRoot().querySelector('.draghomes');
@@ -139,7 +143,7 @@ define([
         var dropzoneSvg = this.getRoot().querySelector('.dropzones');
         var initialHeight = 25;
         for (let line = 0; line < questionLines.length; line++) {
-            height = initialHeight + line * 50;
+            height = initialHeight + (line * 50 * bgratio);
             startcoordinates = '50,' + height + ';10';
             endcoordinates = '200,' + height + ';10';
 
@@ -168,305 +172,57 @@ define([
         }
     };
 
-    // TODO: The below methods can be refractored for window resizing.
-    //
-    // /**
-    //  * Adds a dropzone line with colour, coords and link provided to the array of Lines.
-    //  *
-    //  * @param {jQuery} svg the SVG image to which to add this drop zone.
-    //  * @param {int} dropZoneNo which drop-zone to add.
-    //  * @param {string} colourClass class name
-    //  */
-    // DrawlinesQuestion.prototype.addDropzone = function(svg, dropZoneNo, colourClass) {
-    //     var dropZone = this.visibleDropZones[dropZoneNo],
-    //         line = Line.make(dropZone.line, ''),
-    //         existingmarkertext,
-    //         bgRatio = this.bgRatio();
-    //     if (!line.parse(dropZone.coords, bgRatio)) {
-    //         return;
-    //     }
-    //
-    //     existingmarkertext = this.getRoot().find('div.markertexts span.markerlabelstart' + dropZoneNo);
-    //     if (existingmarkertext.length) {
-    //         if (dropZone.markertext !== '') {
-    //             existingmarkertext.html(dropZone.markertext);
-    //         } else {
-    //             existingmarkertext.remove();
-    //         }
-    //     } else if (dropZone.markertext !== '') {
-    //         var classnames = 'markertext markertext' + dropZoneNo;
-    //         this.getRoot().find('div.markertexts').append('<span class="' + classnames + '">' +
-    //             dropZone.markertext + '</span>');
-    //         var markerspan = this.getRoot().find('div.ddarea div.markertexts span.markertext' + dropZoneNo);
-    //         if (markerspan.length) {
-    //             var handles = line.getHandlePositions();
-    //             var positionLeft = handles.moveHandles.x - (markerspan.outerWidth() / 2) - 4;
-    //             var positionTop = handles.moveHandles.y - (markerspan.outerHeight() / 2);
-    //             markerspan
-    //                 .css('left', positionLeft)
-    //                 .css('top', positionTop);
-    //             markerspan
-    //                 .data('originX', markerspan.position().left / bgRatio)
-    //                 .data('originY', markerspan.position().top / bgRatio);
-    //             this.handleElementScale(markerspan, 'center');
-    //         }
-    //     }
-    //
-    //     var lineSVG = line.makeSvg(svg[0]);
-    //     lineSVG.setAttribute('class', 'dropzone ' + colourClass);
-    //
-    //     this.lines[this.Line.length] = line;
-    //     this.lineSVGs[this.lineSVGs.length] = lineSVG;
-    // };
+    /**
+     * Handle when the window is resized.
+     */
+    DrawlinesQuestion.prototype.handleResize = function() {
+        let thisQ = this,
+            bgImg = this.bgImage(),
+            bgRatio = this.bgRatio(),
+            svgdropzones = this.getRoot().querySelector('div.droparea svg.dropzones'),
+            svgdraghomes = this.getRoot().querySelector('div.draghomes svg.dragshome');
 
-    // /**
-    //  * Draws the drag items on the page (and drop zones if required).
-    //  * The idea is to re-draw all the drags and drops whenever there is a change
-    //  * like a widow resize or an item dropped in place.
-    //  */
-    // DrawlinesQuestion.prototype.repositionDrags = function() {
-    //     var root = this.getRoot(),
-    //         thisQ = this;
-    //
-    //     root.find('div.draghomes .marker').not('.dragplaceholder').each(function(key, item) {
-    //         $(item).addClass('unneeded');
-    //     });
-    //
-    //     root.find('input.choices').each(function(key, input) {
-    //         var choiceNo = thisQ.getChoiceNoFromElement(input),
-    //             imageCoords = thisQ.getImageCoords(input);
-    //
-    //         if (imageCoords.length) {
-    //             var drag = thisQ.getRoot().find('.draghomes' + ' span.marker' + '.choice' + choiceNo).not('.dragplaceholder');
-    //             drag.remove();
-    //             for (var i = 0; i < imageCoords.length; i++) {
-    //                 var dragInDrop = drag.clone();
-    //                 // Convert image coords to screen coords.
-    //                 const screenCoords = thisQ.convertToWindowXY(imageCoords[i]);
-    //                 dragInDrop.data('pagex', screenCoords.x).data('pagey', screenCoords.y);
-    //                 // Save image coords to the drag item so we can use it later.
-    //                 dragInDrop.data('imageCoords', imageCoords[i]);
-    //                 // We always save the coordinates in the 1:1 ratio.
-    //                 // So we need to set the scale ratio to 1 for the initial load.
-    //                 dragInDrop.data('scaleRatio', 1);
-    //                 thisQ.sendDragToDrop(dragInDrop, false, true);
-    //             }
-    //             thisQ.getDragClone(drag).addClass('active');
-    //             thisQ.cloneDragIfNeeded(drag);
-    //         }
-    //     });
-    //
-    //     // Save the question answer.
-    //     thisQ.questionAnswer = thisQ.getQuestionAnsweredValues();
-    // };
-    //
-    // /**
-    //  * Determine what drag items need to be shown and
-    //  * return coords of all drag items except any that are currently being dragged
-    //  * based on contents of hidden inputs and whether drags are 'infinite' or how many
-    //  * drags should be shown.
-    //  *
-    //  * @param {jQuery} inputNode
-    //  * @returns {Point[]} image coordinates of however many copies of the drag item should be shown.
-    //  */
-    // DrawlinesQuestion.prototype.getImageCoords = function(inputNode) {
-    //     var imageCoords = [],
-    //         val = $(inputNode).val();
-    //     if (val !== '') {
-    //         var coordsStrings = val.split(' ');
-    //         for (var i = 0; i < coordsStrings.length; i++) {
-    //             imageCoords[i] = Line.Point.parse(coordsStrings[i]);
-    //         }
-    //     }
-    //     return imageCoords;
-    // };
-    //
-    // /**
-    //  * Converts the relative x and y position coordinates into
-    //  * absolute x and y position coordinates.
-    //  *
-    //  * @param {Point} point relative to the background image.
-    //  * @returns {Point} point relative to the page.
-    //  */
-    // DrawlinesQuestion.prototype.convertToWindowXY = function(point) {
-    //     var bgImage = this.bgImage();
-    //     // The +1 seems rather odd, but seems to give the best results in
-    //     // the three main browsers at a range of zoom levels.
-    //     // (Its due to the 1px border around the image, that shifts the
-    //     // image pixels by 1 down and to the left.)
-    //     return point.offset(bgImage.offset().left + 1, bgImage.offset().top + 1);
-    // };
+        // Calculate and set the svg attributes.
+        thisQ.drawDropzone();
+        svgdropzones.setAttribute("width", bgImg.width);
+        svgdropzones.setAttribute("height", bgImg.height);
+        svgdropzones.setAttribute("viewBox", '0 0 ' + bgImg.width + ' ' + bgImg.height);
 
-    // /**
-    //  * Utility function converting window coordinates to relative to the
-    //  * background image coordinates.
-    //  *
-    //  * @param {Point} point relative to the page.
-    //  * @returns {Point} point relative to the background image.
-    //  */
-    // DrawlinesQuestion.prototype.convertToBgImgXY = function(point) {
-    //     var bgImage = this.bgImage();
-    //     return point.offset(-bgImage.offset().left - 1, -bgImage.offset().top - 1);
-    // };
-    //
-    // /**
-    //  * Functionality at the end of a drag drop.
-    //  * @param {jQuery} dragged the marker that was dragged.
-    //  */
-    // DrawlinesQuestion.prototype.dragEnd = function(dragged) {
-    //     var placed = false,
-    //         choiceNo = this.getChoiceNoFromElement(dragged),
-    //         bgRatio = this.bgRatio(),
-    //         dragXY;
-    //
-    //     dragged.data('pagex', dragged.offset().left).data('pagey', dragged.offset().top);
-    //     dragXY = new Line.Point(dragged.data('pagex'), dragged.data('pagey'));
-    //     if (this.coordsInBgImg(dragXY)) {
-    //         this.sendDragToDrop(dragged, true);
-    //         placed = true;
-    //         // Since we already move the drag item to new position.
-    //         // Remove the image coords if this drag item have it.
-    //         // We will get the new image coords for this drag item in saveCoordsForChoice.
-    //         if (dragged.data('imageCoords')) {
-    //             dragged.data('imageCoords', null);
-    //         }
-    //         // It seems that the dragdrop sometimes leaves the drag
-    //         // one pixel out of position. Put it in exactly the right place.
-    //         var bgImgXY = this.convertToBgImgXY(dragXY);
-    //         bgImgXY = new Line.Point(bgImgXY.x / bgRatio, bgImgXY.y / bgRatio);
-    //         dragged.data('originX', bgImgXY.x).data('originY', bgImgXY.y);
-    //     }
-    //
-    //     if (!placed) {
-    //         this.sendDragHome(dragged);
-    //         this.removeDragIfNeeded(dragged);
-    //     } else {
-    //         this.cloneDragIfNeeded(dragged);
-    //     }
-    //
-    //     this.saveCoordsForChoice(choiceNo);
-    // };
-    //
-    // /**
-    //  * Makes sure the dragged item always exists within the background image area.
-    //  *
-    //  * @param {Point} windowxy
-    //  * @returns {Point} coordinates
-    //  */
-    // DrawlinesQuestion.prototype.constrainToBgImg = function(windowxy) {
-    //     var bgImg = this.bgImage(),
-    //         bgImgXY = this.convertToBgImgXY(windowxy);
-    //     bgImgXY.x = Math.max(0, bgImgXY.x);
-    //     bgImgXY.y = Math.max(0, bgImgXY.y);
-    //     bgImgXY.x = Math.min(bgImg.width(), bgImgXY.x);
-    //     bgImgXY.y = Math.min(bgImg.height(), bgImgXY.y);
-    //     return this.convertToWindowXY(bgImgXY);
-    // };
+        svgdraghomes.setAttribute("width", this.bgImage().width);
+        svgdraghomes.setAttribute("height", parseInt(thisQ.questionLines.length * 50 * bgRatio));
 
-    //
-    // /**
-    //  * Handle when the window is resized.
-    //  */
-    // DrawlinesQuestion.prototype.handleResize = function() {
-    //     var thisQ = this,
-    //         bgRatio = this.bgRatio();
-    //     if (this.isPrinting) {
-    //         bgRatio = 1;
-    //     }
-    //
-    //     this.getRoot().find('div.droparea .marker').not('.beingdragged').each(function(key, drag) {
-    //         $(drag)
-    //             .css('left', parseFloat($(drag).data('originX')) * parseFloat(bgRatio))
-    //             .css('top', parseFloat($(drag).data('originY')) * parseFloat(bgRatio));
-    //         thisQ.handleElementScale(drag, 'left top');
-    //     });
-    //
-    //     this.getRoot().find('div.droparea svg.dropzones')
-    //         .width(this.bgImage().width())
-    //         .height(this.bgImage().height());
-    //
-    //     for (var dropZoneNo = 0; dropZoneNo < this.visibleDropZones.length; dropZoneNo++) {
-    //         var dropZone = thisQ.visibleDropZones[dropZoneNo];
-    //         var originCoords = dropZone.coords;
-    //         var line = thisQ.lines[dropZoneNo];
-    //         var lineSVG = thisQ.lineSVGs[dropZoneNo];
-    //         line.parse(originCoords, bgRatio);
-    //         line.updateSvg(lineSVG);
-    //
-    //         var handles = line.getHandlePositions();
-    //         var markerSpan = this.getRoot().find('div.ddarea div.markertexts span.markertext' + dropZoneNo);
-    //         markerSpan
-    //             .css('left', handles.moveHandles.x - (markerSpan.outerWidth() / 2) - 4)
-    //             .css('top', handles.moveHandles.y - (markerSpan.outerHeight() / 2));
-    //         thisQ.handleElementScale(markerSpan, 'center');
-    //     }
-    // };
+        // Transform the svg lines to scale based on window size.
+        for (let linenumber = 0; linenumber < thisQ.questionLines.length; linenumber++) {
+            var svgline = thisQ.getRoot().querySelector('.dropzone.choice' + linenumber);
+            thisQ.handleElementScale(svgline);
+        }
+    };
 
-    // /**
-    //  * Animate a drag item into a given place.
-    //  *
-    //  * @param {jQuery} drag the item to place.
-    //  * @param {boolean} isScaling Scaling or not.
-    //  * @param {boolean} initialLoad Whether it is the initial load or not.
-    //  */
-    // DrawlinesQuestion.prototype.sendDragToDrop = function(drag, isScaling, initialLoad = false) {
-    //     var dropArea = this.dropArea(),
-    //         bgRatio = this.bgRatio();
-    //     drag.removeClass('beingdragged').removeClass('unneeded');
-    //     var dragXY = this.convertToBgImgXY(new Line.Point(drag.data('pagex'), drag.data('pagey')));
-    //     if (isScaling) {
-    //         drag.data('originX', dragXY.x / bgRatio).data('originY', dragXY.y / bgRatio);
-    //         drag.css('left', dragXY.x).css('top', dragXY.y);
-    //     } else {
-    //         drag.data('originX', dragXY.x).data('originY', dragXY.y);
-    //         drag.css('left', dragXY.x * bgRatio).css('top', dragXY.y * bgRatio);
-    //     }
-    //     // We need to save the original scale ratio for each draggable item.
-    //     if (!initialLoad) {
-    //         // Only set the scale ratio for a current being-dragged item, not for the initial loading.
-    //         drag.data('scaleRatio', bgRatio);
-    //     }
-    //     dropArea.append(drag);
-    //     this.handleElementScale(drag, 'left top');
-    // };
-    //
-    // /**
-    //  * Scale the drag if needed.
-    //  *
-    //  * @param {jQuery} element the item to place.
-    //  * @param {String} type scaling type
-    //  */
-    // DrawlinesQuestion.prototype.handleElementScale = function(element, type) {
-    //     var bgRatio = parseFloat(this.bgRatio());
-    //     if (this.isPrinting) {
-    //         bgRatio = 1;
-    //     }
-    //     $(element).css({
-    //         '-webkit-transform': 'scale(' + bgRatio + ')',
-    //         '-moz-transform': 'scale(' + bgRatio + ')',
-    //         '-ms-transform': 'scale(' + bgRatio + ')',
-    //         '-o-transform': 'scale(' + bgRatio + ')',
-    //         'transform': 'scale(' + bgRatio + ')',
-    //         'transform-origin': type
-    //     });
-    // };
+    /**
+     * Return the background ratio.
+     *
+     * @returns {number} Background ratio.
+     */
+    DrawlinesQuestion.prototype.bgRatio = function() {
+        var bgImg = this.bgImage();
+        var bgImgNaturalWidth = bgImg.naturalWidth;
+        var bgImgClientWidth = bgImg.width;
 
-    // /**
-    //  * Sometimes, despite our best efforts, things change in a way that cannot
-    //  * be specifically caught (e.g. dock expanding or collapsing in Boost).
-    //  * Therefore, we need to periodically check everything is in the right position.
-    //  */
-    // fixLayoutIfThingsMoved: function() {
-    //     if (!questionManager.isKeyboardNavigation) {
-    //         this.handleWindowResize(questionManager.isPrinting);
-    //     }
-    //     // We use setTimeout after finishing work, rather than setInterval,
-    //     // in case positioning things is slow. We want 100 ms gap
-    //     // between executions, not what setInterval does.
-    //     setTimeout(function() {
-    //         questionManager.fixLayoutIfThingsMoved(questionManager.isPrinting);
-    //     }, 100);
-    // },
+        return bgImgClientWidth / bgImgNaturalWidth;
+    };
+
+    /**
+     * Scale the drag if needed.
+     *
+     * @param {SVGElement} element the line to place.
+     */
+    DrawlinesQuestion.prototype.handleElementScale = function(element) {
+        var bgRatio = this.bgRatio();
+        if (this.isPrinting) {
+            bgRatio = 1;
+        }
+        element.setAttribute('transform', 'scale(' + bgRatio + ')');
+    };
 
     /**
      * Get the outer div for this question.
@@ -504,26 +260,14 @@ define([
     };
 
     /**
-     * Return the background ratio.
-     *
-     * @returns {number} Background ratio.
-     */
-    DrawlinesQuestion.prototype.bgRatio = function() {
-        var bgImg = this.bgImage();
-        var bgImgNaturalWidth = bgImg.get(0).naturalWidth;
-        var bgImgClientWidth = bgImg.width();
-
-        return bgImgClientWidth / bgImgNaturalWidth;
-    };
-
-    /**
      * Add this line to an SVG graphic.
      *
      * @param {int} lineNumber Line Number
      * @param {SVGElement} svg the SVG image to which to add this drop zone.
      */
     DrawlinesQuestion.prototype.addToSvg = function(lineNumber, svg) {
-        this.lineSVGs[lineNumber] = this.lines[lineNumber].makeSvg(svg);
+        let bgImage = this.bgImage();
+        this.lineSVGs[lineNumber] = this.lines[lineNumber].makeSvg(svg, bgImage.naturalWidth, bgImage.naturalHeight);
         if (!this.lineSVGs[lineNumber]) {
             return;
         }
@@ -541,7 +285,9 @@ define([
      * @param {int} dropzoneNo
      */
     DrawlinesQuestion.prototype.updateSvgEl = function(dropzoneNo) {
+        var bgimage = this.bgImage();
         this.lines[dropzoneNo].updateSvg(this.lineSVGs[dropzoneNo]);
+        this.lines[dropzoneNo].updateSvgLabels(this.lineSVGs[dropzoneNo], bgimage.naturalWidth, bgimage.naturalHeight);
     };
 
     /**
@@ -560,9 +306,9 @@ define([
             lastX = info.x,
             lastY = info.y,
             dragProxy = this.makeDragProxy(info.x, info.y),
-            svg = this.getRoot().querySelector('svg.dropzones'),
-            maxX = svg.width.baseVal.value,
-            maxY = svg.height.baseVal.value;
+            bgimage = this.bgImage(),
+            maxX = bgimage.naturalWidth,
+            maxY = bgimage.naturalHeight;
 
         dragDrop.start(e, $(dragProxy), function(pageX, pageY) {
             movingDropZone.lines[dropzoneNo].move(whichHandle,
@@ -600,9 +346,15 @@ define([
             svgClass;
 
         var selectedElement = this.lineSVGs[dropzoneNo];
-        const dropX = e.clientX;
-        const dropY = e.clientY;
 
+        let dropX, dropY;
+        if (e.type === 'mousedown') {
+            dropX = e.clientX;
+            dropY = e.clientY;
+        } else if (e.type === 'touchstart') {
+            dropX = e.touches[0].clientX;
+            dropY = e.touches[0].clientY;
+        }
         dragDrop.start(e, $(dragProxy), function(pageX, pageY) {
 
             // The svg's which are associated with this question.
@@ -618,11 +370,11 @@ define([
 
             // If true, the drag is moved from dropZone SVG to draghomes SVG.
             isMoveFromDropzonesToDrags = (svgClass === 'dropzones') &&
-                (movingDrag.lines[dropzoneNo].centre1.y > (bgImage.height - 20));
+                (movingDrag.lines[dropzoneNo].centre1.y > (bgImage.naturalHeight - 20));
 
             if (isMoveFromDragsToDropzones || isMoveFromDropzonesToDrags) {
                 movingDrag.lines[dropzoneNo].addToDropZone('mouse', selectedElement,
-                    closestSVGs.svgDropZone, closestSVGs.svgDragsHome, dropX, dropY);
+                    closestSVGs.svgDropZone, closestSVGs.svgDragsHome, dropX, dropY, bgImage.naturalHeight);
             }
 
             // Drag the lines within the SVG
@@ -676,28 +428,6 @@ define([
         if (items) {
                 imageCoords = items.querySelector('polyline').getAttribute('points');
                 gEleClassAttributes = items.getAttribute('class');
-                // TODO: Kept the below comment as this could be needed for window resizing.
-
-                // thiQ = this,
-                // bgRatio = this.bgRatio();
-                //     if (drag.data('scaleRatio') !== bgRatio) {
-                //         // The scale ratio for the draggable item was changed. We need to update that.
-                //         drag.data('pagex', drag.offset().left).data('pagey', drag.offset().top);
-                //     }
-                //     var dragXY = new Line.Point(drag.data('pagex'), drag.data('pagey'));
-                //     window.console.log("dragXY:" + dragXY);
-                //
-                //     window.console.log("thiQ:" + thiQ);
-                //     if (thiQ.coordsInBgImg(dragXY)) {
-                //         var bgImgXY = thiQ.convertToBgImgXY(dragXY);
-                //         bgImgXY = new Line.Point(bgImgXY.x / bgRatio, bgImgXY.y / bgRatio);
-                //         imageCoords[imageCoords.length] = bgImgXY;
-                //         window.console.log("bgImgXY:" + bgImgXY);
-                //     }
-                // } else if (drag.data('imageCoords')) {
-                //     imageCoords[imageCoords.length] = drag.data('imageCoords');
-                // }
-
         }
         if (gEleClassAttributes !== '' && gEleClassAttributes.includes('placed')) {
             this.getRoot().querySelector('input.choice' + choiceNo).value = imageCoords;
@@ -757,14 +487,14 @@ define([
         var closestSVGs = this.getSvgsClosestToElement(drag);
         var isMoveFromDragsToDropzones = (svgClass === "dragshome");
         var isMoveFromDropzonesToDrags = (svgClass === 'dropzones') &&
-            (question.lines[dropzoneNo].centre1.y > (bgImage.height - 20));
+            (question.lines[dropzoneNo].centre1.y > ((bgImage.naturalHeight - 20)));
 
         if (isMoveFromDragsToDropzones) {
             question.lines[dropzoneNo].addToDropZone('keyboard', dropzoneElement,
-                closestSVGs.svgDropZone, closestSVGs.svgDragsHome, null, null, 'DragsSVG');
+                closestSVGs.svgDropZone, closestSVGs.svgDragsHome, null, null, bgImage.naturalHeight, 'DragsSVG');
         } else if (isMoveFromDropzonesToDrags) {
             question.lines[dropzoneNo].addToDropZone('keyboard', dropzoneElement,
-                closestSVGs.svgDropZone, closestSVGs.svgDragsHome, null, null, 'DropZonesSVG');
+                closestSVGs.svgDropZone, closestSVGs.svgDragsHome, null, null, null, 'DropZonesSVG');
         }
 
         // Get the dimensions of the selected element's svg.
@@ -794,9 +524,10 @@ define([
      * @return {{whichSVG: (string), maxY: number, maxX: number}}
      */
     DrawlinesQuestion.prototype.getSvgDimensionsByClass = function(dragSVG, className) {
+        let bgImg = this.bgImage();
         return {
-            maxX: dragSVG.width.baseVal.value,
-            maxY: dragSVG.height.baseVal.value,
+            maxX: bgImg.naturalWidth,
+            maxY: bgImg.naturalHeight,
             whichSVG: className === 'dragshome' ? 'DragsSVG' : 'DropZonesSVG'
         };
     };
@@ -909,6 +640,10 @@ define([
                 new DrawlinesQuestion(containerId, readOnly, visibleDropZones, questionLines);
 
             questionManager.questions[containerId].updateCoordinates();
+            if (!questionManager.eventHandlersInitialised) {
+                questionManager.setupEventHandlers();
+                questionManager.eventHandlersInitialised = true;
+            }
 
             if (!questionManager.lineEventHandlersInitialised.hasOwnProperty(containerId)) {
                 questionManager.lineEventHandlersInitialised[containerId] = true;
@@ -927,6 +662,13 @@ define([
                     dropArea.addEventListener('keydown', questionManager.handleKeyPress);
                     dropArea.addEventListener('keypress', questionManager.handleKeyPress);
 
+                    dropArea.addEventListener('focusin', function(e) {
+                        questionManager.handleKeyboardFocus(e, true);
+                    });
+                    dropArea.addEventListener('focusout', function(e) {
+                        questionManager.handleKeyboardFocus(e, false);
+                    });
+
                     // For draghomes SVG.
                     var drags = questionContainer.querySelector('.draghomes');
                     // Add event listener for mousedown and touchstart events.
@@ -935,30 +677,53 @@ define([
                     // Add event listener for keydown and keypress events.
                     drags.addEventListener('keydown', questionManager.handleKeyPress);
                     drags.addEventListener('keypress', questionManager.handleKeyPress);
+
+                    drags.addEventListener('focusin', function(e) {
+                        questionManager.handleKeyboardFocus(e, true);
+                    });
+                    drags.addEventListener('focusout', function(e) {
+                        questionManager.handleKeyboardFocus(e, false);
+                    });
                 }
             }
         },
 
-        // TODO: commented as currently we are not using this function. To be removed later if not needed.
-        // /**
-        //  * Set up the event handlers that make this question type work. (Done once per page.)
-        //  */
-        // setupEventHandlers: function() {
-        //     $(window).on('resize', function() {
-        //         questionManager.handleWindowResize(false);
-        //     });
-        //     window.addEventListener('beforeprint', function() {
-        //         questionManager.isPrinting = true;
-        //         questionManager.handleWindowResize(questionManager.isPrinting);
-        //     });
-        //     window.addEventListener('afterprint', function() {
-        //         questionManager.isPrinting = false;
-        //         questionManager.handleWindowResize(questionManager.isPrinting);
-        //     });
-        //     setTimeout(function() {
-        //         questionManager.fixLayoutIfThingsMoved();
-        //     }, 100);
-        // },
+        /**
+         * Set up the event handlers that make this question type work. (Done once per page.)
+         */
+        setupEventHandlers: function() {
+            window.addEventListener('resize', function() {
+                questionManager.handleWindowResize(false);
+            });
+            window.addEventListener('beforeprint', function() {
+                questionManager.isPrinting = true;
+                questionManager.handleWindowResize(questionManager.isPrinting);
+            });
+            window.addEventListener('afterprint', function() {
+                questionManager.isPrinting = false;
+                questionManager.handleWindowResize(questionManager.isPrinting);
+            });
+            setTimeout(function() {
+                questionManager.fixLayoutIfThingsMoved();
+            }, 100);
+        },
+
+        /**
+         * Sometimes, despite our best efforts, things change in a way that cannot
+         * be specifically caught (e.g. dock expanding or collapsing in Boost).
+         * Therefore, we need to periodically check everything is in the right position.
+         */
+        fixLayoutIfThingsMoved: function() {
+            if (!questionManager.isKeyboardNavigation) {
+                this.handleWindowResize(questionManager.isPrinting);
+            }
+            // We use setTimeout after finishing work, rather than setInterval,
+            // in case positioning things is slow. We want 100 ms gap
+            // between executions, not what setInterval does.
+            setTimeout(function() {
+                questionManager.fixLayoutIfThingsMoved(questionManager.isPrinting);
+            }, 100);
+        },
 
         /**
          * Handle mouse and touch events for dropzone svg.
@@ -992,8 +757,9 @@ define([
          * @param {Event} event
          */
         handleDragHomeEventMove: function(event) {
-            var dropzoneElement, dropzoneNo;
-            var question = questionManager.getQuestionForEvent(event);
+            let dropzoneElement, dropzoneNo,
+                question = questionManager.getQuestionForEvent(event);
+
             if (event.target.closest('g')) {
                 dropzoneElement = event.target.closest('g');
                 dropzoneNo = dropzoneElement.dataset.dropzoneNo;
@@ -1033,7 +799,6 @@ define([
 
         /**
          * Handle when the window is resized.
-         *
          * @param {boolean} isPrinting
          */
         handleWindowResize: function(isPrinting) {
@@ -1043,6 +808,15 @@ define([
                     questionManager.questions[containerId].handleResize();
                 }
             }
+        },
+
+        /**
+         * Handle focus lost events on markers.
+         * @param {Event} e
+         * @param {boolean} isNavigating
+         */
+        handleKeyboardFocus: function(e, isNavigating) {
+            questionManager.isKeyboardNavigation = isNavigating;
         },
 
         /**
