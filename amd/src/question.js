@@ -50,6 +50,7 @@ define([
         this.containerId = containerId;
         this.visibleDropZones = visibleDropZones;
         this.questionLines = questionLines;
+        M.util.js_pending('qtype_drawlines-init-' + this.containerId);
         this.lineSVGs = [];
         this.lines = [];
         this.svgEl = null;
@@ -101,15 +102,15 @@ define([
      * Draws the svg lines of any drop zones that should be visible for feedback purposes.
      */
     DrawlinesQuestion.prototype.drawDropzone = function() {
-        var bgImage = this.bgImage();
-        var svg = this.getRoot().querySelector('svg.dropzones');
-        var rootElement = this.getRoot();
+        let rootElement = this.getRoot(),
+            bgImage = this.bgImage(),
+            svg = rootElement.querySelector('svg.dropzones');
         rootElement.querySelector('.que-dlines-dropzone').style.position = 'relative';
         rootElement.querySelector('.que-dlines-dropzone').style.top = (bgImage.height + 1) * -1 + "px";
         rootElement.querySelector('.que-dlines-dropzone').style.height = bgImage.height + "px";
         rootElement.querySelector('.droparea').style.height = bgImage.height + "px";
         if (!svg) {
-            var dropZone = this.getRoot().querySelector('.que-dlines-dropzone');
+            let dropZone = rootElement.querySelector('.que-dlines-dropzone');
             dropZone.innerHTML =
                 '<svg xmlns="http://www.w3.org/2000/svg" ' +
                     'class= "dropzones" ' +
@@ -128,22 +129,23 @@ define([
      * @param {Object[]} questionLines
      */
     DrawlinesQuestion.prototype.drawSVGLines = function(questionLines) {
-        var bgImage = this.bgImage(),
-            bgratio = this.bgRatio(),
+        let bgImage = this.bgImage(),
+            rootElement = this.getRoot(),
             height, startcoordinates, endcoordinates, draginitialcoords;
 
-        var drags = this.getRoot().querySelector('.draghomes');
+        let drags = rootElement.querySelector('.draghomes');
         drags.innerHTML =
             '<svg xmlns="http://www.w3.org/2000/svg" class="dragshome" ' +
             'width="' + bgImage.width + '" ' +
             'height="' + questionLines.length * 50 + '"' +
             '></svg>';
 
-        var draghomeSvg = this.getRoot().querySelector('.dragshome');
-        var dropzoneSvg = this.getRoot().querySelector('.dropzones');
-        var initialHeight = 25;
-        for (let line = 0; line < questionLines.length; line++) {
-            height = initialHeight + (line * 50 * bgratio);
+        let draghomeSvg = rootElement.querySelector('.dragshome'),
+            dropzoneSvg = rootElement.querySelector('.dropzones');
+        const initiallinespacing = 25,
+            spacingbetweenlines = 50;
+        for (let line = 0; line < this.questionLines.length; line++) {
+            height = initiallinespacing + (line * spacingbetweenlines);
             startcoordinates = '50,' + height + ';10';
             endcoordinates = '200,' + height + ';10';
 
@@ -170,6 +172,7 @@ define([
                 this.addToSvg(line, draghomeSvg);
             }
         }
+        M.util.js_complete('qtype_drawlines-init-' + this.containerId);
     };
 
     /**
@@ -179,16 +182,19 @@ define([
         let thisQ = this,
             bgImg = this.bgImage(),
             bgRatio = this.bgRatio(),
-            svgdropzones = this.getRoot().querySelector('div.droparea svg.dropzones'),
-            svgdraghomes = this.getRoot().querySelector('div.draghomes svg.dragshome');
+            svgdropzones,
+            svgdraghomes;
 
         // Calculate and set the svg attributes.
+        // We need to call drawDropzone function to make sure the svg's are created before updating the attributes.
         thisQ.drawDropzone();
+        svgdropzones = this.getRoot().querySelector('div.droparea svg.dropzones');
+        svgdraghomes = this.getRoot().querySelector('div.draghomes svg.dragshome');
         svgdropzones.setAttribute("width", bgImg.width);
         svgdropzones.setAttribute("height", bgImg.height);
         svgdropzones.setAttribute("viewBox", '0 0 ' + bgImg.width + ' ' + bgImg.height);
 
-        svgdraghomes.setAttribute("width", this.bgImage().width);
+        svgdraghomes.setAttribute("width", bgImg.width);
         svgdraghomes.setAttribute("height", parseInt(thisQ.questionLines.length * 50 * bgRatio));
 
         // Transform the svg lines to scale based on window size.
@@ -207,7 +213,10 @@ define([
         var bgImg = this.bgImage();
         var bgImgNaturalWidth = bgImg.naturalWidth;
         var bgImgClientWidth = bgImg.width;
-
+        // Sometimes the width is returned 0, when image is not loaded properly.
+        if (bgImgClientWidth === 0) {
+            return 1;
+        }
         return bgImgClientWidth / bgImgNaturalWidth;
     };
 
@@ -267,7 +276,8 @@ define([
      */
     DrawlinesQuestion.prototype.addToSvg = function(lineNumber, svg) {
         let bgImage = this.bgImage();
-        this.lineSVGs[lineNumber] = this.lines[lineNumber].makeSvg(svg, bgImage.naturalWidth, bgImage.naturalHeight);
+        this.lineSVGs[lineNumber] = this.lines[lineNumber].makeSvg(svg, bgImage.naturalWidth,
+            bgImage.naturalHeight);
         if (!this.lineSVGs[lineNumber]) {
             return;
         }
@@ -286,8 +296,7 @@ define([
      */
     DrawlinesQuestion.prototype.updateSvgEl = function(dropzoneNo) {
         var bgimage = this.bgImage();
-        this.lines[dropzoneNo].updateSvg(this.lineSVGs[dropzoneNo]);
-        this.lines[dropzoneNo].updateSvgLabels(this.lineSVGs[dropzoneNo], bgimage.naturalWidth, bgimage.naturalHeight);
+        this.lines[dropzoneNo].updateSvg(this.lineSVGs[dropzoneNo], bgimage.naturalWidth, bgimage.naturalHeight);
     };
 
     /**
@@ -385,11 +394,14 @@ define([
             maxY = dimensions.maxY;
             whichSVG = dimensions.whichSVG;
 
-            movingDrag.lines[dropzoneNo].moveDrags(
-                parseInt(pageX) - parseInt(lastX), parseInt(pageY) - parseInt(lastY),
-                parseInt(maxX), parseInt(maxY), whichSVG);
-            lastX = pageX;
-            lastY = pageY;
+            // Move the lines if they are in the dropzones svg.
+            if (whichSVG === 'DropZonesSVG') {
+                movingDrag.lines[dropzoneNo].moveDrags(
+                    parseInt(pageX) - parseInt(lastX), parseInt(pageY) - parseInt(lastY),
+                    parseInt(maxX), parseInt(maxY));
+                lastX = pageX;
+                lastY = pageY;
+            }
 
             movingDrag.updateSvgEl(dropzoneNo);
             movingDrag.saveCoordsForChoice(dropzoneNo);
@@ -504,9 +516,9 @@ define([
         maxY = dimensions.maxY;
         whichSVG = dimensions.whichSVG;
 
-        if (activeElement === 'line') {
+        if (activeElement === 'line' && whichSVG === 'DropZonesSVG') {
             // Move the entire line when the focus is on it.
-            question.lines[dropzoneNo].moveDrags(parseInt(x), parseInt(y), parseInt(maxX), parseInt(maxY), whichSVG);
+            question.lines[dropzoneNo].moveDrags(parseInt(x), parseInt(y), parseInt(maxX), parseInt(maxY));
         } else {
             // Move the line endpoints.
             question.lines[dropzoneNo].move(activeElement, parseInt(x), parseInt(y), parseInt(maxX), parseInt(maxY));
@@ -641,8 +653,17 @@ define([
 
             questionManager.questions[containerId].updateCoordinates();
             if (!questionManager.eventHandlersInitialised) {
-                questionManager.setupEventHandlers();
-                questionManager.eventHandlersInitialised = true;
+                // Make sure all the images are loaded before setting up resizing event handlers.
+                // This was bit tricky as if the images are not loaded then the image height and width would be
+                // set to 0, thus causing improper loading of the lines.
+                const dropareaimages = document.querySelectorAll('.drawlines .droparea img');
+                questionManager.checkAllImagesLoaded(dropareaimages)
+                    .then((dropareaimages) => {
+                        questionManager.setupEventHandlers();
+                        questionManager.eventHandlersInitialised = true;
+                        return dropareaimages;
+                })
+                .catch(error => window.console.error(error));
             }
 
             if (!questionManager.lineEventHandlersInitialised.hasOwnProperty(containerId)) {
@@ -686,6 +707,24 @@ define([
                     });
                 }
             }
+        },
+
+        /**
+         * Verify that all the images are loaded on this page.
+         * @param {NodeList} images
+         **/
+        checkAllImagesLoaded: function(images) {
+            const promises = Array.from(images).map(img =>
+                new Promise((resolve, reject) => {
+                    if (img.complete && img.naturalHeight !== 0) {
+                        resolve(img); // Image already loaded
+                    } else {
+                        img.addEventListener('load', () => resolve(img), {once: true});
+                        img.addEventListener('error', () => reject(new Error(`Failed to load image: ${img.src}`)), {once: true});
+                    }
+                })
+            );
+            return Promise.all(promises);
         },
 
         /**

@@ -159,8 +159,7 @@ define(function() {
     Line.prototype.makeSvg = function(svg, bgImageWidth, bgImageHeight) {
         addLineArrow(svg);
         var svgEl = createSvgShapeGroup(svg, 'polyline');
-        this.updateSvg(svgEl);
-        this.updateSvgLabels(svgEl, bgImageWidth, bgImageHeight);
+        this.updateSvg(svgEl, bgImageWidth, bgImageHeight);
         return svgEl;
     };
 
@@ -168,10 +167,12 @@ define(function() {
      * Update the SVG representation of this shape.
      *
      * @param {SVGElement} svgEl the SVG representation of this shape.
+     * @param {int} bgImageWidth
+     * @param {int} bgImageHeight
      */
-    Line.prototype.updateSvg = function(svgEl) {
+    Line.prototype.updateSvg = function(svgEl, bgImageWidth, bgImageHeight) {
         // Set line attributes.
-        this.drawLine(svgEl);
+        this.drawLine(svgEl, bgImageWidth, bgImageHeight);
 
         // Set start and end circle attributes.
         svgEl.childNodes[1].setAttribute('cx', this.centre1.x);
@@ -188,6 +189,7 @@ define(function() {
             svgEl.childNodes[1].setAttribute('tabindex', '0');
             svgEl.childNodes[2].setAttribute('tabindex', '0');
         }
+        this.updateSvgLabels(svgEl, bgImageWidth, bgImageHeight);
     };
 
     /**
@@ -223,7 +225,6 @@ define(function() {
      * @param {int} bgImageHeight
      */
     Line.prototype.adjustTextPosition = function(svgTextEl, linex, liney, bgImageWidth, bgImageHeight) {
-        // SVG container dimensions
         const padding = 20;
 
         // Text element dimensions.
@@ -250,8 +251,10 @@ define(function() {
      * Update svg line attributes.
      *
      * @param {SVGElement} svgEl the SVG representation of the shape.
+     * @param {int} bgImageWidth
+     * @param {int} bgImageHeight
      */
-    Line.prototype.drawLine = function(svgEl) {
+    Line.prototype.drawLine = function(svgEl, bgImageWidth, bgImageHeight) {
         // Set attributes for the polyline.
         svgEl.childNodes[0].style.stroke = "#000973";
         svgEl.childNodes[0].style['stroke-width'] = "3";
@@ -274,7 +277,7 @@ define(function() {
                 break;
 
             case 'lineinfinite':
-                var newCoordinates = this.drawInfiniteLine(svgEl.parentNode);
+                var newCoordinates = this.drawInfiniteLine(svgEl.parentNode, bgImageWidth, bgImageHeight);
                 var infiniteLine = newCoordinates[0] + "," + newCoordinates[1] +
                     " " + points + " " + newCoordinates[2] + "," + newCoordinates[3];
                 svgEl.childNodes[0].setAttribute('points', infiniteLine);
@@ -287,11 +290,10 @@ define(function() {
      * Get the minimum and maximum endpoints of the line to draw an infinite line.
      *
      * @param {SVGElement} svg the SVG representation of the shape.
+     * @param {int} bgImageWidth
+     * @param {int} bgImageHeight
      */
-    Line.prototype.drawInfiniteLine = function(svg) {
-
-        const width = svg.width.baseVal.value;
-        const height = svg.height.baseVal.value;
+    Line.prototype.drawInfiniteLine = function(svg, bgImageWidth, bgImageHeight) {
 
         // Calculate slope
         const dx = this.centre2.x - this.centre1.x;
@@ -302,36 +304,36 @@ define(function() {
         if (dx === 0) { // Vertical line
             xMin = xMax = this.centre1.x;
             yMin = 0;
-            yMax = height;
+            yMax = bgImageHeight;
         } else if (dy === 0) { // Horizontal line
             xMin = 0;
-            xMax = width;
+            xMax = bgImageWidth;
             yMin = yMax = this.centre1.y;
         } else {
             const slope = dy / dx;
             const intercept = this.centre1.y - slope * this.centre1.x;
 
             // Find intersection points with SVG canvas borders
-            xMin = -width; // Starting far left
+            xMin = -bgImageWidth; // Starting far left
             yMin = slope * xMin + intercept;
 
-            xMax = 2 * width; // Extending far right
+            xMax = 2 * bgImageWidth; // Extending far right
             yMax = slope * xMax + intercept;
 
             // Clamp to canvas height bounds
             if (yMin < 0) {
                 yMin = 0;
                 xMin = (yMin - intercept) / slope;
-            } else if (yMin > height) {
-                yMin = height;
+            } else if (yMin > bgImageHeight) {
+                yMin = bgImageHeight;
                 xMin = (yMin - intercept) / slope;
             }
 
             if (yMax < 0) {
                 yMax = 0;
                 xMax = (yMax - intercept) / slope;
-            } else if (yMax > height) {
-                yMax = height;
+            } else if (yMax > bgImageHeight) {
+                yMax = bgImageHeight;
                 xMax = (yMax - intercept) / slope;
             }
         }
@@ -421,37 +423,26 @@ define(function() {
      * @param {int} dy y offset.
      * @param {int} maxX ensure that after editing, the shape lies between 0 and maxX on the x-axis.
      * @param {int} maxY ensure that after editing, the shape lies between 0 and maxX on the y-axis.
-     * @param {String} whichSVG The svg containing the drag.
      */
-    Line.prototype.moveDrags = function(dx, dy, maxX, maxY, whichSVG) {
-        // If the drags are in the dragHomes then we want to keep the x coordinates fixed.
-        if (whichSVG === 'DragsSVG') {
-            // We don't want to move drags horizontally in this SVG.
-            this.centre1.move(0, dy);
-            this.centre2.move(0, dy);
-            this.centre1.x = 50;
-            this.x1 = 50;
-            this.centre2.x = 200;
-            this.x2 = 200;
-        } else {
-            this.centre1.move(dx, dy);
-            this.centre2.move(dx, dy);
-            if (this.centre1.x < this.startRadius) {
-                this.centre1.x = this.startRadius;
-                this.x1 = this.startRadius;
-            }
-            if (this.centre1.x > maxX - this.startRadius) {
-                this.centre1.x = maxX - this.startRadius;
-                this.x1 = maxX - this.startRadius;
-            }
-            if (this.centre2.x < this.endRadius) {
-                this.centre2.x = this.endRadius;
-                this.x2 = this.endRadius;
-            }
-            if (this.centre2.x > maxX - this.endRadius) {
-                this.centre2.x = maxX - this.endRadius;
-                this.x2 = maxX - this.endRadius;
-            }
+    Line.prototype.moveDrags = function(dx, dy, maxX, maxY) {
+        // Move the lines in the dropzones.
+        this.centre1.move(dx, dy);
+        this.centre2.move(dx, dy);
+        if (this.centre1.x < this.startRadius) {
+            this.centre1.x = this.startRadius;
+            this.x1 = this.startRadius;
+        }
+        if (this.centre1.x > maxX - this.startRadius) {
+            this.centre1.x = maxX - this.startRadius;
+            this.x1 = maxX - this.startRadius;
+        }
+        if (this.centre2.x < this.endRadius) {
+            this.centre2.x = this.endRadius;
+            this.x2 = this.endRadius;
+        }
+        if (this.centre2.x > maxX - this.endRadius) {
+            this.centre2.x = maxX - this.endRadius;
+            this.x2 = maxX - this.endRadius;
         }
         if (this.centre1.y < this.startRadius) {
             this.centre1.y = this.startRadius;
@@ -488,6 +479,8 @@ define(function() {
         let dropzoneNo = selectedElement.getAttribute('data-dropzone-no'),
             classattributes,
             dropZone = false;
+        const initiallinespacing = 25,
+            spacingbetweenlines = 50;
         if (eventType === 'mouse') {
             dropZone = this.isInsideSVG(svgDragsHome, dropX, dropY);
         } else {
@@ -519,11 +512,11 @@ define(function() {
             // We want to drop the lines from the top, depending on the line number.
             // Calculate the position of line drop.
             this.centre1.x = 50;
-            this.centre1.y = this.startRadius + (dropzoneNo * 50);
-            this.y1 = this.startRadius + (dropzoneNo * 50);
+            this.centre1.y = initiallinespacing + (dropzoneNo * spacingbetweenlines);
+            this.y1 = initiallinespacing + (dropzoneNo * spacingbetweenlines);
             this.centre2.x = 200;
-            this.centre2.y = this.endRadius + (dropzoneNo * 50);
-            this.y2 = this.endRadius + (dropzoneNo * 50);
+            this.centre2.y = initiallinespacing + (dropzoneNo * spacingbetweenlines);
+            this.y2 = initiallinespacing + (dropzoneNo * spacingbetweenlines);
 
             // Update the class attributes to 'inactive' if the line is in the svg draghome.
             classattributes = selectedElement.getAttribute('class');
