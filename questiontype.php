@@ -364,4 +364,33 @@ class qtype_drawlines extends question_type {
     public function get_random_guess_score($questiondata) {
         return 0;
     }
+
+    #[\Override]
+    public function get_possible_responses($questiondata) {
+        if ($questiondata->options->grademethod == 'partial') {
+            $partialcredit = 0.5;
+        } else {
+            $partialcredit = 0;
+        }
+        $question = $this->make_question($questiondata);
+        $parts = [];
+        foreach ($question->lines as $lineno => $place) {
+            $coordsstart = explode(';', $question->lines[$lineno]->zonestart);
+            $coordsend = explode(';', $question->lines[$lineno]->zoneend);
+            $parts['Line ' . $place->number . ' (' . $coordsstart[0] . ') (' . $coordsend[0] . ')'] = [
+                1 => new question_possible_response(get_string('valid_startandendcoordinates', 'qtype_drawlines'), 1),
+            ];
+            $parts['Line ' . $place->number . ' (' .$coordsstart[0] . ')'] = [
+                2 => new question_possible_response(get_string('valid_startcoordinates', 'qtype_drawlines'), $partialcredit),
+            ];
+            $parts['Line ' . $place->number . ' (' .$coordsend[0] . ')'] = [
+                3 => new question_possible_response(get_string('valid_endcoordinates', 'qtype_drawlines'), $partialcredit),
+            ];
+            $parts['Line ' . $place->number] = [
+                4 => new question_possible_response(get_string('incorrectresponse', 'qtype_drawlines'), 0),
+                null => question_possible_response::no_response(),
+            ];
+        }
+        return $parts;
+    }
 }

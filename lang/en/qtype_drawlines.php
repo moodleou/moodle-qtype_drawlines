@@ -47,6 +47,7 @@ $string['grademethod_help'] = 'Give partial credit (default): each correct respo
 All or nothing: students must get every response correct, otherwise they score zero.';
 $string['gradepartialcredit'] = 'Give partial credit';
 
+$string['incorrectresponse'] = 'Incorrect response';
 $string['labelend'] = 'End label';
 $string['labelmiddle'] = 'Mid label';
 $string['labelstart'] = 'Start label';
@@ -81,6 +82,10 @@ $string['summariseplaceno'] = 'Drop zone {$a}';
 
 $string['type'] = 'Type';
 $string['type_help'] = 'You can choose whether the line doesn’t have a beginning or end (line), has one or more ends (right, left, and double arrows), or it only matters that the line intersects specific points on the graph (intersect points).';
+
+$string['valid_endcoordinates'] = 'Valid end co-ordinates';
+$string['valid_startandendcoordinates'] = 'Valid start and end co-ordinates';
+$string['valid_startcoordinates'] = 'Valid start co-ordinates';
 
 $string['xleft'] = 'Left';
 

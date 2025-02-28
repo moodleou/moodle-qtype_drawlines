@@ -16,6 +16,7 @@
 
 namespace qtype_drawlines;
 
+use question_possible_response;
 use stdClass;
 use question_bank;
 
@@ -180,7 +181,94 @@ final class questiontype_test extends \advanced_testcase {
         }
     }
 
+    /**
+     * Test get_possible_responses for 'partial' grading method.
+     *
+     * @covers \qtype_drawlines::get_possible_responses
+     */
+    public function test_get_possible_responses_partial(): void {
+        $this->resetAfterTest(false);
+        $this->setAdminUser();
+        $generator = $this->getDataGenerator()->get_plugin_generator('core_question');
+        $category = $generator->create_question_category([]);
+        $createdquestion = $generator->create_question('drawlines', 'mkmap_twolines',
+            ['category' => $category->id, 'name' => 'Test question', 'grademethod' => 'partial']);
+        $q = question_bank::load_question_data($createdquestion->id);
+        $this->assertEquals([
+            'Line 1 (10,10) (10,200)' => [
+                1 => new question_possible_response(get_string('valid_startandendcoordinates', 'qtype_drawlines'), 1),
+            ],
+            'Line 1 (10,10)' => [
+                2 => new question_possible_response(get_string('valid_startcoordinates', 'qtype_drawlines'), 0.5),
+            ],
+            'Line 1 (10,200)' => [
+                3 => new question_possible_response(get_string('valid_endcoordinates', 'qtype_drawlines'), 0.5),
+            ],
+            'Line 1' => [
+                4 => new question_possible_response('Incorrect response', 0),
+                null => question_possible_response::no_response(),
+            ],
+            'Line 2 (300,10) (300,200)' => [
+                1 => new question_possible_response(get_string('valid_startandendcoordinates', 'qtype_drawlines'), 1),
+            ],
+            'Line 2 (300,10)' => [
+                2 => new question_possible_response(get_string('valid_startcoordinates', 'qtype_drawlines'), 0.5),
+            ],
+            'Line 2 (300,200)' => [
+                3 => new question_possible_response(get_string('valid_endcoordinates', 'qtype_drawlines'), 0.5),
+            ],
+             'Line 2' => [
+                 4 => new question_possible_response('Incorrect response', 0),
+                null => question_possible_response::no_response(),
+             ],
+        ], $this->qtype->get_possible_responses($q));
+    }
+
+    /**
+     * Test get_possible_responses for 'All-or-nothing' grading method.
+     *
+     * @covers \qtype_drawlines::get_possible_responses
+     */
+    public function test_get_possible_responses_allornone(): void {
+        $this->resetAfterTest(false);
+        $this->setAdminUser();
+        $generator = $this->getDataGenerator()->get_plugin_generator('core_question');
+        $category = $generator->create_question_category([]);
+        $createdquestion = $generator->create_question('drawlines', 'mkmap_twolines',
+            ['category' => $category->id, 'name' => 'Test question', 'grademethod' => 'allornone']);
+        $q = question_bank::load_question_data($createdquestion->id);
+        $this->assertEquals([
+            'Line 1 (10,10) (10,200)' => [
+                1 => new question_possible_response(get_string('valid_startandendcoordinates', 'qtype_drawlines'), 1),
+            ],
+            'Line 1 (10,10)' => [
+                2 => new question_possible_response(get_string('valid_startcoordinates', 'qtype_drawlines'), 0),
+            ],
+            'Line 1 (10,200)' => [
+                3 => new question_possible_response(get_string('valid_endcoordinates', 'qtype_drawlines'), 0),
+            ],
+            'Line 1' => [
+                4 => new question_possible_response('Incorrect response', 0),
+                null => question_possible_response::no_response(),
+            ],
+            'Line 2 (300,10) (300,200)' => [
+                1 => new question_possible_response(get_string('valid_startandendcoordinates', 'qtype_drawlines'), 1),
+            ],
+            'Line 2 (300,10)' => [
+                2 => new question_possible_response(get_string('valid_startcoordinates', 'qtype_drawlines'), 0),
+            ],
+            'Line 2 (300,200)' => [
+                3 => new question_possible_response(get_string('valid_endcoordinates', 'qtype_drawlines'), 0),
+            ],
+            'Line 2' => [
+                4 => new question_possible_response('Incorrect response', 0),
+                null => question_possible_response::no_response(),
+            ],
+        ], $this->qtype->get_possible_responses($q));
+    }
+
     public function test_get_random_guess_score(): void {
+        $this->resetAfterTest();
         $qdata = \test_question_maker::get_question_data('drawlines', 'mkmap_twolines');
         $this->assertEquals(0, $this->qtype->get_random_guess_score($qdata));
     }
