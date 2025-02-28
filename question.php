@@ -151,37 +151,12 @@ class qtype_drawlines_question extends question_graded_automatically {
         $numpartright = 0;
         foreach ($this->lines as $key => $line) {
             if (array_key_exists($this->field($key), $response) && $response[$this->field($key)] !== '') {
-                $coords = explode(' ', $response[$this->field($key)]);
-                if ($line->type === line::TYPE_LINE_INFINITE) {
-                    if (count($coords) == 2) {
-                        // Response with 2 coordinates (x1,y1 x2,y2).
-                        if (line::is_item_positioned_correctly_on_axis(
-                                $coords[0], $line->zonestart, $line->zoneend, 'start')) {
-                            $numpartright++;
-                        }
-                        if (line::is_item_positioned_correctly_on_axis(
-                                $coords[1], $line->zonestart, $line->zoneend, 'end')) {
-                            $numpartright++;
-                        }
-                    } else {
-                        // Response has 4 coordinates(x1,y1 x2,y2 x3,y3 x4,y4).
-                        // Here we need to consider x2,y2 x3,y3 for calculation.
-                        if (line::is_item_positioned_correctly_on_axis(
-                                $coords[1], $line->zonestart, $line->zoneend, 'start')) {
-                            $numpartright++;
-                        }
-                        if (line::is_item_positioned_correctly_on_axis(
-                                $coords[2], $line->zonestart, $line->zoneend, 'end')) {
-                            $numpartright++;
-                        }
-                    }
-                } else {
-                    if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart)) {
-                        $numpartright++;
-                    }
-                    if (line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
-                        $numpartright++;
-                    }
+                [$isstartrightplace, $isendrightplace] = $this->is_line_correctly_placed($response[$this->field($key)], $key);
+                if ($isstartrightplace) {
+                    $numpartright++;
+                }
+                if ($isendrightplace) {
+                    $numpartright++;
                 }
             }
         }
@@ -202,39 +177,50 @@ class qtype_drawlines_question extends question_graded_automatically {
         $numright = 0;
         foreach ($this->lines as $key => $line) {
             if (array_key_exists($this->field($key), $response) && $response[$this->field($key)] !== '') {
-                $coords = explode(' ', $response[$this->field($key)]);
-                if ($line->type == line::TYPE_LINE_INFINITE) {
-                    if (count($coords) == 2) {
-                        // Response with 2 coordinates (x1,y1 x2,y2 x3,y3 x4,y4).
-                        $isstartrightplace = line::is_item_positioned_correctly_on_axis(
-                            $coords[0], $line->zonestart, $line->zoneend, 'start'
-                        );
-                        $isendrightplace = line::is_item_positioned_correctly_on_axis(
-                            $coords[1], $line->zonestart, $line->zoneend, 'end'
-                        );
-                    } else {
-                        // Response has 4 coordinates(x1,y1 x2,y2 x3,y3 x4,y4).
-                        // Here we need to consider x2,y2 x3,y3 for calculation.
-                        $isstartrightplace = line::is_item_positioned_correctly_on_axis(
-                            $coords[1], $line->zonestart, $line->zoneend, 'start'
-                        );
-                        $isendrightplace = line::is_item_positioned_correctly_on_axis(
-                            $coords[2], $line->zonestart, $line->zoneend, 'end'
-                        );
-                    }
-                    if ($isstartrightplace && $isendrightplace) {
-                        $numright++;
-                    }
-                } else {
-                    if (line::is_dragitem_in_the_right_place($coords[0], $line->zonestart) &&
-                            line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
-                        $numright++;
-                    }
+                [$isstartrightplace, $isendrightplace] = $this->is_line_correctly_placed($response[$this->field($key)], $key);
+                if ($isstartrightplace && $isendrightplace) {
+                    $numright++;
                 }
             }
         }
         $total = count($this->lines);
         return [$numright, $total];
+    }
+
+    /**
+     * Get the number of correct choices selected in the response.
+     *
+     * @param string $response The response string.
+     * @param int $key the question line number to compare with.
+     * @return array Returns an array of bools true if the line end points are correctly answered.
+     */
+    public function is_line_correctly_placed(string $response, $key): array {
+        $coords = explode(' ', $response);
+        $line = $this->lines[$key];
+        if ($line->type == line::TYPE_LINE_INFINITE) {
+            if (count($coords) == 2) {
+                // Response with 2 coordinates (x1,y1 x2,y2 x3,y3 x4,y4).
+                $isstartrightplace = line::is_item_positioned_correctly_on_axis(
+                        $coords[0], $line->zonestart, $line->zoneend, 'start'
+                );
+                $isendrightplace = line::is_item_positioned_correctly_on_axis(
+                        $coords[1], $line->zonestart, $line->zoneend, 'end'
+                );
+            } else {
+                // Response has 4 coordinates(x1,y1 x2,y2 x3,y3 x4,y4).
+                // Here we need to consider x2,y2 x3,y3 for calculation.
+                $isstartrightplace = line::is_item_positioned_correctly_on_axis(
+                        $coords[1], $line->zonestart, $line->zoneend, 'start'
+                );
+                $isendrightplace = line::is_item_positioned_correctly_on_axis(
+                        $coords[2], $line->zonestart, $line->zoneend, 'end'
+                );
+            }
+        } else {
+            $isstartrightplace = line::is_dragitem_in_the_right_place($coords[0], $line->zonestart);
+            $isendrightplace = line::is_dragitem_in_the_right_place($coords[1], $line->zoneend);
+        }
+        return [$isstartrightplace, $isendrightplace];
     }
 
     #[\Override]
@@ -263,23 +249,47 @@ class qtype_drawlines_question extends question_graded_automatically {
 
     #[\Override]
     public function classify_response(array $response) {
-        $classifiedresponse = [];
+        if ($this->grademethod == 'partial') {
+            $partialcredit = 0.5;
+        } else {
+            $partialcredit = 0;
+        }
         foreach ($this->lines as $key => $line) {
+            $quelinecoordsstart = explode(';', $line->zonestart);
+            $quelinecoordsend = explode(';', $line->zoneend);
             if (array_key_exists($this->field($key), $response) && $response[$this->field($key)] !== '') {
-                if ($this->grademethod == 'partial') {
-                    $fraction = 0.5;
+                [$startcoordsmatched, $endcoordsmatched] = $this->is_line_correctly_placed($response[$this->field($key)], $key);
+                if ($startcoordsmatched && $endcoordsmatched) {
+                    $classifiedresponse['Line ' . $line->number . ' (' . $quelinecoordsstart[0] . ') (' .
+                            $quelinecoordsend[0] . ')'] =
+                        new question_classified_response(1, get_string('valid_startandendcoordinates', 'qtype_drawlines'), 1);
+                } else if ($startcoordsmatched) {
+                    $classifiedresponse['Line ' . $line->number . ' (' . $quelinecoordsstart[0] . ')'] =
+                        new question_classified_response(2, get_string('valid_startcoordinates', 'qtype_drawlines'),
+                                $partialcredit);
+                } else if ($endcoordsmatched) {
+                    $classifiedresponse['Line ' . $line->number . ' (' . $quelinecoordsend[0] . ')'] =
+                        new question_classified_response(3, get_string('valid_endcoordinates', 'qtype_drawlines'), $partialcredit);
                 } else {
-                    $fraction = 1;
+                    $classifiedresponse['Line ' . $line->number] =
+                        new question_classified_response(4, get_string('incorrectresponse', 'qtype_drawlines'), 0);
                 }
-                $classifiedresponse[$key] = new question_classified_response(
-                        $line->number,
-                        'Line ' . $line->number . ': ' . $response[$this->field($key)],
-                        $fraction);
             } else {
-                $classifiedresponse[$key] = question_classified_response::no_response();
+                $classifiedresponse['Line ' . $line->number] = question_classified_response::no_response();
             }
         }
         return $classifiedresponse;
+    }
+
+    #[\Override]
+    public function prepare_simulated_post_data($simulatedresponse): array {
+        $postdata = [];
+        foreach ($this->lines as $key => $line) {
+            if (isset($simulatedresponse[$key])) {
+                $postdata[$this->field($key)] = $simulatedresponse[$key];
+            }
+        }
+        return $postdata;
     }
 
     #[\Override]

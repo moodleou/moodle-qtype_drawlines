@@ -37,7 +37,7 @@ require_once($CFG->dirroot . '/question/type/drawlines/question.php');
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers \qtype_drawlines_question
  */
-final class question_test extends \basic_testcase {
+final class question_test extends \advanced_testcase {
 
     /** @var string Line1 right start. */
     const L1_RIGHT_START = '10,10';
@@ -480,5 +480,139 @@ final class question_test extends \basic_testcase {
         } else {
             $this->assertEquals($expected, $fraction);
         }
+    }
+
+    public function test_prepare_simulated_post_data(): void {
+        $this->resetAfterTest();
+        $question = \test_question_maker::make_question('drawlines');
+        $question->start_attempt(new question_attempt_step(), 1);
+
+        $response = ['0' => "10 10 300,10", '1' => "10,200 300,200"];
+        $expected = ['c0' => "10 10 300,10", 'c1' => "10,200 300,200"];
+        $this->assertEquals($expected, $question->prepare_simulated_post_data($response));
+
+        $response = ['0' => "10 10 300,10"];
+        $expected = ['c0' => "10 10 300,10"];
+        $this->assertEquals($expected, $question->prepare_simulated_post_data($response));
+
+        $response = ['1' => "10,200 300,200"];
+        $expected = ['c1' => "10,200 300,200"];
+        $this->assertEquals($expected, $question->prepare_simulated_post_data($response));
+    }
+
+    /**
+     * Test classify response for 'partial' grading method.
+     */
+    public function test_classify_response_partial(): void {
+        $l1rightstart = self::L1_RIGHT_START;
+        $l1wrongstart = self::L1_WRONG_START;
+        $l1rightend = self::L1_RIGHT_END;
+        $l1wrongend = self::L1_WRONG_END;
+
+        $l2rightstart = self::L2_RIGHT_START;
+        $l2wrongstart = self::L2_WRONG_START;
+        $l2rightend = self::L2_RIGHT_END;
+        $l2wrongend = self::L2_WRONG_END;
+        $this->resetAfterTest();
+        $question = \test_question_maker::make_question('drawlines');
+        $question->start_attempt(new question_attempt_step(), 1);
+
+        // All sub-questions are answered correctly.
+        $response = $question->prepare_simulated_post_data(
+            ['0' => "$l1rightstart $l1rightend", '1' => "$l2rightstart $l2rightend"]);
+        $this->assertEquals([
+            "Line 1 ($l1rightstart) ($l1rightend)" => new question_classified_response(
+                1, get_string('valid_startandendcoordinates', 'qtype_drawlines'), 1),
+            "Line 2 ($l2rightstart) ($l2rightend)" => new question_classified_response(
+                1, get_string('valid_startandendcoordinates', 'qtype_drawlines'), 1),
+        ], $question->classify_response($response));
+
+        // Two co-ordinates are answered correctly and two incorrectly.
+        $response = $question->prepare_simulated_post_data(
+            ['0' => "$l1rightstart $l1wrongend", '1' => "$l2wrongstart $l2rightend"]);
+        $this->assertEquals([
+            "Line 1 ($l1rightstart)" => new question_classified_response(
+                2, get_string('valid_startcoordinates', 'qtype_drawlines'), 0.5),
+            "Line 2 ($l2rightend)" => new question_classified_response(
+                3, get_string('valid_endcoordinates', 'qtype_drawlines'), 0.5),
+        ], $question->classify_response($response));
+
+        // Three coordinates are incorrectly answered.
+        $response = $question->prepare_simulated_post_data(
+            ['0' => "$l1wrongstart $l1rightend", '1' => "$l2wrongstart $l2wrongend"]);
+        $this->assertEquals([
+            "Line 1 ($l1rightend)" => new question_classified_response(
+                3, get_string('valid_endcoordinates', 'qtype_drawlines'), 0.5),
+            "Line 2" => new question_classified_response(
+                4, get_string('incorrectresponse', 'qtype_drawlines'), 0),
+        ], $question->classify_response($response));
+
+        // One sub-questions is answered correctly, and the second sub-question is not answered.
+        $response = $question->prepare_simulated_post_data(['0' => "$l1rightstart $l1rightend"]);
+        $this->assertEquals([
+            "Line 1 ($l1rightstart) ($l1rightend)" => new question_classified_response(
+                1, get_string('valid_startandendcoordinates', 'qtype_drawlines'), 1),
+            "Line 2" => new question_classified_response(
+                null, '[No response]', 0),
+        ], $question->classify_response($response));
+    }
+
+    /**
+     * Test classify response for 'All-or-nothing' grading method.
+     */
+    public function test_classify_response_allornone(): void {
+        $l1rightstart = self::L1_RIGHT_START;
+        $l1wrongstart = self::L1_WRONG_START;
+        $l1rightend = self::L1_RIGHT_END;
+        $l1wrongend = self::L1_WRONG_END;
+
+        $l2rightstart = self::L2_RIGHT_START;
+        $l2wrongstart = self::L2_WRONG_START;
+        $l2rightend = self::L2_RIGHT_END;
+        $l2wrongend = self::L2_WRONG_END;
+        $this->resetAfterTest();
+        $question = \test_question_maker::make_question('drawlines');
+        $question->grademethod = 'allornone';
+        $question->start_attempt(new question_attempt_step(), 1);
+
+        // All sub-questions are answered correctly.
+        $response = $question->prepare_simulated_post_data(
+            ['0' => "$l1rightstart $l1rightend", '1' => "$l2rightstart $l2rightend"]);
+        $this->assertEquals([
+            "Line 1 ($l1rightstart) ($l1rightend)" => new question_classified_response(
+                1, get_string('valid_startandendcoordinates', 'qtype_drawlines'), 1),
+            "Line 2 ($l2rightstart) ($l2rightend)" => new question_classified_response(
+                1, get_string('valid_startandendcoordinates', 'qtype_drawlines'), 1),
+        ], $question->classify_response($response));
+
+        // Two co-ordinates are answered correctly and two incorrectly.
+        $response = $question->prepare_simulated_post_data(
+            ['0' => "$l1rightstart $l1wrongend", '1' => "$l2wrongstart $l2rightend"]);
+        $this->assertEquals([
+            "Line 1 ($l1rightstart)" => new question_classified_response(
+                2, get_string('valid_startcoordinates', 'qtype_drawlines'), 0),
+            "Line 2 ($l2rightend)" => new question_classified_response(
+                3, get_string('valid_endcoordinates', 'qtype_drawlines'), 0),
+        ], $question->classify_response($response));
+
+        // Three co-ordinates are incorrectly answered.
+        $response = $question->prepare_simulated_post_data(
+            ['0' => "$l1wrongstart $l1rightend", '1' => "$l2wrongstart $l2wrongend"]);
+        $this->assertEquals([
+            "Line 1 ($l1rightend)" => new question_classified_response(
+                3, get_string('valid_endcoordinates', 'qtype_drawlines'), 0),
+            "Line 2" => new question_classified_response(
+                4, get_string('incorrectresponse', 'qtype_drawlines'), 0),
+        ], $question->classify_response($response));
+
+        // One sub-question is answered correctly, and the second sub-question is not answered.
+        $response = $question->prepare_simulated_post_data(
+            ['0' => "$l1rightstart $l1rightend"]);
+        $this->assertEquals([
+            "Line 1 ($l1rightstart) ($l1rightend)" => new question_classified_response(
+                1, get_string('valid_startandendcoordinates', 'qtype_drawlines'), 1),
+            "Line 2" => new question_classified_response(
+                null, '[No response]', 0),
+        ], $question->classify_response($response));
     }
 }
