@@ -91,6 +91,28 @@ Feature: Test creating a draw lines question
     Then I should see "Drawlines02"
 
   @javascript @_file_upload
+  Scenario: Verify that the coordinates of the lines are correctly set
+    Given I am on the "Course 1" "core_question > course question bank" page logged in as teacher
+    When I press "Create a new question ..."
+    And I set the field "Draw lines" to "1"
+    And I click on "Add" "button" in the "Choose a question type to add" "dialogue"
+    And I should see "Adding a Draw lines question"
+    And I expand all fieldsets
+    And I upload "question/type/drawlines/tests/fixtures/mkmap.png" file to "Background image" filemanager
+    And I click on "id_addlines" "button"
+    And I expand all fieldsets
+
+    And I set the following fields to these values:
+      | id_type_0      | lineinfinite |
+      | id_zonestart_0 | 10,10;10     |
+      | id_zoneend_0   | 200,10;10    |
+      | id_type_1      | linesegment  |
+      | id_zonestart_1 | 50,90;10     |
+      | id_zoneend_1   | 180,20;10    |
+    Then "//*[name()='svg']/*[name()='g' and @data-dropzone-no='0']/*[name()='polyline' and @points='0,10 10,10 200,10 544,10']" "xpath_element" should exist
+    And "//*[name()='svg']/*[name()='g' and @data-dropzone-no='1']/*[name()='polyline' and @points='50,90 180,20']" "xpath_element" should exist
+
+  @javascript @_file_upload
   Scenario: Selecting a line type, should display a line on the background image with default start and end coordinates
     Given I am on the "Course 1" "core_question > course question bank" page logged in as teacher
     And I press "Create a new question ..."
