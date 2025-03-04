@@ -177,8 +177,7 @@ define(['jquery', 'core/dragdrop', 'qtype_drawlines/line'], function($, dragDrop
             return;
         }
         var img = document.querySelector('fieldset#id_previewareaheader .dropbackground');
-        this.line.updateSvg(this.svgEl);
-        this.line.updateSvgLabels(this.svgEl, img.naturalWidth, img.naturalHeight);
+        this.line.updateSvg(this.svgEl, img.naturalWidth, img.naturalHeight);
 
         // Adjust handles.
         var handles = this.line.getHandlePositions();
