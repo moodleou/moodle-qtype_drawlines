@@ -14,7 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * Draw lines question qtype_drawlines class.
+ *
+ * @package   qtype_drawlines
+ * @copyright 2024 The Open University
+ * @author    The Open University
+ * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 use qtype_drawlines\line;
+
+defined('MOODLE_INTERNAL') || die();
+require_once($CFG->libdir.'/questionlib.php');
 
 /**
  * The Draw lines question type class.
@@ -64,7 +76,7 @@ class qtype_drawlines extends question_type {
             $options->questionid = $fromform->id;
         }
         $options->grademethod = $fromform->grademethod ?? get_config('qtype_drawlines', 'grademethod');
-        $options->shownumcorrect = !empty($formdata->shownumcorrect);
+        $options->shownumcorrect = !empty($formdata->shownumcorrect) ? 1 : 0;
         $options->showmisplaced = !empty($formdata->showmisplaced);
         $options = $this->save_combined_feedback_helper($options, $fromform, $context, true);
         $DB->insert_record('qtype_drawlines_options', $options);
@@ -115,32 +127,28 @@ class qtype_drawlines extends question_type {
         }
 
         if ($withparts) {
-            if (!empty($fromform->hintclearwrong)) {
-                $numclears = max(array_keys($fromform->hintclearwrong)) + 1;
-            } else {
-                $numclears = 0;
-            }
             if (!empty($fromform->hintshownumcorrect)) {
                 $numshows = max(array_keys($fromform->hintshownumcorrect)) + 1;
             } else {
                 $numshows = 0;
             }
-            $numhints = max($numhints, $numclears, $numshows);
+            if (!empty($fromform->hintshowmisplaced)) {
+                $nummisplaced = max(array_keys($fromform->hintshowmisplaced)) + 1;
+            } else {
+                $nummisplaced = 0;
+            }
+            $numhints = max($numhints, $nummisplaced, $numshows);
         }
-
         for ($i = 0; $i < $numhints; $i += 1) {
             if (html_is_blank($fromform->hint[$i]['text'])) {
                 $fromform->hint[$i]['text'] = '';
             }
 
             if ($withparts) {
-                $clearwrong = !empty($fromform->hintclearwrong[$i]);
                 $shownumcorrect = !empty($fromform->hintshownumcorrect[$i]);
-                $statewhichincorrect = !empty($fromform->hintoptions[$i]);
+                $showmisplaced = !empty($fromform->hintshowmisplaced[$i]);
             }
-
-            if (empty($fromform->hint[$i]['text']) && empty($clearwrong) &&
-                    empty($shownumcorrect) && empty($statewhichincorrect)) {
+            if (empty($fromform->hint[$i]['text']) && empty($shownumcorrect) && empty($showmisplaced)) {
                 continue;
             }
 
@@ -157,9 +165,8 @@ class qtype_drawlines extends question_type {
                     $context, 'question', 'hint', $hint->id);
             $hint->hintformat = $fromform->hint[$i]['format'];
             if ($withparts) {
-                $hint->clearwrong = $clearwrong;
                 $hint->shownumcorrect = $shownumcorrect;
-                $hint->options = $statewhichincorrect;
+                $hint->options = $showmisplaced;
             }
             $DB->update_record('question_hints', $hint);
         }
@@ -209,6 +216,11 @@ class qtype_drawlines extends question_type {
         return new line($line->id, $line->questionid, $line->number, $line->type,
                 $line->labelstart, $line->labelmiddle, $line->labelend,
                 $line->zonestart, $line->zoneend);
+    }
+
+    #[\Override]
+    protected function make_hint($hint) {
+        return question_hint_drawlines::load_from_record($hint);
     }
 
     #[\Override]
@@ -392,5 +404,46 @@ class qtype_drawlines extends question_type {
             ];
         }
         return $parts;
+    }
+}
+
+/**
+ * Question hint for drawlines.
+ * An extension of {@link question_hint} for questions like match and multiple
+ * choice with multiple answers, where there are options for whether to show the
+ * number of parts right at each stage, and to reset the wrong parts.
+ *
+ * @package   qtype_drawlines
+ * @copyright  2025 The Open University
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+class question_hint_drawlines extends question_hint_with_parts {
+
+    /** @var bool option to display the parts of the question that were wrong on retry.*/
+    public $showmisplaced;
+
+    /**
+     * Constructor.
+     * @param int the hint id from the database.
+     * @param string $hint The hint text
+     * @param int the corresponding text FORMAT_... type.
+     * @param bool $shownumcorrect whether the number of right parts should be shown
+     * @param bool $clearwrong whether the wrong parts should be reset.
+     * @param bool $showmisplaced whether the show the wrong parts.
+     */
+    public function __construct($id, $hint, $hintformat, $shownumcorrect,
+            $clearwrong, $showmisplaced) {
+        parent::__construct($id, $hint, $hintformat, $shownumcorrect, $clearwrong);
+        $this->showmisplaced = $showmisplaced;
+    }
+
+    /**
+     * Create a basic hint from a row loaded from the question_hints table in the database.
+     * @param object $row with property options as well as hint, shownumcorrect and clearwrong set.
+     * @return question_hint_drawlines
+     */
+    public static function load_from_record($row) {
+        return new question_hint_drawlines($row->id, $row->hint, $row->hintformat,
+                $row->shownumcorrect, $row->clearwrong, $row->options);
     }
 }

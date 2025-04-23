@@ -64,4 +64,4 @@ Feature: Test duplicating a course containing a draw lines question
     And I click on "Multiple tries" "link"
     And the following fields match these values:
       | Hint 1 | You are trying to draw 2 lines by placing the start and end markers for each line on the map.   |
-      | Hint 2 | You have to find the positins for start and end of each line as described in the question text. |
+      | Hint 2 | You have to find the positions for start and end of each line as described in the question text. |

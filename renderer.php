@@ -164,7 +164,10 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
 
     #[\Override]
     public function specific_feedback(question_attempt $qa) {
-        return $this->combined_feedback($qa);
+        $output = '';
+        $output .= $this->combined_feedback($qa);
+        $hint = $qa->get_applicable_hint();
+        return $output;
     }
 
     #[\Override]
@@ -193,6 +196,72 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
         return $this->correct_choices($rightanswers);
     }
 
+    #[\Override]
+    protected function hint(question_attempt $qa, question_hint $hint) {
+        $output = '';
+        $question = $qa->get_question();
+        $response = $qa->get_last_qt_data();
+        $grademethod = $qa->get_question()->grademethod;
+        // Accumulate the wrong coords for each lines to be displayed and hint options.
+        $wrongcoords = [];
+        if ($hint->showmisplaced) {
+            foreach ($question->lines as $key => $line) {
+                if (in_array($question->field($key), array_keys($response))) {
+                    $coords = explode(' ', $response[$question->field($key)]);
+                    if ($question->grademethod === 'partial') {
+                        // Label the line.
+                        $linelabelstart = null;
+                        $linelabelend = null;
+                        if (!line::is_dragitem_in_the_right_place($coords[0], $line->zonestart)) {
+                            $linelabelstart = ' Line ' . $line->number;
+                            $wrongcoords[] = html_writer::tag('span', $linelabelstart .
+                                ' start(' . $coords[0] . ')', ['class' => 'misplaced']);
+                        }
+                        if (!line::is_dragitem_in_the_right_place($coords[1], $line->zoneend)) {
+                            if (is_null($linelabelstart)) {
+                                // Do not repeat the line number for the end-prt of the line coordinates.
+                                $linelabelend = ' Line ' . $line->number;
+                            }
+                            $wrongcoords[] = html_writer::tag('span', $linelabelend .
+                                ' end(' . $coords[1] . ')', ['class' => 'misplaced']);
+                        }
+                    } else {
+                        if (!(line::is_dragitem_in_the_right_place($coords[0], $line->zonestart) &&
+                            line::is_dragitem_in_the_right_place($coords[1], $line->zoneend))) {
+                            $wrongcoords[] = html_writer::tag('span', ' Line ' . $line->number .
+                                ' start(' . $coords[0] . ') end(' . $coords[1] . ')', ['class' => 'misplaced']);
+                        }
+                    }
+                }
+            }
+            if (empty($wrongcoords)) {
+                $output .= '';
+            } else if (count($wrongcoords) === 1) {
+                if ($grademethod === 'partial') {
+                    $output .= html_writer::tag('div',
+                        get_string('showmisplacedcoordinate', 'qtype_drawlines', implode($wrongcoords)),
+                        ['class' => 'misplacedinfo']);
+                } else {
+                    $output .= html_writer::tag('div',
+                        get_string('showmisplacedline', 'qtype_drawlines', implode($wrongcoords)),
+                        ['class' => 'misplacedinfo']);
+                }
+            } else {
+                if ($grademethod === 'partial') {
+                    $output .= html_writer::tag('div',
+                        get_string('showmisplacedcoordinates', 'qtype_drawlines', implode(',', $wrongcoords)),
+                        ['class' => 'misplacedinfo']);
+                } else {
+                    $output .= html_writer::tag('div',
+                        get_string('showmisplacedlines', 'qtype_drawlines', implode(',', $wrongcoords)),
+                        ['class' => 'misplacedinfo']);
+                }
+            }
+        }
+        $output .= parent::hint($qa, $hint);
+        return $output;
+    }
+
     /**
      * Function returns string based on number of correct answers.
      *
@@ -214,16 +283,29 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
     #[\Override]
     protected function num_parts_correct(question_attempt $qa): string {
         $a = new stdClass();
-        list($a->num, $a->outof) = $qa->get_question()->get_num_parts_right(
-                $qa->get_last_qt_data());
-        if (is_null($a->outof)) {
+        $grademethod = $qa->get_question()->grademethod;
+        if ($grademethod === 'partial') {
+            [$a->num, $a->outof] = $qa->get_question()->get_num_parts_right_grade_partial($qa->get_last_qt_data());
+        } else {
+            [$a->num, $a->outof] = $qa->get_question()->get_num_parts_right_grade_allornone($qa->get_last_qt_data());
+        }
+        if ($a->num === 0 || is_null($a->outof)) {
             return '';
-        } else if ($a->num == 1) {
-            return html_writer::tag('p', get_string('yougot1right', 'qtype_drawlines'));
+        }
+        if ($a->num == 1) {
+            if ($grademethod === 'partial') {
+                return html_writer::tag('p', get_string('yougot1right', 'qtype_drawlines', $a));
+            } else {
+                return html_writer::tag('p', get_string('yougot1rightline', 'qtype_drawlines', $a));
+            }
         } else {
             $f = new NumberFormatter(current_language(), NumberFormatter::SPELLOUT);
             $a->num = $f->format($a->num);
-            return html_writer::tag('p', get_string('yougotnright', 'qtype_drawlines', $a));
+            if ($grademethod === 'partial') {
+                return html_writer::tag('p', get_string('yougotnright', 'qtype_drawlines', $a));
+            } else {
+                return html_writer::tag('p', get_string('yougotnrightline', 'qtype_drawlines', $a));
+            }
         }
     }
 }

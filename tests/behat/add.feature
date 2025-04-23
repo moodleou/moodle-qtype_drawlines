@@ -43,7 +43,11 @@ Feature: Test creating a draw lines question
       | For any partially correct response | Partially correct feedback. |
       | For any incorrect response         | Incorrect feedback.         |
       | Hint 1                             | First hint                  |
+      | id_hintshownumcorrect_0            | 1                           |
+      | id_hintshowmisplaced_0             | 0                           |
       | Hint 2                             | Second hint                 |
+      | id_hintshownumcorrect_1            | 1                           |
+      | id_hintshowmisplaced_1             | 1                           |
     When I click on "id_submitbutton" "button"
     Then I should see "Drawlines01"
 
@@ -85,8 +89,11 @@ Feature: Test creating a draw lines question
       | For any partially correct response | Partially correct feedback. |
       | For any incorrect response         | Incorrect feedback.         |
       | Hint 1                             | First hint                  |
+      | id_hintshownumcorrect_0            | 1                           |
+      | id_hintshowmisplaced_0             | 1                           |
       | Hint 2                             | Second hint                 |
-
+      | id_hintshownumcorrect_1            | 0                           |
+      | id_hintshowmisplaced_1             | 1                           |
     When I click on "id_submitbutton" "button"
     Then I should see "Drawlines02"
 

@@ -172,11 +172,11 @@ class qtype_drawlines_edit_form extends question_edit_form {
     /**
      * Create the form elements required by one hint.
      *
-     * @param string $withclearwrong whether this quesiton type uses the 'Clear wrong' option on hints.
+     * @param string $withshowmisplaced whether this quesiton type uses the 'show misplaced' option on hints.
      * @param string $withshownumpartscorrect whether this quesiton type uses the 'Show num parts correct' option on hints.
      * @return array form field elements for one hint.
      */
-    protected function get_hint_fields($withclearwrong = false, $withshownumpartscorrect = false) {
+    protected function get_hint_fields($withshowmisplaced = true, $withshownumpartscorrect = false) {
         $mform = $this->_form;
 
         $repeated = [];
@@ -187,7 +187,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
         $repeated[] = $mform->createElement('checkbox', 'hintshownumcorrect',
                 get_string('options', 'question'),
                 get_string('shownumpartscorrect', 'question'));
-        $repeated[] = $mform->createElement('checkbox', 'hintoptions', '',
+        $repeated[] = $mform->createElement('checkbox', 'hintshowmisplaced', '',
                 get_string('showmisplaced', 'qtype_' . $this->qtype()));
 
         return [$repeated, $repeatedoptions];
@@ -256,16 +256,17 @@ class qtype_drawlines_edit_form extends question_edit_form {
     }
 
     #[\Override]
-    protected function data_preprocessing_hints($question, $withclearwrong = false,
-            $withshownumpartscorrect = false) {
+    protected function data_preprocessing_hints($question, $withshowmisplaced = false,
+                                                $withshownumpartscorrect = false) {
         if (empty($question->hints)) {
             return $question;
         }
-        parent::data_preprocessing_hints($question, $withclearwrong, $withshownumpartscorrect);
+        parent::data_preprocessing_hints($question, false, $withshownumpartscorrect);
 
-        $question->hintoptions = [];
-        foreach ($question->hints as $hint) {
-            $question->hintoptions[] = $hint->options;
+        foreach ($question->hints as $key => $hint) {
+            if ($withshowmisplaced) {
+                $question->hintshowmisplaced[] = $hint->options;
+            }
         }
 
         return $question;
