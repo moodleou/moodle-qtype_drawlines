@@ -31,8 +31,8 @@ $string['correctansweris'] = 'The correct answer is: {$a}';
 $string['correctanswersare'] = 'The correct answers are: {$a}';
 $string['dropbackground'] = 'Background image for Draw lines';
 
-$string['formerror_nobgimage'] = 'You need to select an image to use as the background for the drag and drop area.';
 $string['formerror_invalidimagesize'] = 'Image file should not be larger than 600x600 px. The uploaded image file size is {$a->width}x{$a->height} px.';
+$string['formerror_nobgimage'] = 'You need to select an image to use as the background for the drag and drop area.';
 $string['formerror_nolines'] = 'You need to expand \'Line 1\' and fill the form for it';
 $string['formerror_notype'] = 'You have to select a type for Line {$a}';
 $string['formerror_zoneend'] = 'End zone coordinates should be in x,y;r format, where x,y are the coordinates of the centre of a circle and r is the radius.';
@@ -75,6 +75,10 @@ $string['privacy:preference:penalty'] = 'The penalty for each incorrect try when
 $string['refresh'] = 'Refresh preview';
 
 $string['showmisplaced'] = 'State which zones are incorrectly placed';
+$string['showmisplacedcoordinate'] = 'The coordinate {$a} is placed incorrectly.';
+$string['showmisplacedcoordinates'] = 'The coordinates {$a} are placed incorrectly.';
+$string['showmisplacedline'] = 'The {$a} is placed incorrectly.';
+$string['showmisplacedlines'] = 'The {$a} are placed incorrectly.';
 $string['summarisechoice'] = '{$a->no}. {$a->text}';
 $string['summarisechoiceno'] = 'Item {$a}';
 $string['summariseplace'] = '{$a->no}. {$a->text}';
@@ -89,9 +93,9 @@ $string['valid_startcoordinates'] = 'Valid start co-ordinates';
 
 $string['xleft'] = 'Left';
 
-$string['yougot1right'] = 'You have correctly selected one point.';
+$string['yougot1right'] = 'You have correctly selected one coordinate.';
 $string['yougot1rightline'] = 'You have correctly selected one line.';
-$string['yougotnright'] = 'You have correctly selected {$a->num} points.';
+$string['yougotnright'] = 'You have correctly selected {$a->num} coordinates.';
 $string['yougotnrightline'] = 'You have correctly selected {$a->num} lines.';
 $string['ytop'] = 'Top';
 

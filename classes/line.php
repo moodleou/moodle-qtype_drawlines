@@ -177,7 +177,7 @@ class line {
      * Parse the input and return the parts in a list of 'cx', 'cy' with or whothout 'r'.
      *
      * @param string $dropzone, the string in a given format with or whithout radius
-     * @param bool $radius, if set to true, return the list with radius, otherwise with radius
+     * @param bool $radius, if set to true, return the list with radius, otherwise without radius
      * @return int[], a list of 'cx', 'cy' with or whothout 'r'.
      */
     public static function parse_into_cx_cy_with_or_without_radius(string $dropzone, bool $radius = false): array {

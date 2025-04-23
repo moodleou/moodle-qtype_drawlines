@@ -65,3 +65,13 @@ form.mform fieldset#id_previewareaheader .dropbackground {
 form.mform fieldset#id_previewareaheader div.ddarea {
     text-align: center;
 }
+
+.que.drawlines div.misplacedinfo {
+    margin: 2px;
+}
+
+.que.drawlines span.misplaced {
+    background-color: #c8ff00;
+    opacity: .6;
+    margin: 2px;
+}

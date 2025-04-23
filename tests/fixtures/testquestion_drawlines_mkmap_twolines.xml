@@ -73,10 +73,12 @@
         <hint format="html">
             <text><![CDATA[<p>You are trying to draw 2 lines by placing the start and end markers for each line on the map.</p>]]></text>
             <shownumcorrect/>
+            <showmisplaced/>
         </hint>
         <hint format="html">
-            <text><![CDATA[<p>You have to find the positins for start and end of each line as described in the question text.</p>]]></text>
+            <text><![CDATA[<p>You have to find the positions for start and end of each line as described in the question text.</p>]]></text>
             <shownumcorrect/>
+            <showmisplaced/>
             <options>1</options>
         </hint>
     </question>

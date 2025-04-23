@@ -28,11 +28,11 @@ class qtype_drawlines_test_helper extends question_test_helper {
 
     #[\Override]
     public function get_test_questions(): array {
-        return ['mkmap_twolines'];
+        return ['mkmap_twolines', 'mkmap_twolines_allornone'];
     }
 
     /**
-     * Get the question data, as it would be loaded by get_question_options.
+     * Get the question data for partial grading, as it would be loaded by get_question_options.
      *
      * @return stdClass
      */
@@ -92,23 +92,100 @@ class qtype_drawlines_test_helper extends question_test_helper {
                 1 => (object) [
                         'hint' => 'Hint 1.',
                         'hintformat' => FORMAT_HTML,
-                        'shownumcorrect' => 1,
-                        'showmisplaced' => 0,
+                        'hintshownumcorrect' => 1,
+                        'hintshowmisplaced' => 0,
                         'options' => 0,
                 ],
                 2 => (object) [
                         'hint' => 'Hint 2.',
                         'hintformat' => FORMAT_HTML,
-                        'shownumcorrect' => 1,
-                        'showmisplaced' => 1,
+                        'hintshownumcorrect' => 1,
+                        'hintshowmisplaced' => 1,
                         'options' => 1,
                 ],
         ];
         return $qdata;
     }
 
+
     /**
-     * Return the form data for a DrawLines with 2 lines.
+     * Get the question data for all-or-non grading, as it would be loaded by get_question_options.
+     *
+     * @return stdClass
+     */
+    public function get_drawlines_question_data_mkmap_twolines_allornone(): stdClass {
+        global $CFG, $USER;
+
+        $qdata = new stdClass();
+        $qdata->createdby = $USER->id;
+        $qdata->modifiedby = $USER->id;
+        $qdata->qtype = 'drawlines';
+        $qdata->name = 'drawlines_mkmap01_allornone';
+        $qdata->questiontext = 'Draw 2 lines on the map. A line segment from A (line starting point) to B (line Ending point),' .
+            ' and another one from C to D. A is ..., B is ..., C is ... and D is ...';
+        $qdata->questiontextformat = FORMAT_HTML;
+        $qdata->generalfeedback = 'We draw lines from a starting to an end point.';
+        $qdata->generalfeedbackformat = FORMAT_HTML;
+        $qdata->defaultmark = 1;
+        $qdata->length = 1;
+        $qdata->penalty = 0.3333333;
+        $qdata->status = \core_question\local\bank\question_version_status::QUESTION_STATUS_READY;
+        $qdata->versionid = 0;
+        $qdata->version = 1;
+        $qdata->questionbankentryid = 0;
+        $qdata->options = new stdClass();
+        $qdata->options->grademethod = 'allnone';
+        $qdata->options->correctfeedback = test_question_maker::STANDARD_OVERALL_CORRECT_FEEDBACK;
+        $qdata->options->correctfeedbackformat = FORMAT_HTML;
+        $qdata->options->partiallycorrectfeedback = test_question_maker::STANDARD_OVERALL_PARTIALLYCORRECT_FEEDBACK;
+        $qdata->options->partiallycorrectfeedbackformat = FORMAT_HTML;
+        $qdata->options->incorrectfeedback = test_question_maker::STANDARD_OVERALL_INCORRECT_FEEDBACK;
+        $qdata->options->incorrectfeedbackformat = FORMAT_HTML;
+        $qdata->options->shownumcorrect = 1;
+        $qdata->options->showmisplaced = 0;
+
+        $qdata->lines = [
+            1 => (object)[
+                'id' => 11,
+                'number' => 1,
+                'type' => line::TYPE_LINE_SEGMENT,
+                'labelstart' => 'Start 1',
+                'labelmiddle' => 'Mid 1',
+                'labelend' => '',
+                'zonestart' => '10,10;10',
+                'zoneend' => '300,10;10',
+            ],
+            2 => (object)[
+                'number' => 2,
+                'type' => line::TYPE_LINE_SEGMENT,
+                'labelstart' => 'Start 2',
+                'labelmiddle' => '',
+                'labelend' => '',
+                'zonestart' => '10,200;10',
+                'zoneend' => '300,200;10',
+            ],
+        ];
+        $qdata->hints = [
+            1 => (object) [
+                'hint' => 'Hint 1.',
+                'hintformat' => FORMAT_HTML,
+                'hintshownumcorrect' => 1,
+                'hintshowmisplaced' => 0,
+                'options' => 0,
+            ],
+            2 => (object) [
+                'hint' => 'Hint 2.',
+                'hintformat' => FORMAT_HTML,
+                'hintshownumcorrect' => 1,
+                'hintshowmisplaced' => 1,
+                'options' => 1,
+            ],
+        ];
+        return $qdata;
+    }
+
+    /**
+     * Return the form data for a DrawLines with 2 lines and for partial grading.
      *
      * @return stdClass data to create a drawliness question.
      */
@@ -128,17 +205,17 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $filerecord->filepath = '/';
         $filerecord->filename = 'mkmap.png';
         $fs->create_file_from_pathname($filerecord, $CFG->dirroot .
-                '/question/type/drawlines/tests/fixtures/mkmap.png');
+            '/question/type/drawlines/tests/fixtures/mkmap.png');
 
         $fromform->id = 123;
         $fromform->name = 'MK landmarks';
         $fromform->questiontext = [
             'text' => 'Draw 2 lines on the map. A line segment from A (line starting point) to B (line Ending point),' .
-                    ' and another one from C to D. A is ..., B is ..., C is ... and D is ...',
+                ' and another one from C to D. A is ..., B is ..., C is ... and D is ...',
             'format' => FORMAT_HTML,
         ];
         $fromform->defaultmark = 1;
-        $fromform->grademethod = get_config('qtype_drawlines', 'grademethod');
+        $fromform->grademethod = 'partial';
         $fromform->generalfeedback = [
             'text' => 'We draw lines from a starting to an end point.',
             'format' => FORMAT_HTML,
@@ -163,12 +240,81 @@ class qtype_drawlines_test_helper extends question_test_helper {
                 'format' => FORMAT_HTML,
             ],
             [
-                'text' => 'You have to find the positins for start and end of each line as described in the question text.',
+                'text' => 'You have to find the positions for start and end of each line as described in the question text.',
                 'format' => FORMAT_HTML,
             ],
         ];
         $fromform->hintshownumcorrect = [1, 1];
-        $fromform->hintclearwrong = [0, 1];
+        $fromform->hintshowmisplaced = [0, 1];
+        $fromform->hintoptions = [0, 1];
+
+        $fromform->status = \core_question\local\bank\question_version_status::QUESTION_STATUS_READY;
+
+        return $fromform;
+    }
+
+    /**
+     * Return the form data for a DrawLines with 2 lines for all-or-none grading.
+     *
+     * @return stdClass data to create a drawliness question.
+     */
+    public function get_drawlines_question_form_data_mkmap_twolines_allornone(): stdClass {
+        global $CFG, $USER;
+        $fromform = new stdClass();
+        $fromform->context = \context_user::instance($USER->id);
+
+        $bgdraftitemid = 0;
+        file_prepare_draft_area($bgdraftitemid, null, null, null, null);
+        $fs = get_file_storage();
+        $filerecord = new stdClass();
+        $filerecord->contextid = context_user::instance($USER->id)->id;
+        $filerecord->component = 'user';
+        $filerecord->filearea = 'draft';
+        $filerecord->itemid = $bgdraftitemid;
+        $filerecord->filepath = '/';
+        $filerecord->filename = 'mkmap.png';
+        $fs->create_file_from_pathname($filerecord, $CFG->dirroot .
+                '/question/type/drawlines/tests/fixtures/mkmap.png');
+
+        $fromform->id = 123;
+        $fromform->name = 'MK landmarks_allornone';
+        $fromform->questiontext = [
+            'text' => 'Draw 2 lines on the map. A line segment from A (line starting point) to B (line Ending point),' .
+                    ' and another one from C to D. A is ..., B is ..., C is ... and D is ...',
+            'format' => FORMAT_HTML,
+        ];
+        $fromform->defaultmark = 1;
+        $fromform->grademethod = 'allnone';
+        $fromform->generalfeedback = [
+            'text' => 'We draw lines from a starting to an end point.',
+            'format' => FORMAT_HTML,
+        ];
+        $fromform->bgimage = $bgdraftitemid;
+
+        // We create 2 lines in this question.
+        $fromform->numberoflines = 2;
+        $fromform->type = ['0' => line::TYPE_LINE_SEGMENT, '1' => line::TYPE_LINE_SEGMENT];
+        $fromform->labelstart = ['0' => 'Start 1', '1' => 'Start 2'];
+        $fromform->labelmiddle = ['0' => 'Mid 1', '1' => 'Mid 2'];
+        $fromform->labelend = ['0' => '', '1' => 'End 2'];
+        $fromform->zonestart = ['0' => '10,10;12', '1' => '300,10;12'];
+        $fromform->zoneend = ['0' => '10,200;12', '1' => '300,200;12'];
+
+        test_question_maker::set_standard_combined_feedback_form_data($fromform);
+
+        $fromform->penalty = '0.3333333';
+        $fromform->hint = [
+            [
+                'text' => 'You are trying to draw 2 lines by placing the start and end markers for each line on the map.',
+                'format' => FORMAT_HTML,
+            ],
+            [
+                'text' => 'You have to find the positions for start and end of each line as described in the question text.',
+                'format' => FORMAT_HTML,
+            ],
+        ];
+        $fromform->hintshownumcorrect = [1, 1];
+        $fromform->hintshowmisplaced = [0, 1];
         $fromform->hintoptions = [0, 1];
 
         $fromform->status = \core_question\local\bank\question_version_status::QUESTION_STATUS_READY;
