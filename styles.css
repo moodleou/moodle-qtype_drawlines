@@ -65,3 +65,9 @@ form.mform fieldset#id_previewareaheader .dropbackground {
 form.mform fieldset#id_previewareaheader div.ddarea {
     text-align: center;
 }
+
+.que.drawlines span.misplaced  {
+    background-color: #ff0;
+    opacity: .6;
+    margin: 2px;
+}

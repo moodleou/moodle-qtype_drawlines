@@ -115,17 +115,17 @@ class qtype_drawlines extends question_type {
         }
 
         if ($withparts) {
-            if (!empty($fromform->hintclearwrong)) {
-                $numclears = max(array_keys($fromform->hintclearwrong)) + 1;
+            if (!empty($fromform->hintoptions)) {
+                $numshowmisplaced = max(array_keys($fromform->hintshowmisplaced)) + 1;
             } else {
-                $numclears = 0;
+                $numshowmisplaced = 0;
             }
             if (!empty($fromform->hintshownumcorrect)) {
                 $numshows = max(array_keys($fromform->hintshownumcorrect)) + 1;
             } else {
                 $numshows = 0;
             }
-            $numhints = max($numhints, $numclears, $numshows);
+            $numhints = max($numhints, $numshowmisplaced, $numshows);
         }
 
         for ($i = 0; $i < $numhints; $i += 1) {
@@ -134,7 +134,7 @@ class qtype_drawlines extends question_type {
             }
 
             if ($withparts) {
-                $clearwrong = !empty($fromform->hintclearwrong[$i]);
+                $statewhichincorrect = !empty($fromform->hintshowmisplaced[$i]);
                 $shownumcorrect = !empty($fromform->hintshownumcorrect[$i]);
                 $statewhichincorrect = !empty($fromform->hintoptions[$i]);
             }
@@ -157,7 +157,7 @@ class qtype_drawlines extends question_type {
                     $context, 'question', 'hint', $hint->id);
             $hint->hintformat = $fromform->hint[$i]['format'];
             if ($withparts) {
-                $hint->clearwrong = $clearwrong;
+                $hint->showmisplaced = $statewhichincorrect;
                 $hint->shownumcorrect = $shownumcorrect;
                 $hint->options = $statewhichincorrect;
             }

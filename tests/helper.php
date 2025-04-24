@@ -65,7 +65,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $qdata->options->incorrectfeedback = test_question_maker::STANDARD_OVERALL_INCORRECT_FEEDBACK;
         $qdata->options->incorrectfeedbackformat = FORMAT_HTML;
         $qdata->options->shownumcorrect = 1;
-        $qdata->options->showmisplaced = 0;
+        $qdata->options->showmisplaced = 1;
 
         $qdata->lines = [
                 1 => (object)[
@@ -93,7 +93,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
                         'hint' => 'Hint 1.',
                         'hintformat' => FORMAT_HTML,
                         'shownumcorrect' => 1,
-                        'showmisplaced' => 0,
+                        'showmisplaced' => 1,
                         'options' => 0,
                 ],
                 2 => (object) [
@@ -168,7 +168,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
             ],
         ];
         $fromform->hintshownumcorrect = [1, 1];
-        $fromform->hintclearwrong = [0, 1];
+        $fromform->hintshowmisplaced = [0, 1];
         $fromform->hintoptions = [0, 1];
 
         $fromform->status = \core_question\local\bank\question_version_status::QUESTION_STATUS_READY;
@@ -211,7 +211,7 @@ class qtype_drawlines_test_helper extends question_test_helper {
         $question->incorrectfeedback = test_question_maker::STANDARD_OVERALL_INCORRECT_FEEDBACK;
         $question->incorrectfeedbackformat = FORMAT_HTML;
         $question->shownumcorrect = 1;
-        $question->showmisplaced = 0;
+        $question->showmisplaced = 1;
 
         $question->lines = [
                 0 => new line(

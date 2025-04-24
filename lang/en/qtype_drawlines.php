@@ -31,8 +31,8 @@ $string['correctansweris'] = 'The correct answer is: {$a}';
 $string['correctanswersare'] = 'The correct answers are: {$a}';
 $string['dropbackground'] = 'Background image for Draw lines';
 
-$string['formerror_nobgimage'] = 'You need to select an image to use as the background for the drag and drop area.';
 $string['formerror_invalidimagesize'] = 'Image file should not be larger than 600x600 px. The uploaded image file size is {$a->width}x{$a->height} px.';
+$string['formerror_nobgimage'] = 'You need to select an image to use as the background for the drag and drop area.';
 $string['formerror_nolines'] = 'You need to expand \'Line 1\' and fill the form for it';
 $string['formerror_notype'] = 'You have to select a type for Line {$a}';
 $string['formerror_zoneend'] = 'End zone coordinates should be in x,y;r format, where x,y are the coordinates of the centre of a circle and r is the radius.';
