@@ -50,6 +50,31 @@ class restore_qtype_drawlines_plugin extends restore_qtype_plugin {
         return $paths;
     }
 
+    #[\Override]
+    public static function convert_backup_to_questiondata(array $backupdata): \stdClass {
+        $questiondata = parent::convert_backup_to_questiondata($backupdata);
+        $qtype = $questiondata->qtype;
+        if (isset($backupdata["plugin_qtype_{$qtype}_question"]['drawlines'])) {
+            $questiondata->options = (object) array_merge(
+                (array) $questiondata->options,
+                $backupdata["plugin_qtype_{$qtype}_question"]['drawlines'][0],
+            );
+        }
+        $questiondata->lines = [];
+        foreach ($backupdata["plugin_qtype_{$qtype}_question"]['lines']['line'] as $line) {
+            $questiondata->lines[] = (object) $line;
+        }
+        return $questiondata;
+    }
+
+    #[\Override]
+    protected function define_excluded_identity_hash_fields(): array {
+        return [
+            'lines/questionid',
+            'lines/id',
+        ];
+    }
+
     /**
      *
      * Process the qtype_drawlines element.
