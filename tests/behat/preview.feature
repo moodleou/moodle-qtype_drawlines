@@ -63,7 +63,7 @@ Feature: Preview a DrawLines question
     And I should see "We draw lines from a starting to an end point."
 
   @javascript
-  Scenario: Preview a question using interactive with multiple tries with partical garding
+  Scenario: Preview a question using interactive with multiple tries with partial grading
     Given I am on the "Drawlines to preview partial" "core_question > preview" page logged in as teacher
     And I expand all fieldsets
     And I set the field "How questions behave" to "Interactive with multiple tries"

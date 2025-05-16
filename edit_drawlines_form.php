@@ -257,7 +257,7 @@ class qtype_drawlines_edit_form extends question_edit_form {
 
     #[\Override]
     protected function data_preprocessing_hints($question, $withshowmisplaced = false,
-                                                $withshownumpartscorrect = false) {
+            $withshownumpartscorrect = false) {
         if (empty($question->hints)) {
             return $question;
         }

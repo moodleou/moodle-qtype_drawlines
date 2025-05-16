@@ -44,4 +44,4 @@ Feature: Test importing draw lines questions
       | hintshownumcorrect[0] | Checked |
       | hintshownumcorrect[1] | Checked |
       | hintshowmisplaced[0]  |         |
-      | hintshowmisplaced[1]  |         |
+      | hintshowmisplaced[1]  | Checked |

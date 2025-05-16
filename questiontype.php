@@ -344,7 +344,7 @@ class qtype_drawlines extends question_type {
 
         $format->import_hints($question, $data, true, true,
                 $format->get_format($question->questiontextformat));
-
+        $question->hintshowmisplaced = $question->hintoptions;
         return $question;
     }
 
