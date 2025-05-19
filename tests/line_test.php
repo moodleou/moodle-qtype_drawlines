@@ -31,7 +31,7 @@ final class line_test extends \advanced_testcase {
      *
      * @dataProvider zone_coordinates_provider
      * @param string $zonecooredinate
-     * @return bool
+     * @param bool $trueorfalse
      */
     public function test_is_zone_coordinates_valid(string $zonecooredinate, bool $trueorfalse): void {
         $this->assertEquals($trueorfalse, line::is_zone_coordinates_valid($zonecooredinate));

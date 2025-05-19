@@ -186,9 +186,8 @@ final class question_test extends \advanced_testcase {
      * Test the summarise_response function.
      *
      * @dataProvider summarise_response_provider
-     * @param int|float $expected
-     * @param array $responses
-     * @return void
+     * @param string $expected
+     * @param array $response
      */
     public function test_summarise_response(string $expected, array $response): void {
         $question = \test_question_maker::make_question('drawlines', 'mkmap_twolines');
@@ -237,10 +236,9 @@ final class question_test extends \advanced_testcase {
      * Test the get_num_parts_right_grade_partial function.
      *
      * @dataProvider response_provider
-     * @param int|float $expected
-     * @param array $responses
+     * @param int $expected
+     * @param array $response
      * @param string $grademethod
-     * @return void
      */
     public function test_get_num_parts_right_grade_partial(int $expected, array $response, string $grademethod): void {
         if ($grademethod !== 'partial') {
@@ -260,9 +258,8 @@ final class question_test extends \advanced_testcase {
      *
      * @dataProvider response_provider
      * @param int|float $expected
-     * @param array $responses
+     * @param array $response
      * @param string $grademethod
-     * @return void
      */
     public function test_get_num_parts_right_grade_allornone(int|float $expected, array $response, string $grademethod): void {
         if ($grademethod !== 'allnone') {
@@ -373,9 +370,8 @@ final class question_test extends \advanced_testcase {
      *
      * @dataProvider grade_response_provider
      * @param array $expected A list of fraction an state (graderight, gradewrong, gradepartial).
-     * @param array $responses
+     * @param array $response
      * @param string $grademethod
-     * @return void
      */
     public function test_grade_response(array $expected, array $response, string $grademethod): void {
         $question = \test_question_maker::make_question('drawlines');
