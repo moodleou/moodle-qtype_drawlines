@@ -41,12 +41,12 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
     /**
      * Returns the URL for an image
      *
-     * @param object $qa Question attempt object
+     * @param question_attempt $qa Question attempt object
      * @param string $filearea File area descriptor
      * @param int $itemid Item id to get
      * @return string Output url, or null if not found
      */
-    protected static function get_url_for_image(question_attempt $qa, $filearea, $itemid = 0) {
+    protected static function get_url_for_image(question_attempt $qa, string $filearea, int $itemid = 0): ?string {
         $question = $qa->get_question();
         $qubaid = $qa->get_usage_id();
         $slot = $qa->get_slot();
@@ -74,13 +74,14 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
     /**
      * Returns a hidden field for a qt variable
      *
-     * @param object $qa Question attempt object
+     * @param question_attempt $qa Question attempt object
      * @param string $varname The hidden var name
-     * @param string $value The hidden value
-     * @param array $classes Any additional css classes to apply
+     * @param null|string $value The hidden value
+     * @param null|array $classes Any additional css classes to apply
      * @return array Array with field name and the html of the tag
      */
-    protected function hidden_field_for_qt_var(question_attempt $qa, $varname, $value = null, $classes = null) {
+    protected function hidden_field_for_qt_var(question_attempt $qa, string $varname, ?string $value = null,
+            ?array $classes = null): array {
         if ($value === null) {
             $value = $qa->get_last_qt_var($varname);
         }
@@ -97,13 +98,13 @@ class qtype_drawlines_renderer extends qtype_with_combined_feedback_renderer {
 
     /**
      * Generate the hidden fields on the preview page to capture the responses.
-     * @param question_attempt $qa
-     * @param $choicenumber
-     * @param $value
-     * @param $class
-     * @return mixed
+     *
+     * @param question_attempt $qa Question attempt object
+     * @param int $choicenumber choice number
+     * @param null|string $value the hidden value
+     * @return string the html of the choice
      */
-    protected function hidden_field_choice(question_attempt $qa, $choicenumber, $value = null, $class = null) {
+    protected function hidden_field_choice(question_attempt $qa, int $choicenumber, ?string $value = null): string {
         $varname = $qa->get_question()->field($choicenumber);
         $classes = ['choices', 'choice'. $choicenumber];
         [, $html] = $this->hidden_field_for_qt_var($qa, $varname, $value, $classes);

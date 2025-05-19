@@ -129,11 +129,11 @@ class line {
     /**
      * Return true or false
      *
-     * @param $dragcoord string 'cx,cy' format
-     * @param $dropcood string 'cx,cy;radius' format
+     * @param string $dragcoord 'cx,cy' format
+     * @param string $dropcood 'cx,cy;radius' format
      * @return bool
      */
-    public static function is_dragitem_in_the_right_place($dragcoord, $dropcood): bool {
+    public static function is_dragitem_in_the_right_place(string $dragcoord, string $dropcood): bool {
         [$cx, $cy, $r] = self::parse_into_cx_cy_with_or_without_radius($dropcood, true);
         [$rescx, $rescy] = self::parse_into_cx_cy_with_or_without_radius($dragcoord);
 
@@ -154,13 +154,14 @@ class line {
     /**
      * Return true or false
      *
-     * @param $responsecoord string 'cx,cy' format
-     * @param $linestart string 'cx,cy;radius' format.
-     * @param $lineend string 'cx,cy;radius' format.
-     * @param $which string which end of the line is being compared, start or end.
+     * @param string $responsecoord 'cx,cy' format
+     * @param string $linestart 'cx,cy;radius' format.
+     * @param string $lineend  'cx,cy;radius' format.
+     * @param string $which  which end of the line is being compared, start or end.
      * @return bool
      */
-    public static function is_item_positioned_correctly_on_axis($responsecoord, $linestart, $lineend, $which): bool {
+    public static function is_item_positioned_correctly_on_axis(string $responsecoord, string $linestart,
+            string $lineend, string $which): bool {
         [$scx, $scy, $sr] = self::parse_into_cx_cy_with_or_without_radius($linestart, true);
         [$ecx, $ecy, $er] = self::parse_into_cx_cy_with_or_without_radius($lineend, true);
         [$rescx, $rescy] = self::parse_into_cx_cy_with_or_without_radius($responsecoord);
@@ -174,11 +175,11 @@ class line {
     }
 
     /**
-     * Parse the input and return the parts in a list of 'cx', 'cy' with or whothout 'r'.
+     * Parse the input and return the parts in a list of 'cx', 'cy' with or without 'r'.
      *
-     * @param string $dropzone, the string in a given format with or whithout radius
-     * @param bool $radius, if set to true, return the list with radius, otherwise without radius
-     * @return int[], a list of 'cx', 'cy' with or whothout 'r'.
+     * @param string $dropzone, the string in a given format with or without radius
+     * @param bool $radius if set to true, return the list with radius, otherwise without radius
+     * @return array a list of 'cx', 'cy' with or without 'r' [cx, xy, r] or [cx, xy].
      */
     public static function parse_into_cx_cy_with_or_without_radius(string $dropzone, bool $radius = false): array {
         if ($radius === true) {

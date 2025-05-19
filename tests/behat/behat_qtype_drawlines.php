@@ -50,13 +50,13 @@ class behat_qtype_drawlines extends behat_base {
      * Type some characters while focused on a given line.
      *
      * @param string $direction the direction key to press.
-     * @param int $
-     * @param string $part the part of the line to move.
+     * @param int $repeats How many times to press the key.
      * @param string $line the line to drag. The label, optionally followed by ,<instance number> (int) if relevant.
+     * @param string $part the part of the line to move.
      *
      * @Given /^I type "(?P<direction>up|down|left|right)" "(?P<repeats>\d+)" times on line "(?P<line>\d+)" "(?P<endpoint>line|startcircle|endcircle)" in the drawlines question$/
      */
-    public function i_type_on_line_in_the_drawlines_question($direction, $repeats, $line, $part) {
+    public function i_type_on_line_in_the_drawlines_question(string $direction, int $repeats, string $line, string $part): void {
         $node = $this->get_selected_node('xpath_element', $this->line_xpath($line, $part, true));
         $this->ensure_node_is_visible($node);
         $node->focus();
